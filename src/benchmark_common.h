@@ -60,6 +60,19 @@ extern char *optarg;
 #define STOCKS_FLAG       0x0001
 #define PERSONAL_FLAG     0x0002
 #define CURRENCIES_FLAG   0x0004
+#define QUOTES_FLAG       0x0008
+#define QUOTES_HIST_FLAG  0x0010
+#define PORTFOLIOS_FLAG   0x0020
+#define ACCOUNTS_FLAG     0x0040
+#define ALL_DBS_FLAG      0x00FF
+
+#define IS_STOCKS(_v)       (((_v) & STOCKS_FLAG) == STOCKS_FLAG)
+#define IS_PERSONAL(_v)     (((_v) & PERSONAL_FLAG) == PERSONAL_FLAG)
+#define IS_CURRENCIES(_v)   (((_v) & CURRENCIES_FLAG) == CURRENCIES_FLAG)
+#define IS_QUOTES(_v)       (((_v) & QUOTES_FLAG) == QUOTES_FLAG)
+#define IS_QUOTES_HIST(_v)  (((_v) & QUOTES_HIST_FLAG) == QUOTES_HIST_FLAG)
+#define IS_PORTFOLIOS(_v)   (((_v) & PORTFOLIOS_FLAG) == PORTFOLIOS_FLAG)
+#define IS_ACCOUNTS(_v)     (((_v) & ACCOUNTS_FLAG) == ACCOUNTS_FLAG)
 
 /* Let's define our Benchmark DB, which translates to
  * multiple berkeley DBs*/
@@ -169,9 +182,12 @@ typedef struct personal {
 } PERSONAL;
 
 /* Function prototypes */
-int	databases_setup(BENCHMARK_DBS *, const char *, FILE *);
+int	databases_setup(BENCHMARK_DBS *, int, const char *, FILE *);
 int	databases_open(DB **, const char *, const char *, FILE *, int);
 int	databases_close(BENCHMARK_DBS *);
 
 void	initialize_benchmarkdbs(BENCHMARK_DBS *);
 void	set_db_filenames(BENCHMARK_DBS *my_stock);
+
+int 
+show_stocks_records(BENCHMARK_DBS *benchmarkP);
