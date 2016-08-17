@@ -11,4 +11,7 @@ In this repository, I am trying to reconstruct their testbed from scratch. I am
 providing the following utilities:
 
 1) benchmark_initial_load: Performs the initial load of the 'static' tables.
+
 2) benchmark_databases_dump: Dumps the contents of the tables.
+
+[In Progress]
