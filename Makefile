@@ -25,7 +25,7 @@ LIBS=		 -lpthread
 ##################################################
 # Targets for example programs.
 ##################################################
-examples_c: benchmark_initial_load benchmark_databases_dump
+all: benchmark_initial_load benchmark_databases_dump view_stock_txn
 
 ##################################################
 # Example programs for C.
@@ -45,23 +45,14 @@ benchmark_databases_dump: benchmark_databases_dump.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) benchmark_databases_dump.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
-gettingstarted_common.lo: $(exampledir)/gettingstarted_common.c
-	$(CC) -I$(exampledir) $(CFLAGS) $?
-example_database_load.lo: $(exampledir)/example_database_load.c
+view_stock_txn.lo:	$(exampledir)/view_stock_txn.c
 	$(CC) $(CFLAGS) $?
-example_database_read.lo: $(exampledir)/example_database_read.c
-	$(CC) $(CFLAGS) $?
-example_database_load: example_database_load.lo gettingstarted_common.lo
-	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) example_database_load.lo gettingstarted_common.lo  $(DEF_LIB) $(LIBS)
-	$(POSTLINK) $(builddir)/$@
-example_database_read: example_database_read.lo gettingstarted_common.lo
-	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) example_database_read.lo gettingstarted_common.lo $(DEF_LIB) $(LIBS)
+view_stock_txn: view_stock_txn.lo benchmark_common.lo
+	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) view_stock_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
 clean:
-	-rm example_database_load example_database_read
 	-rm *.o
 	-rm *.lo
-	-rm *.db
 	-rm -rf bin
 	-rm -rf databases/*

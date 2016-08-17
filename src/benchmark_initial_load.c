@@ -94,7 +94,7 @@ main(int argc, char *argv[])
   currencies_file = malloc(size);
   snprintf(currencies_file, size, "%s%s", basename, CURRENCIES_FILE);
 
-  ret = databases_setup(&my_benchmark, "benchmark_initial_load", stderr);
+  ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, "benchmark_initial_load", stderr);
   if (ret) {
     fprintf(stderr, "Error opening databases.\n");
     databases_close(&my_benchmark);

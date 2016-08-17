@@ -19,7 +19,33 @@
 
 #include "benchmark_common.h"
 
+static int 
+show_stock_item(void *);
+
 /*=============== STATIC FUNCTIONS =======================*/
+static int
+show_stock_item(void *vBuf)
+{
+  char *symbol;
+  char *name;
+
+  size_t buf_pos = 0;
+  char *buf = (char *)vBuf;
+
+  /* TODO: Pack the string instead */
+  symbol = buf;
+  buf_pos += ID_SZ;
+
+  name = buf + buf_pos;
+
+  /* Display all this information */
+  printf("Symbol: %s\n", symbol);
+  printf("\tName: %s\n", name);
+
+  /* Return the vendor's name */
+  return 0;
+}
+
 static int
 open_database(DB **dbpp,       
               const char *file_name,     
@@ -82,65 +108,80 @@ open_database(DB **dbpp,
 /*=============== PUBLIC FUNCTIONS =======================*/
 int	
 databases_setup(BENCHMARK_DBS *my_benchmarkP,
+                int which_database,
                 const char *program_name, 
                 FILE *error_fileP)
 {
   int ret;
 
-  ret = open_database(&(my_benchmarkP->stocks_dbp),
-                      my_benchmarkP->stocks_db_name,
-                      program_name, error_fileP,
-                      PRIMARY_DB);
-  if (ret != 0) {
-    return (ret);
+  if (IS_STOCKS(which_database)) {
+    ret = open_database(&(my_benchmarkP->stocks_dbp),
+                        my_benchmarkP->stocks_db_name,
+                        program_name, error_fileP,
+                        PRIMARY_DB);
+    if (ret != 0) {
+      return (ret);
+    }
   }
 
-  ret = open_database(&(my_benchmarkP->quotes_dbp),
-                      my_benchmarkP->quotes_db_name,
-                      program_name, error_fileP,
-                      PRIMARY_DB);
-  if (ret != 0) {
-    return (ret);
+  if (IS_QUOTES(which_database)) {
+    ret = open_database(&(my_benchmarkP->quotes_dbp),
+                        my_benchmarkP->quotes_db_name,
+                        program_name, error_fileP,
+                        PRIMARY_DB);
+    if (ret != 0) {
+      return (ret);
+    }
   }
 
-  ret = open_database(&(my_benchmarkP->quotes_hist_dbp),
-                      my_benchmarkP->quotes_hist_db_name,
-                      program_name, error_fileP,
-                      PRIMARY_DB);
-  if (ret != 0) {
-    return (ret);
+  if (IS_QUOTES_HIST(which_database)) {
+    ret = open_database(&(my_benchmarkP->quotes_hist_dbp),
+                        my_benchmarkP->quotes_hist_db_name,
+                        program_name, error_fileP,
+                        PRIMARY_DB);
+    if (ret != 0) {
+      return (ret);
+    }
   }
 
-  ret = open_database(&(my_benchmarkP->portfolios_dbp),
-                      my_benchmarkP->portfolios_db_name,
-                      program_name, error_fileP,
-                      PRIMARY_DB);
-  if (ret != 0) {
-    return (ret);
+  if (IS_PORTFOLIOS(which_database)) {
+    ret = open_database(&(my_benchmarkP->portfolios_dbp),
+                        my_benchmarkP->portfolios_db_name,
+                        program_name, error_fileP,
+                        PRIMARY_DB);
+    if (ret != 0) {
+      return (ret);
+    }
   }
 
-  ret = open_database(&(my_benchmarkP->accounts_dbp),
-                      my_benchmarkP->accounts_db_name,
-                      program_name, error_fileP,
-                      PRIMARY_DB);
-  if (ret != 0) {
-    return (ret);
+  if (IS_ACCOUNTS(which_database)) {
+    ret = open_database(&(my_benchmarkP->accounts_dbp),
+                        my_benchmarkP->accounts_db_name,
+                        program_name, error_fileP,
+                        PRIMARY_DB);
+    if (ret != 0) {
+      return (ret);
+    }
   }
 
-  ret = open_database(&(my_benchmarkP->currencies_dbp),
-                      my_benchmarkP->currencies_db_name,
-                      program_name, error_fileP,
-                      PRIMARY_DB);
-  if (ret != 0) {
-    return (ret);
+  if (IS_CURRENCIES(which_database)) {
+    ret = open_database(&(my_benchmarkP->currencies_dbp),
+                        my_benchmarkP->currencies_db_name,
+                        program_name, error_fileP,
+                        PRIMARY_DB);
+    if (ret != 0) {
+      return (ret);
+    }
   }
 
-  ret = open_database(&(my_benchmarkP->personal_dbp),
-                      my_benchmarkP->personal_db_name,
-                      program_name, error_fileP,
-                      PRIMARY_DB);
-  if (ret != 0) {
-    return (ret);
+  if (IS_PERSONAL(which_database)) {
+    ret = open_database(&(my_benchmarkP->personal_dbp),
+                        my_benchmarkP->personal_db_name,
+                        program_name, error_fileP,
+                        PRIMARY_DB);
+    if (ret != 0) {
+      return (ret);
+    }
   }
 
   printf("databases opened successfully\n");
@@ -270,3 +311,32 @@ databases_close(BENCHMARK_DBS *my_benchmarkP)
   printf("databases closed.\n");
   return (0);
 }
+
+
+int 
+show_stocks_records(BENCHMARK_DBS *benchmarkP)
+{
+  DBC *stock_cursorp;
+  DBT key, data;
+  char *the_stock;
+  int exit_value, ret;
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  printf("================= SHOWING STOCKS DATABASE ==============\n");
+
+  benchmarkP->stocks_dbp->cursor(benchmarkP->stocks_dbp, NULL,
+                                    &stock_cursorp, 0);
+
+  exit_value = 0;
+  while ((ret =
+    stock_cursorp->get(stock_cursorp, &key, &data, DB_NEXT)) == 0)
+  {
+    (void) show_stock_item(data.data);
+  }
+
+  stock_cursorp->close(stock_cursorp);
+  return (exit_value);
+}
+

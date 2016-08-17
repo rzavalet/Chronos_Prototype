@@ -21,11 +21,9 @@
 /* Forward declarations */
 int usage(void);
 
-int show_stock_item(void *);
 int show_personal_item(void *);
 int show_currencies_item(void *);
 
-int show_stocks_records(BENCHMARK_DBS *);
 int show_personal_records(BENCHMARK_DBS *);
 int show_currencies_records(BENCHMARK_DBS *);
 
@@ -86,7 +84,7 @@ main(int argc, char *argv[])
   set_db_filenames(&my_benchmark);
 
   /* Open all databases */
-  ret = databases_setup(&my_benchmark, "benchmark_databases_dump", stderr);
+  ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, "benchmark_databases_dump", stderr);
   if (ret != 0) {
     fprintf(stderr, "Error opening databases\n");
     databases_close(&my_benchmark);
@@ -107,54 +105,6 @@ main(int argc, char *argv[])
   return (ret);
 }
 
-int show_stocks_records(BENCHMARK_DBS *my_benchmarkP)
-{
-  DBC *stock_cursorp;
-  DBT key, data;
-  char *the_stock;
-  int exit_value, ret;
-
-  memset(&key, 0, sizeof(DBT));
-  memset(&data, 0, sizeof(DBT));
-
-  printf("================= SHOWING STOCKS DATABASE ==============\n");
-
-  my_benchmarkP->stocks_dbp->cursor(my_benchmarkP->stocks_dbp, NULL,
-                                    &stock_cursorp, 0);
-
-  exit_value = 0;
-  while ((ret =
-    stock_cursorp->get(stock_cursorp, &key, &data, DB_NEXT)) == 0)
-  {
-    (void) show_stock_item(data.data);
-  }
-
-  stock_cursorp->close(stock_cursorp);
-  return (exit_value);
-}
-
-int
-show_stock_item(void *vBuf)
-{
-  char *symbol;
-  char *name;
-
-  size_t buf_pos = 0;
-  char *buf = (char *)vBuf;
-
-  /* TODO: Pack the string instead */
-  symbol = buf;
-  buf_pos += ID_SZ;
-
-  name = buf + buf_pos;
-
-  /* Display all this information */
-  printf("Symbol: %s\n", symbol);
-  printf("\tName: %s\n", name);
-
-  /* Return the vendor's name */
-  return 0;
-}
 
 int show_personal_records(BENCHMARK_DBS *my_benchmarkP)
 {
