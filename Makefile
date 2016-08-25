@@ -25,12 +25,12 @@ LDFLAGS=
 LIBS=		 -lpthread
 
 ##################################################
-# Targets for example programs.
+# Targets 
 ##################################################
 all: benchmark_initial_load benchmark_databases_dump view_stock_txn
 
 ##################################################
-# Example programs for C.
+# Compile and link
 ##################################################
 benchmark_common.lo: $(exampledir)/benchmark_common.c
 	$(CC) -I$(exampledir) $(CFLAGS) $?
@@ -54,6 +54,9 @@ view_stock_txn: view_stock_txn.lo benchmark_common.lo
 	$(POSTLINK) $(builddir)/$@
 
 
+##################################################
+# Useful targets for running the benchmark
+##################################################
 reinit:
 	rm -rf $(homedir)/*
 	
