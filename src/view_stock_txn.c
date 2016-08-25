@@ -24,8 +24,8 @@ int usage(void);
 int
 usage()
 {
-  fprintf(stderr, "view_stock_txn ");
-  fprintf(stderr, " [-h <database_home_directory>]\n");
+  fprintf(stderr, "view_stock_txn \n");
+  fprintf(stderr, "\t-h <database_home_directory>\n");
   return (-1);
 }
 
@@ -61,6 +61,11 @@ main(int argc, char *argv[])
       default:
           return (usage());
     }
+  }
+
+  if (my_benchmark.db_home_dir == NULL) {
+    fprintf(stderr, "You must specify -h\n");
+    return usage();
   }
 
   /* Identify the files that hold our databases */

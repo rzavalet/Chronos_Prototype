@@ -2,6 +2,8 @@
 
 exampledir= ./src
 builddir= ./bin
+homedir= ./databases
+datafilesdir= ./datafiles
 
 ##################################################
 # General library information.
@@ -50,6 +52,20 @@ view_stock_txn.lo:	$(exampledir)/view_stock_txn.c
 view_stock_txn: view_stock_txn.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) view_stock_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
+
+
+reinit:
+	rm -rf $(homedir)/*
+	
+load:
+	-mkdir databases
+	$(builddir)/benchmark_initial_load -b $(datafilesdir)/ -h $(homedir)/
+
+dump:
+	$(builddir)/benchmark_databases_dump -d STOCKSDB -d PERSONALDB -d CURRENCIESDB -h $(homedir)/
+
+view_stock:
+	$(builddir)/view_stock_txn -h $(homedir)/
 
 clean:
 	-rm *.o

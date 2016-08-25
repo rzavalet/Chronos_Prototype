@@ -30,8 +30,14 @@ int show_currencies_records(BENCHMARK_DBS *);
 int
 usage()
 {
-    fprintf(stderr, "benchmark_databases_dump ");
-    fprintf(stderr, " [-h <database home>]\n");
+    fprintf(stderr, "benchmark_databases_dump\n");
+    fprintf(stderr, "\t-h <database home>\n");
+    fprintf(stderr, "\t-d <database name>\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Valid database names are:\n");
+    fprintf(stderr, "\t\tSTOCKSDB\n");
+    fprintf(stderr, "\t\tPERSONALDB\n");
+    fprintf(stderr, "\t\tCURRENCIESDB\n");
     return (-1);
 }
 
@@ -78,6 +84,16 @@ main(int argc, char *argv[])
       default:
           return (usage());
     }
+  }
+
+  if (my_benchmark.db_home_dir == NULL) {
+    fprintf(stderr, "You must specify -h\n");
+    return usage();
+  }
+
+  if (which_tables == 0) {
+    fprintf(stderr, "You must specify -d\n");
+    return usage();
   }
 
   /* Identify the files that hold our databases */

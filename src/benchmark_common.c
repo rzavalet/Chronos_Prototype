@@ -11,7 +11,7 @@
  *       Compiler:  gcc
  *
  *         Author:  Ricardo Zavaleta (rj.zavaleta@gmail.com)
- *   Organization:  
+ *   Organization:  Cinvestav
  *
  * =====================================================================================
  */
@@ -47,7 +47,8 @@ show_stock_item(void *vBuf)
 }
 
 static int
-open_database(DB **dbpp,       
+open_database(DB_ENV *envP,
+              DB **dbpp,       
               const char *file_name,     
               const char *program_name,  
               FILE *error_file_pointer,
@@ -58,10 +59,10 @@ open_database(DB **dbpp,
   int ret;
 
   /* Initialize the DB handle */
-  ret = db_create(&dbp, NULL, 0);
+  ret = db_create(&dbp, envP, 0);
   if (ret != 0) {
     fprintf(error_file_pointer, "%s: %s\n", program_name,
-    db_strerror(ret));
+            db_strerror(ret));
     return (ret);
   }
   /* Point to the memory malloc'd by db_create() */
@@ -87,7 +88,8 @@ open_database(DB **dbpp,
 #endif
 
   /* Set the open flags */
-  open_flags = DB_CREATE;    /* Allow database creation */
+  open_flags = DB_CREATE |    /* Allow database creation */
+               DB_AUTO_COMMIT; 
 
   /* Now open the database */
   ret = dbp->open(dbp,        /* Pointer to the database */
@@ -98,25 +100,111 @@ open_database(DB **dbpp,
                   open_flags, /* Open flags */
                   0);         /* File mode. Using defaults */
   if (ret != 0) {
-    dbp->err(dbp, ret, "Database '%s' open failed.", file_name);
+    envP->err(envP, ret, "%d: Database '%s' open failed", __LINE__, file_name);
     return (ret);
   }
 
   return (0);
 }
 
+static int
+close_database(DB_ENV *envP,
+              DB *dbP,       
+              const char *program_name)
+{
+  int rc = 0;
+
+  if (envP == NULL || dbP == NULL) {
+    fprintf(stderr, "%s: Invalid argument\n", __func__);
+    goto failXit;
+  } 
+
+  rc = dbP->close(dbP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Database close failed.");
+    goto failXit;
+  }
+
+  goto cleanup;
+
+failXit:
+  rc = 1;
+
+cleanup:
+  return rc; 
+}
+
+int open_environment(BENCHMARK_DBS *benchmarkP)
+{
+  int rc = 0;
+  u_int32_t env_flags;
+  DB_ENV  *envP = NULL;
+
+  if (benchmarkP == NULL || benchmarkP->envP == NULL) {
+    fprintf(stderr, "%s: Invalid argument\n", __func__);
+    goto failXit;
+  }
+
+
+  rc = db_env_create(&envP, 0);
+  if (rc != 0) {
+    fprintf(stderr, "Error creating environment handle: %s\n",
+            db_strerror(rc));
+    goto failXit;
+  }
+ 
+  env_flags = DB_CREATE    |
+              DB_INIT_TXN  |
+              DB_INIT_LOCK |
+              DB_INIT_LOG  |
+              DB_INIT_MPOOL;
+
+  rc = envP->open(envP, benchmarkP->db_home_dir, env_flags, 0); 
+  if (rc != 0) {
+    fprintf(stderr, "Error opening environment: %s\n",
+            db_strerror(rc));
+    goto failXit;
+  }
+
+  goto cleanup;
+
+failXit:
+  if (envP != NULL) {
+    rc = envP->close(envP, 0);
+    if (rc != 0) {
+      fprintf(stderr, "Error closing environment: %s\n",
+              db_strerror(rc));
+    }
+  }
+  rc = 1;
+
+cleanup:
+  benchmarkP->envP = envP;
+  return rc;
+}
+
+
 /*=============== PUBLIC FUNCTIONS =======================*/
 int	
-databases_setup(BENCHMARK_DBS *my_benchmarkP,
+databases_setup(BENCHMARK_DBS *benchmarkP,
                 int which_database,
                 const char *program_name, 
                 FILE *error_fileP)
 {
   int ret;
 
+  /* TODO: Maybe better to receive the envP and pass the home dir? */
+  ret = open_environment(benchmarkP);
+  if (ret != 0) {
+    fprintf(stderr, "%s: Could not open environment\n",
+            __func__);
+    goto failXit;
+  }
+
   if (IS_STOCKS(which_database)) {
-    ret = open_database(&(my_benchmarkP->stocks_dbp),
-                        my_benchmarkP->stocks_db_name,
+    ret = open_database(benchmarkP->envP,
+                        &(benchmarkP->stocks_dbp),
+                        benchmarkP->stocks_db_name,
                         program_name, error_fileP,
                         PRIMARY_DB);
     if (ret != 0) {
@@ -125,8 +213,9 @@ databases_setup(BENCHMARK_DBS *my_benchmarkP,
   }
 
   if (IS_QUOTES(which_database)) {
-    ret = open_database(&(my_benchmarkP->quotes_dbp),
-                        my_benchmarkP->quotes_db_name,
+    ret = open_database(benchmarkP->envP,
+                        &(benchmarkP->quotes_dbp),
+                        benchmarkP->quotes_db_name,
                         program_name, error_fileP,
                         PRIMARY_DB);
     if (ret != 0) {
@@ -135,8 +224,9 @@ databases_setup(BENCHMARK_DBS *my_benchmarkP,
   }
 
   if (IS_QUOTES_HIST(which_database)) {
-    ret = open_database(&(my_benchmarkP->quotes_hist_dbp),
-                        my_benchmarkP->quotes_hist_db_name,
+    ret = open_database(benchmarkP->envP,
+                        &(benchmarkP->quotes_hist_dbp),
+                        benchmarkP->quotes_hist_db_name,
                         program_name, error_fileP,
                         PRIMARY_DB);
     if (ret != 0) {
@@ -145,8 +235,9 @@ databases_setup(BENCHMARK_DBS *my_benchmarkP,
   }
 
   if (IS_PORTFOLIOS(which_database)) {
-    ret = open_database(&(my_benchmarkP->portfolios_dbp),
-                        my_benchmarkP->portfolios_db_name,
+    ret = open_database(benchmarkP->envP,
+                        &(benchmarkP->portfolios_dbp),
+                        benchmarkP->portfolios_db_name,
                         program_name, error_fileP,
                         PRIMARY_DB);
     if (ret != 0) {
@@ -155,8 +246,9 @@ databases_setup(BENCHMARK_DBS *my_benchmarkP,
   }
 
   if (IS_ACCOUNTS(which_database)) {
-    ret = open_database(&(my_benchmarkP->accounts_dbp),
-                        my_benchmarkP->accounts_db_name,
+    ret = open_database(benchmarkP->envP,
+                        &(benchmarkP->accounts_dbp),
+                        benchmarkP->accounts_db_name,
                         program_name, error_fileP,
                         PRIMARY_DB);
     if (ret != 0) {
@@ -165,8 +257,9 @@ databases_setup(BENCHMARK_DBS *my_benchmarkP,
   }
 
   if (IS_CURRENCIES(which_database)) {
-    ret = open_database(&(my_benchmarkP->currencies_dbp),
-                        my_benchmarkP->currencies_db_name,
+    ret = open_database(benchmarkP->envP,
+                        &(benchmarkP->currencies_dbp),
+                        benchmarkP->currencies_db_name,
                         program_name, error_fileP,
                         PRIMARY_DB);
     if (ret != 0) {
@@ -175,8 +268,9 @@ databases_setup(BENCHMARK_DBS *my_benchmarkP,
   }
 
   if (IS_PERSONAL(which_database)) {
-    ret = open_database(&(my_benchmarkP->personal_dbp),
-                        my_benchmarkP->personal_db_name,
+    ret = open_database(benchmarkP->envP,
+                        &(benchmarkP->personal_dbp),
+                        benchmarkP->personal_db_name,
                         program_name, error_fileP,
                         PRIMARY_DB);
     if (ret != 0) {
@@ -186,123 +280,204 @@ databases_setup(BENCHMARK_DBS *my_benchmarkP,
 
   printf("databases opened successfully\n");
   return (0);
+
+failXit:
+  return 1;
 }
 
 
+int	
+benchmark_end(BENCHMARK_DBS *benchmarkP,
+              int which_database,
+              char *program_name)
+{
+  int rc = 0;
+
+  if (benchmarkP->envP == NULL) {
+    fprintf(stderr, "%s: Invalid argument\n", __func__);
+    goto failXit;
+  } 
+
+  if (IS_STOCKS(which_database)) {
+    rc = close_database(benchmarkP->envP,
+                        benchmarkP->stocks_dbp,
+                        program_name);
+    if (rc != 0) {
+      goto failXit;
+    }
+  }
+
+  if (IS_QUOTES(which_database)) {
+    rc = close_database(benchmarkP->envP,
+                        benchmarkP->quotes_dbp,
+                        program_name);
+    if (rc != 0) {
+      goto failXit;
+    }
+  }
+
+  if (IS_QUOTES_HIST(which_database)) {
+    rc = close_database(benchmarkP->envP,
+                        benchmarkP->quotes_hist_dbp,
+                        program_name);
+    if (rc != 0) {
+      goto failXit;
+    }
+  }
+
+  if (IS_PORTFOLIOS(which_database)) {
+    rc = close_database(benchmarkP->envP,
+                        benchmarkP->portfolios_dbp,
+                        program_name);
+    if (rc != 0) {
+      goto failXit;
+    }
+  }
+
+  if (IS_ACCOUNTS(which_database)) {
+    rc = close_database(benchmarkP->envP,
+                        benchmarkP->accounts_dbp,
+                        program_name);
+    if (rc != 0) {
+      goto failXit;
+    }
+  }
+
+  if (IS_CURRENCIES(which_database)) {
+    rc = close_database(benchmarkP->envP,
+                        benchmarkP->currencies_dbp,
+                        program_name);
+    if (rc != 0) {
+      goto failXit;
+    }
+  }
+
+  if (IS_PERSONAL(which_database)) {
+    rc = close_database(benchmarkP->envP,
+                        benchmarkP->personal_dbp,
+                        program_name);
+    if (rc != 0) {
+      goto failXit;
+    }
+  }
+
+  printf("databases opened successfully\n");
+  return (0);
+
+failXit:
+  rc = 1;
+
+cleanup:
+  return rc; 
+}
+
 /* Initializes the STOCK_DBS struct.*/
 void
-initialize_benchmarkdbs(BENCHMARK_DBS *my_benchmarkP)
+initialize_benchmarkdbs(BENCHMARK_DBS *benchmarkP)
 {
-  my_benchmarkP->db_home_dir = DEFAULT_HOMEDIR;
+  benchmarkP->db_home_dir = NULL;
 
-  my_benchmarkP->stocks_dbp = NULL;
-  my_benchmarkP->quotes_dbp = NULL;
-  my_benchmarkP->quotes_hist_dbp = NULL;
-  my_benchmarkP->portfolios_dbp = NULL;
-  my_benchmarkP->accounts_dbp = NULL;
-  my_benchmarkP->currencies_dbp = NULL;
-  my_benchmarkP->personal_dbp = NULL;
+  benchmarkP->stocks_dbp = NULL;
+  benchmarkP->quotes_dbp = NULL;
+  benchmarkP->quotes_hist_dbp = NULL;
+  benchmarkP->portfolios_dbp = NULL;
+  benchmarkP->accounts_dbp = NULL;
+  benchmarkP->currencies_dbp = NULL;
+  benchmarkP->personal_dbp = NULL;
 
-  my_benchmarkP->stocks_db_name = NULL;
-  my_benchmarkP->quotes_db_name = NULL;
-  my_benchmarkP->quotes_hist_db_name = NULL;
-  my_benchmarkP->portfolios_db_name = NULL;
-  my_benchmarkP->accounts_db_name = NULL;
-  my_benchmarkP->currencies_db_name = NULL;
-  my_benchmarkP->personal_db_name = NULL;
+  benchmarkP->stocks_db_name = NULL;
+  benchmarkP->quotes_db_name = NULL;
+  benchmarkP->quotes_hist_db_name = NULL;
+  benchmarkP->portfolios_db_name = NULL;
+  benchmarkP->accounts_db_name = NULL;
+  benchmarkP->currencies_db_name = NULL;
+  benchmarkP->personal_db_name = NULL;
 }
 
 /* Identify all the files that will hold our databases. */
 void
-set_db_filenames(BENCHMARK_DBS *my_benchmarkP)
+set_db_filenames(BENCHMARK_DBS *benchmarkP)
 {
   size_t size;
 
-  size = strlen(my_benchmarkP->db_home_dir) + strlen(STOCKSDB) + 1;
-  my_benchmarkP->stocks_db_name = malloc(size);
-  snprintf(my_benchmarkP->stocks_db_name, size, "%s%s",
-          my_benchmarkP->db_home_dir, STOCKSDB);
+  size = strlen(STOCKSDB) + 1;
+  benchmarkP->stocks_db_name = malloc(size);
+  snprintf(benchmarkP->stocks_db_name, size, "%s", STOCKSDB);
 
-  size = strlen(my_benchmarkP->db_home_dir) + strlen(QUOTESDB) + 1;
-  my_benchmarkP->quotes_db_name = malloc(size);
-  snprintf(my_benchmarkP->quotes_db_name, size, "%s%s",
-          my_benchmarkP->db_home_dir, QUOTESDB);
+  size = strlen(QUOTESDB) + 1;
+  benchmarkP->quotes_db_name = malloc(size);
+  snprintf(benchmarkP->quotes_db_name, size, "%s", QUOTESDB);
 
-  size = strlen(my_benchmarkP->db_home_dir) + strlen(QUOTES_HISTDB) + 1;
-  my_benchmarkP->quotes_hist_db_name = malloc(size);
-  snprintf(my_benchmarkP->quotes_hist_db_name, size, "%s%s",
-          my_benchmarkP->db_home_dir, QUOTES_HISTDB);
+  size = strlen(QUOTES_HISTDB) + 1;
+  benchmarkP->quotes_hist_db_name = malloc(size);
+  snprintf(benchmarkP->quotes_hist_db_name, size, "%s", QUOTES_HISTDB);
 
-  size = strlen(my_benchmarkP->db_home_dir) + strlen(PORTFOLIOSDB) + 1;
-  my_benchmarkP->portfolios_db_name = malloc(size);
-  snprintf(my_benchmarkP->portfolios_db_name, size, "%s%s",
-          my_benchmarkP->db_home_dir, PORTFOLIOSDB);
+  size = strlen(PORTFOLIOSDB) + 1;
+  benchmarkP->portfolios_db_name = malloc(size);
+  snprintf(benchmarkP->portfolios_db_name, size, "%s", PORTFOLIOSDB);
 
-  size = strlen(my_benchmarkP->db_home_dir) + strlen(ACCOUNTSDB) + 1;
-  my_benchmarkP->accounts_db_name = malloc(size);
-  snprintf(my_benchmarkP->accounts_db_name, size, "%s%s",
-          my_benchmarkP->db_home_dir, ACCOUNTSDB);
+  size = strlen(ACCOUNTSDB) + 1;
+  benchmarkP->accounts_db_name = malloc(size);
+  snprintf(benchmarkP->accounts_db_name, size, "%s", ACCOUNTSDB);
 
-  size = strlen(my_benchmarkP->db_home_dir) + strlen(CURRENCIESDB) + 1;
-  my_benchmarkP->currencies_db_name = malloc(size);
-  snprintf(my_benchmarkP->currencies_db_name, size, "%s%s",
-          my_benchmarkP->db_home_dir, CURRENCIESDB);
+  size = strlen(CURRENCIESDB) + 1;
+  benchmarkP->currencies_db_name = malloc(size);
+  snprintf(benchmarkP->currencies_db_name, size, "%s", CURRENCIESDB);
 
-  size = strlen(my_benchmarkP->db_home_dir) + strlen(PERSONALDB) + 1;
-  my_benchmarkP->personal_db_name = malloc(size);
-  snprintf(my_benchmarkP->personal_db_name, size, "%s%s",
-          my_benchmarkP->db_home_dir, PERSONALDB);
+  size = strlen(PERSONALDB) + 1;
+  benchmarkP->personal_db_name = malloc(size);
+  snprintf(benchmarkP->personal_db_name, size, "%s", PERSONALDB);
 }
 
 int
-databases_close(BENCHMARK_DBS *my_benchmarkP)
+databases_close(BENCHMARK_DBS *benchmarkP)
 {
   int ret;
 
-  if (my_benchmarkP->stocks_dbp != NULL) {
-    ret = my_benchmarkP->stocks_dbp->close(my_benchmarkP->stocks_dbp, 0);
+  if (benchmarkP->stocks_dbp != NULL) {
+    ret = benchmarkP->stocks_dbp->close(benchmarkP->stocks_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
     }
   }
 
-  if (my_benchmarkP->quotes_dbp != NULL) {
-    ret = my_benchmarkP->quotes_dbp->close(my_benchmarkP->quotes_dbp, 0);
+  if (benchmarkP->quotes_dbp != NULL) {
+    ret = benchmarkP->quotes_dbp->close(benchmarkP->quotes_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
     }
   }
 
-  if (my_benchmarkP->quotes_hist_dbp != NULL) {
-    ret = my_benchmarkP->quotes_hist_dbp->close(my_benchmarkP->quotes_hist_dbp, 0);
+  if (benchmarkP->quotes_hist_dbp != NULL) {
+    ret = benchmarkP->quotes_hist_dbp->close(benchmarkP->quotes_hist_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
     }
   }
 
-  if (my_benchmarkP->portfolios_dbp != NULL) {
-    ret = my_benchmarkP->portfolios_dbp->close(my_benchmarkP->portfolios_dbp, 0);
+  if (benchmarkP->portfolios_dbp != NULL) {
+    ret = benchmarkP->portfolios_dbp->close(benchmarkP->portfolios_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
     }
   }
 
-  if (my_benchmarkP->accounts_dbp != NULL) {
-    ret = my_benchmarkP->accounts_dbp->close(my_benchmarkP->accounts_dbp, 0);
+  if (benchmarkP->accounts_dbp != NULL) {
+    ret = benchmarkP->accounts_dbp->close(benchmarkP->accounts_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
     }
   }
 
-  if (my_benchmarkP->currencies_dbp != NULL) {
-    ret = my_benchmarkP->currencies_dbp->close(my_benchmarkP->currencies_dbp, 0);
+  if (benchmarkP->currencies_dbp != NULL) {
+    ret = benchmarkP->currencies_dbp->close(benchmarkP->currencies_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
     }
   }
 
-  if (my_benchmarkP->personal_dbp != NULL) {
-    ret = my_benchmarkP->personal_dbp->close(my_benchmarkP->personal_dbp, 0);
+  if (benchmarkP->personal_dbp != NULL) {
+    ret = benchmarkP->personal_dbp->close(benchmarkP->personal_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
     }
