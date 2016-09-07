@@ -6,7 +6,7 @@ builddir= ./bin
 ##################################################
 # General library information.
 ##################################################
-DEF_LIB=	-L/usr/local/BerkeleyDB.6.1/lib -ldb-6.1
+DEF_LIB=	-L/usr/local/BerkeleyDB.6.2/lib -ldb-6.2
 LIBTOOL=	./libtool
 
 POSTLINK=	$(LIBTOOL) --mode=execute true
@@ -15,7 +15,7 @@ SOLINK=		$(LIBTOOL) --mode=link cc -avoid-version -O3
 ##################################################
 # C API.
 ##################################################
-CFLAGS=		-c -I/usr/local/BerkeleyDB.6.1/include -O3 -g
+CFLAGS=		-c -I/usr/local/BerkeleyDB.6.2/include -O3 -g
 CC=		$(LIBTOOL) --mode=compile cc
 CCLINK=		$(LIBTOOL) --mode=link cc -O3 
 
