@@ -78,6 +78,9 @@ extern char *optarg;
  * multiple berkeley DBs*/
 typedef struct benchmark_dbs {
 
+  /* This is the environment */
+  DB_ENV  *envP;
+
   /* These are the dbs */
   DB  *stocks_dbp;
   DB  *quotes_dbp;

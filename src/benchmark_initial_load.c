@@ -33,8 +33,9 @@ load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file);
 int
 usage()
 {
-  fprintf(stderr, "benchmark_initial_load [-b <path to data files>]");
-  fprintf(stderr, " [-h <database_home_directory>]\n");
+  fprintf(stderr, "benchmark_initial_load \n");
+  fprintf(stderr, "\t-b <path to data files>\n");
+  fprintf(stderr, "\t-h <database_home_directory>\n");
 
   fprintf(stderr, "\tNote: Any path specified must end with your");
   fprintf(stderr, " system's path delimiter (/ or \\)\n");
@@ -47,7 +48,7 @@ main(int argc, char *argv[])
   BENCHMARK_DBS my_benchmark;
   int ch, ret;
   size_t size;
-  char *basename, *personal_file, *stocks_file, *currencies_file;
+  char *basename = NULL, *personal_file, *stocks_file, *currencies_file;
 
   initialize_benchmarkdbs(&my_benchmark);
 
@@ -79,6 +80,16 @@ main(int argc, char *argv[])
     }
   }
 
+  if (my_benchmark.db_home_dir == NULL) {
+    fprintf(stderr, "You must specify -h\n");
+    return usage();
+  }
+
+  if (basename == NULL) {
+    fprintf(stderr, "You must specify -b\n");
+    return usage();
+  }
+
   set_db_filenames(&my_benchmark);
 
   /* Find our input files */
@@ -96,28 +107,28 @@ main(int argc, char *argv[])
 
   ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, "benchmark_initial_load", stderr);
   if (ret) {
-    fprintf(stderr, "Error opening databases.\n");
+    fprintf(stderr, "%s:%d Error opening databases.\n", __FILE__, __LINE__);
     databases_close(&my_benchmark);
     return (ret);
   }
 
   ret = load_personal_database(my_benchmark, personal_file);
   if (ret) {
-    fprintf(stderr, "Error loading personal database.\n");
+    fprintf(stderr, "%s:%d Error loading personal database.\n", __FILE__, __LINE__);
     databases_close(&my_benchmark);
     return (ret);
   }
 
   ret = load_stocks_database(my_benchmark, stocks_file);
   if (ret) {
-    fprintf(stderr, "Error loading stocks database.\n");
+    fprintf(stderr, "%s:%d Error loading stocks database.\n", __FILE__, __LINE__);
     databases_close(&my_benchmark);
     return (ret);
   }
 
   ret = load_currencies_database(my_benchmark, currencies_file);
   if (ret) {
-    fprintf(stderr, "Error loading currencies database.\n");
+    fprintf(stderr, "%s:%d Error loading currencies database.\n", __FILE__, __LINE__);
     databases_close(&my_benchmark);
     return (ret);
   }
@@ -131,18 +142,27 @@ main(int argc, char *argv[])
 int
 load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
 {
+  int rc = 0;
   DBT key, data;
+  DB_TXN *txnP = NULL;
+  DB_ENV  *envP = NULL;
   char buf[MAXLINE];
   char ignore_buf[500];
   FILE *ifp;
   PERSONAL my_personal;
+
+  envP = my_benchmarkP.envP;
+  if (envP == NULL || personal_file == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
 
   printf("================= LOADING PERSONAL DATABASE ==============\n");
 
   ifp = fopen(personal_file, "r");
   if (ifp == NULL) {
     fprintf(stderr, "Error opening file '%s'\n", personal_file);
-    return (-1);
+    goto failXit;
   }
 
   /* Iterate over the vendor file */
@@ -189,28 +209,62 @@ load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
 
     /* Put the data into the database */
     printf("Inserting: %s\n", key.data);
-    my_benchmarkP.personal_dbp->put(my_benchmarkP.personal_dbp, 0, &key, &data, 0);
+
+    rc = envP->txn_begin(envP, NULL, &txnP, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction begin failed.");
+      goto failXit; 
+    }
+
+    rc = my_benchmarkP.personal_dbp->put(my_benchmarkP.personal_dbp, txnP, &key, &data, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "Database put failed.");
+      txnP->abort(txnP);
+      goto failXit; 
+    }
+
+    rc = txnP->commit(txnP, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction commit failed.");
+      goto failXit; 
+    }
   }
 
   fclose(ifp);
   return (0);
+
+failXit:
+  if (ifp != NULL) {
+    fclose(ifp);
+  }
+
+  return 1;
 }
 
 int
 load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
 {
+  int rc = 0;
   DBT key, data;
+  DB_TXN *txnP = NULL;
+  DB_ENV  *envP = NULL;
   char buf[MAXLINE];
   char ignore_buf[500];
   FILE *ifp;
   STOCK my_stocks;
+
+  envP = my_benchmarkP.envP;
+  if (envP == NULL || stocks_file == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
 
   printf("================= LOADING STOCKS DATABASE ==============\n");
 
   ifp = fopen(stocks_file, "r");
   if (ifp == NULL) {
     fprintf(stderr, "Error opening file '%s'\n", stocks_file);
-    return (-1);
+    goto failXit;
   }
 
   /* Iterate over the vendor file */
@@ -254,29 +308,63 @@ load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
     /* Put the data into the database */
     printf("Inserting: %s\n", key.data);
     printf("\t(%s, %s)\n", my_stocks.stock_symbol, my_stocks.full_name);
-    my_benchmarkP.stocks_dbp->put(my_benchmarkP.stocks_dbp, 0, &key, &data, 0);
+
+    rc = envP->txn_begin(envP, NULL, &txnP, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction begin failed.");
+      goto failXit; 
+    }
+
+    rc = my_benchmarkP.stocks_dbp->put(my_benchmarkP.stocks_dbp, txnP, &key, &data, 0);
+
+    if (rc != 0) {
+      envP->err(envP, rc, "Database put failed.");
+      txnP->abort(txnP);
+      goto failXit; 
+    }
+
+    rc = txnP->commit(txnP, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction commit failed.");
+      goto failXit; 
+    }
   }
 
   fclose(ifp);
   return (0);
+
+failXit:
+  if (ifp != NULL) {
+    fclose(ifp);
+  }
+
+  return 1;
 }
 
 int
 load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
 {
+  int rc = 0;
   DBT key, data;
+  DB_TXN *txnP = NULL;
+  DB_ENV  *envP = NULL;
   char buf[MAXLINE];
   char ignore_buf[500];
   FILE *ifp;
   CURRENCY my_currencies;
-  int rc = 0;
  
+  envP = my_benchmarkP.envP;
+  if (envP == NULL || currencies_file == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
   printf("================= LOADING CURRENCIES DATABASE ==============\n");
 
   ifp = fopen(currencies_file, "r");
   if (ifp == NULL) {
     fprintf(stderr, "Error opening file '%s'\n", currencies_file);
-    return (-1);
+    goto failXit;
   }
 
   /* Iterate over the vendor file */
@@ -319,15 +407,36 @@ load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
 
     /* Put the data into the database */
     printf("Inserting: %s\n", key.data);
-    rc = my_benchmarkP.currencies_dbp->put(my_benchmarkP.currencies_dbp, 0, &key, &data, 0);
+
+    rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
-      printf("Could not save register\n");
-      goto failXit;
+      envP->err(envP, rc, "Transaction begin failed.");
+      goto failXit; 
+    }
+
+    rc = my_benchmarkP.currencies_dbp->put(my_benchmarkP.currencies_dbp, txnP, &key, &data, 0);
+
+    if (rc != 0) {
+      envP->err(envP, rc, "Database put failed.");
+      txnP->abort(txnP);
+      goto failXit; 
+    }
+
+    rc = txnP->commit(txnP, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction commit failed.");
+      goto failXit; 
     }
   }
 
-failXit:
   fclose(ifp);
   return (0);
+
+failXit:
+  if (ifp != NULL) {
+    fclose(ifp);
+  }
+
+  return 1;
 }
 
