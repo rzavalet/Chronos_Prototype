@@ -27,6 +27,7 @@
 #endif
 #define CHRONOS_INMEMORY
 #define CHRONOS_SHMKEY 35
+#define CHRONOS_PORTFOLIOS_NUM	100
 
 #ifdef _WIN32
 extern int getopt(int, char * const *, const char *);
@@ -63,6 +64,7 @@ extern char *optarg;
 #define PERSONAL_FILE     "accounts.txt"
 #define STOCKS_FILE       "companylist.txt"
 #define CURRENCIES_FILE   "currencies.txt"
+#define QUOTES_FILE       "quotes.txt"
 
 #define STOCKS_FLAG       0x0001
 #define PERSONAL_FLAG     0x0002
@@ -135,15 +137,15 @@ typedef struct stock {
 
 typedef struct quote {
   char      symbol[ID_SZ];
-  int       current_price;
-  time_t    trade_time;
-  int       low_price_day;
-  int       high_price_day;
-  int       perc_price_change;
-  int       bidding_price;
-  int       asking_price;
-  int       trade_volume;
-  int       market_cap;
+  float     current_price;
+  char      trade_time[ID_SZ];
+  float     low_price_day;
+  float     high_price_day;
+  float     perc_price_change;
+  float     bidding_price;
+  float     asking_price;
+  long      trade_volume;
+  char      market_cap[ID_SZ];
 } QUOTE;
 
 typedef struct quotes_hist {

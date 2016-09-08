@@ -28,7 +28,7 @@ LIBS=		 -lpthread
 ##################################################
 # Targets 
 ##################################################
-all: benchmark_initial_load benchmark_databases_dump view_stock_txn view_portfolio_txn
+all: benchmark_initial_load benchmark_databases_dump view_stock_txn view_portfolio_txn refresh_quotes populate_portfolios
 
 ##################################################
 # Compile and link
@@ -60,6 +60,20 @@ view_portfolio_txn: view_portfolio_txn.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) view_portfolio_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
+refresh_quotes.lo:	$(exampledir)/refresh_quotes.c
+	$(CC) $(CFLAGS) $?
+
+refresh_quotes: refresh_quotes.lo benchmark_common.lo
+	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) refresh_quotes.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(builddir)/$@
+
+populate_portfolios.lo:	$(exampledir)/populate_portfolios.c
+	$(CC) $(CFLAGS) $?
+
+populate_portfolios: populate_portfolios.lo benchmark_common.lo
+	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) populate_portfolios.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(builddir)/$@
+
 
 ##################################################
 # Useful targets for running the benchmark
@@ -80,9 +94,12 @@ view_stock:
 view_portfolio:
 	$(builddir)/view_portfolio_txn -h $(homedir)/
 
-refresh_quotes:
-	python $(utilsdir)/query_quotes.py > $(datafilesdir)/quotes.txt
-	$(builddir)/refresh_quotes -h $(homedir)/
+run_refresh_quotes:
+	#python $(utilsdir)/query_quotes.py > $(datafilesdir)/quotes.txt
+	$(builddir)/refresh_quotes -b $(datafilesdir)/ -h $(homedir)/
+
+run_populate_portfolios:
+	$(builddir)/populate_portfolios -h $(homedir)/
 
 clean:
 	-rm *.o

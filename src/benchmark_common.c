@@ -567,12 +567,9 @@ show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
   memset(&data, 0, sizeof(DBT));
 
   if (symbolId != NULL && symbolId[0] != '\0') {
-    memcpy(key.data, symbolId, ID_SZ);
+    key.data = symbolId;
+    key.size = (u_int32_t)strlen(symbolId) + 1;
   }
-
-#ifdef CHRONOS_DEBUG
-  printf("================= SHOWING STOCKS DATABASE ==============\n");
-#endif
 
   benchmarkP->stocks_dbp->cursor(benchmarkP->stocks_dbp, NULL,
                                     &stock_cursorp, 0);
@@ -581,7 +578,10 @@ show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
   while ((ret =
     stock_cursorp->get(stock_cursorp, &key, &data, DB_NEXT)) == 0)
   {
-    (void) show_stock_item(data.data);
+    /*Uhhh, this is ugly.... */
+    if (strcmp(symbolId, (char *)key.data) == 0) {
+      (void) show_stock_item(data.data);
+    }
   }
 
   stock_cursorp->close(stock_cursorp);
@@ -604,19 +604,21 @@ show_portfolios(BENCHMARK_DBS *benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-#ifdef CHRONOS_DEBUG
-  printf("================= SHOWING PORTFOLIOS ==============\n");
-#endif
-
   /* First read the personall account */
   benchmarkP->personal_dbp->cursor(benchmarkP->personal_dbp, NULL,
                                     &personal_cursorP, 0);
 
   while ((rc=personal_cursorP->get(personal_cursorP, &key, &data, DB_NEXT)) == 0)
   {
+#ifdef CHRONOS_DEBUG
+     printf("================= SHOWING PORTFOLIO ==============\n");
+#endif
     (void) show_personal_item(data.data);   
     (void) show_one_portfolio(key.data, benchmarkP);
     numClients ++;
+#ifdef CHRONOS_DEBUG
+     printf("==================================================\n");
+#endif
   }
 
   personal_cursorP->close(personal_cursorP);

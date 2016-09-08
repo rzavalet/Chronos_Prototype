@@ -2,7 +2,7 @@ import urllib2, urllib, json
 
 # First we need to create the query in YML
 baseurl = "http://query.yahooapis.com/v1/public/yql?"
-yql_query = "select * from yahoo.finance.quotes where symbol in (\"YHOO\",\"AAPL\",\"GOOG\",\"MSFT\", \"PIH\", \"FLWS\", \"FCCY\", \"SRCE\", \"VNET\", \"TWOU\", \"JOBS\")"
+yql_query = "select * from yahoo.finance.quotes where symbol in (\"YHOO\",\"AAPL\",\"GOOG\",\"MSFT\", \"PIH\", \"FLWS\", \"SRCE\", \"VNET\", \"TWOU\", \"JOBS\")"
 env_string = "store://datatables.org/alltableswithkeys"
 
 # Now, lets encode the URL
