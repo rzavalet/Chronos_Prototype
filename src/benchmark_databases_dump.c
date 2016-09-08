@@ -108,7 +108,7 @@ main(int argc, char *argv[])
   }
 
   if ((which_tables & STOCKS_FLAG) == STOCKS_FLAG)
-	  ret = show_stocks_records(&my_benchmark);
+	  ret = show_stocks_records(NULL, &my_benchmark);
 
   if ((which_tables & PERSONAL_FLAG) == PERSONAL_FLAG)
     ret = show_personal_records(&my_benchmark);
@@ -120,7 +120,6 @@ main(int argc, char *argv[])
   databases_close(&my_benchmark);
   return (ret);
 }
-
 
 int show_personal_records(BENCHMARK_DBS *my_benchmarkP)
 {
@@ -148,6 +147,7 @@ int show_personal_records(BENCHMARK_DBS *my_benchmarkP)
   return (exit_value);
 }
 
+#if 0
 int
 show_personal_item(void *vBuf)
 {
@@ -266,7 +266,4 @@ show_currencies_item(void *vBuf)
 
   return 0;
 }
-
-
-
-
+#endif

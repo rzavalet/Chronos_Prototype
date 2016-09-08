@@ -208,7 +208,7 @@ load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
      */
 
     /* Put the data into the database */
-    printf("Inserting: %s\n", key.data);
+    printf("Inserting: %s\n", (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
@@ -306,7 +306,7 @@ load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
      */ 
 
     /* Put the data into the database */
-    printf("Inserting: %s\n", key.data);
+    printf("Inserting: %s\n", (char *)key.data);
     printf("\t(%s, %s)\n", my_stocks.stock_symbol, my_stocks.full_name);
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
@@ -406,7 +406,7 @@ load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
      */
 
     /* Put the data into the database */
-    printf("Inserting: %s\n", key.data);
+    printf("Inserting: %s\n", (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {

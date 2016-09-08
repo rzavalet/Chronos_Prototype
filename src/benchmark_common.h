@@ -22,6 +22,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if 1
+#define CHRONOS_DEBUG
+#endif
+#define CHRONOS_INMEMORY
+#define CHRONOS_SHMKEY 35
+
 #ifdef _WIN32
 extern int getopt(int, char * const *, const char *);
 extern char *optarg;
@@ -47,6 +53,7 @@ extern char *optarg;
 #define QUOTESDB          "Quotes"
 #define QUOTES_HISTDB     "Quotes_Hist"
 #define PORTFOLIOSDB      "Portfolios"
+#define PORTFOLIOSSECDB   "PortfoliosSec"
 #define ACCOUNTSDB        "Accounts"
 #define CURRENCIESDB      "Currencies"
 #define PERSONALDB        "Personal"
@@ -90,9 +97,13 @@ typedef struct benchmark_dbs {
   DB  *currencies_dbp;
   DB  *personal_dbp;
 
+  /* secondary databases */
+  DB  *portfolios_sdbp;
+
   /* Some other useful information */
   char *db_home_dir;
 
+  /* Primary databases */
   char *stocks_db_name;
   char *quotes_db_name;
   char *quotes_hist_db_name;
@@ -100,6 +111,9 @@ typedef struct benchmark_dbs {
   char *accounts_db_name;
   char *currencies_db_name;
   char *personal_db_name;
+
+  /* secondary databases */
+  char *portfolios_sdb_name;
 
 } BENCHMARK_DBS;
 
@@ -193,4 +207,4 @@ void	initialize_benchmarkdbs(BENCHMARK_DBS *);
 void	set_db_filenames(BENCHMARK_DBS *my_stock);
 
 int 
-show_stocks_records(BENCHMARK_DBS *benchmarkP);
+show_portfolios(BENCHMARK_DBS *benchmarkP);

@@ -24,7 +24,7 @@ int usage(void);
 int
 usage()
 {
-  fprintf(stderr, "view_stock_txn \n");
+  fprintf(stderr, "view_portfolio_txn \n");
   fprintf(stderr, "\t-h <database_home_directory>\n");
   return (-1);
 }
@@ -70,14 +70,14 @@ main(int argc, char *argv[])
   set_db_filenames(&my_benchmark);
 
   /* Open stocks database */
-  ret = databases_setup(&my_benchmark, STOCKS_FLAG, __FILE__, stderr);
+  ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, __FILE__, stderr);
   if (ret != 0) {
     fprintf(stderr, "Error opening databases\n");
     databases_close(&my_benchmark);
     return (ret);
   }
 
-  ret = show_stocks_records(NULL, &my_benchmark);
+  ret = show_portfolios(&my_benchmark);
 
   /* close our databases */
   databases_close(&my_benchmark);
