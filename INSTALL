@@ -1,0 +1,9 @@
+Quick-start build instructions
+-------------------------------
+1) Build the system
+	$ make all
+
+Running unit tests
+-------------------
+A set of unit tests are provided in the test/ directory. To run these tests:
+	$ make tests

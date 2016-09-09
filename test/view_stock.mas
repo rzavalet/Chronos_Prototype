@@ -1,0 +1,6288 @@
+./bin/view_stock_txn -h ./databases/
+shm key set to: 35
+databases opened successfully
+Symbol: AAAP
+	Name: Advanced Accelerator Applications S.A.
+Symbol: AAL
+	Name: American Airlines Group
+Symbol: AAME
+	Name: Atlantic American Corporation
+Symbol: AAOI
+	Name: Applied Optoelectronics
+Symbol: AAON
+	Name: AAON
+Symbol: AAPC
+	Name: Atlantic Alliance Partnership Corp.
+Symbol: AAPL
+	Name: Apple Inc.
+Symbol: AAWW
+	Name: Atlas Air Worldwide Holdings
+Symbol: AAXJ
+	Name: iShares MSCI All Country Asia ex Japan Index Fund
+Symbol: ABAC
+	Name: Aoxin Tianli Group
+Symbol: ABAX
+	Name: ABAXIS
+Symbol: ABCB
+	Name: Ameris Bancorp
+Symbol: ABCD
+	Name: Cambium Learning Group
+Symbol: ABCO
+	Name: The Advisory Board Company
+Symbol: ABDC
+	Name: Alcentra Capital Corp.
+Symbol: ABEO
+	Name: Abeona Therapeutics Inc.
+Symbol: ABEOW
+	Name: Abeona Therapeutics Inc.
+Symbol: ABIL
+	Name: Ability Inc.
+Symbol: ABIO
+	Name: ARCA biopharma
+Symbol: ABMD
+	Name: ABIOMED
+Symbol: ABTL
+	Name: Autobytel Inc.
+Symbol: ABTX
+	Name: Allegiance Bancshares
+Symbol: ABUS
+	Name: Arbutus Biopharma Corporation
+Symbol: ABY
+	Name: Atlantica Yield plc
+Symbol: ACAD
+	Name: ACADIA Pharmaceuticals Inc.
+Symbol: ACAS
+	Name: American Capital
+Symbol: ACAT
+	Name: Arctic Cat Inc.
+Symbol: ACBI
+	Name: Atlantic Capital Bancshares
+Symbol: ACET
+	Name: Aceto Corporation
+Symbol: ACFC
+	Name: Atlantic Coast Financial Corporation
+Symbol: ACGL
+	Name: Arch Capital Group Ltd.
+Symbol: ACHC
+	Name: Acadia Healthcare Company
+Symbol: ACHN
+	Name: Achillion Pharmaceuticals
+Symbol: ACIA
+	Name: Acacia Communications
+Symbol: ACIW
+	Name: ACI Worldwide
+Symbol: ACLS
+	Name: Axcelis Technologies
+Symbol: ACNB
+	Name: ACNB Corporation
+Symbol: ACOR
+	Name: Acorda Therapeutics
+Symbol: ACPW
+	Name: Active Power
+Symbol: ACRS
+	Name: Aclaris Therapeutics
+Symbol: ACRX
+	Name: AcelRx Pharmaceuticals
+Symbol: ACSF
+	Name: American Capital Senior Floating
+Symbol: ACST
+	Name: Acasti Pharma
+Symbol: ACTA
+	Name: Actua Corporation
+Symbol: ACTG
+	Name: Acacia Research Corporation
+Symbol: ACTS
+	Name: Actions Semiconductor Co.
+Symbol: ACTX
+	Name: Global X Guru Activist ETF
+Symbol: ACUR
+	Name: Acura Pharmaceuticals
+Symbol: ACWI
+	Name: iShares MSCI ACWI Index Fund
+Symbol: ACWX
+	Name: iShares MSCI ACWI ex US Index Fund
+Symbol: ACXM
+	Name: Acxiom Corporation
+Symbol: ADAP
+	Name: Adaptimmune Therapeutics plc
+Symbol: ADBE
+	Name: Adobe Systems Incorporated
+Symbol: ADES
+	Name: Advanced Emissions Solutions
+Symbol: ADHD
+	Name: Alcobra Ltd.
+Symbol: ADI
+	Name: Analog Devices
+Symbol: ADMA
+	Name: ADMA Biologics Inc
+Symbol: ADMP
+	Name: Adamis Pharmaceuticals Corporation
+Symbol: ADMS
+	Name: Adamas Pharmaceuticals
+Symbol: ADP
+	Name: Automatic Data Processing
+Symbol: ADRA
+	Name: BLDRS Asia 50 ADR Index Fund
+Symbol: ADRD
+	Name: BLDRS Developed Markets 100 ADR Index Fund
+Symbol: ADRE
+	Name: BLDRS Emerging Markets 50 ADR Index Fund
+Symbol: ADRO
+	Name: Aduro Biotech
+Symbol: ADRU
+	Name: BLDRS Europe 100 ADR Index Fund
+Symbol: ADSK
+	Name: Autodesk
+Symbol: ADTN
+	Name: ADTRAN
+Symbol: ADUS
+	Name: Addus HomeCare Corporation
+Symbol: ADVM
+	Name: Adverum Biotechnologies
+Symbol: ADXS
+	Name: Advaxis
+Symbol: ADXSW
+	Name: Advaxis
+Symbol: AEGN
+	Name: Aegion Corp
+Symbol: AEGR
+	Name: Aegerion Pharmaceuticals
+Symbol: AEHR
+	Name: Aehr Test Systems
+Symbol: AEIS
+	Name: Advanced Energy Industries
+Symbol: AEMD
+	Name: Aethlon Medical
+Symbol: AEPI
+	Name: AEP Industries Inc.
+Symbol: AERI
+	Name: Aerie Pharmaceuticals
+Symbol: AETI
+	Name: American Electric Technologies
+Symbol: AEY
+	Name: ADDvantage Technologies Group
+Symbol: AEZS
+	Name: AEterna Zentaris Inc.
+Symbol: AFAM
+	Name: Almost Family Inc
+Symbol: AFH
+	Name: Atlas Financial Holdings
+Symbol: AFMD
+	Name: Affimed N.V.
+Symbol: AFSI
+	Name: AmTrust Financial Services
+Symbol: AGEN
+	Name: Agenus Inc.
+Symbol: AGFS
+	Name: AgroFresh Solutions
+Symbol: AGFSW
+	Name: AgroFresh Solutions
+Symbol: AGII
+	Name: Argo Group International Holdings
+Symbol: AGIIL
+	Name: Argo Group International Holdings
+Symbol: AGIO
+	Name: Agios Pharmaceuticals
+Symbol: AGLE
+	Name: Aeglea BioTherapeutics
+Symbol: AGNC
+	Name: American Capital Agency Corp.
+Symbol: AGNCB
+	Name: American Capital Agency Corp.
+Symbol: AGNCP
+	Name: American Capital Agency Corp.
+Symbol: AGND
+	Name: WisdomTree Barclays U.S. Aggregate Bond Negative Duration Fund
+Symbol: AGRX
+	Name: Agile Therapeutics
+Symbol: AGTC
+	Name: Applied Genetic Technologies Corporation
+Symbol: AGYS
+	Name: Agilysys
+Symbol: AGZD
+	Name: WisdomTree Barclays U.S. Aggregate Bond Zero Duration Fund
+Symbol: AHGP
+	Name: Alliance Holdings GP
+Symbol: AHPI
+	Name: Allied Healthcare Products
+Symbol: AIA
+	Name: iShares Asia 50 ETF
+Symbol: AIMC
+	Name: Altra Industrial Motion Corp.
+Symbol: AIMT
+	Name: Aimmune Therapeutics
+Symbol: AINV
+	Name: Apollo Investment Corporation
+Symbol: AIQ
+	Name: Alliance HealthCare Services
+Symbol: AIRM
+	Name: Air Methods Corporation
+Symbol: AIRR
+	Name: First Trust RBA American Industrial Renaissance ETF
+Symbol: AIRT
+	Name: Air T
+Symbol: AIXG
+	Name: Aixtron SE
+Symbol: AKAM
+	Name: Akamai Technologies
+Symbol: AKAO
+	Name: Achaogen
+Symbol: AKBA
+	Name: Akebia Therapeutics
+Symbol: AKER
+	Name: Akers Biosciences Inc
+Symbol: AKRX
+	Name: Akorn
+Symbol: AKTX
+	Name: Akari Therapeutics Plc
+Symbol: ALCO
+	Name: Alico
+Symbol: ALDR
+	Name: Alder BioPharmaceuticals
+Symbol: ALDX
+	Name: Aldeyra Therapeutics
+Symbol: ALGN
+	Name: Align Technology
+Symbol: ALGT
+	Name: Allegiant Travel Company
+Symbol: ALIM
+	Name: Alimera Sciences
+Symbol: ALJJ
+	Name: ALJ Regional Holdings
+Symbol: ALKS
+	Name: Alkermes plc
+Symbol: ALLT
+	Name: Allot Communications Ltd.
+Symbol: ALNY
+	Name: Alnylam Pharmaceuticals
+Symbol: ALOG
+	Name: Analogic Corporation
+Symbol: ALOT
+	Name: AstroNova
+Symbol: ALQA
+	Name: Alliqua BioMedical
+Symbol: ALRM
+	Name: Alarm.com Holdings
+Symbol: ALSK
+	Name: Alaska Communications Systems Group
+Symbol: ALTY
+	Name: Global X SuperDividend Alternatives ETF
+Symbol: ALXN
+	Name: Alexion Pharmaceuticals
+Symbol: AMAG
+	Name: AMAG Pharmaceuticals
+Symbol: AMAT
+	Name: Applied Materials
+Symbol: AMBA
+	Name: Ambarella
+Symbol: AMBC
+	Name: Ambac Financial Group
+Symbol: AMBCW
+	Name: Ambac Financial Group
+Symbol: AMCC
+	Name: Applied Micro Circuits Corporation
+Symbol: AMCN
+	Name: AirMedia Group Inc
+Symbol: AMCX
+	Name: AMC Networks Inc.
+Symbol: AMD
+	Name: Advanced Micro Devices
+Symbol: AMDA
+	Name: Amedica Corporation
+Symbol: AMED
+	Name: Amedisys Inc
+Symbol: AMGN
+	Name: Amgen Inc.
+Symbol: AMIC
+	Name: American Independence Corp.
+Symbol: AMKR
+	Name: Amkor Technology
+Symbol: AMNB
+	Name: American National Bankshares
+Symbol: AMOT
+	Name: Allied Motion Technologies
+Symbol: AMOV
+	Name: America Movil
+Symbol: AMPH
+	Name: Amphastar Pharmaceuticals
+Symbol: AMRB
+	Name: American River Bankshares
+Symbol: AMRI
+	Name: Albany Molecular Research
+Symbol: AMRK
+	Name: A-Mark Precious Metals
+Symbol: AMRN
+	Name: Amarin Corporation PLC
+Symbol: AMRS
+	Name: Amyris
+Symbol: AMSC
+	Name: American Superconductor Corporation
+Symbol: AMSF
+	Name: AMERISAFE
+Symbol: AMSG
+	Name: Amsurg Corp.
+Symbol: AMSGP
+	Name: Amsurg Corp.
+Symbol: AMSWA
+	Name: American Software
+Symbol: AMTD
+	Name: TD Ameritrade Holding Corporation
+Symbol: AMTX
+	Name: Aemetis
+Symbol: AMWD
+	Name: American Woodmark Corporation
+Symbol: AMZN
+	Name: Amazon.com
+Symbol: ANAT
+	Name: American National Insurance Company
+Symbol: ANCB
+	Name: Anchor Bancorp
+Symbol: ANCX
+	Name: Access National Corporation
+Symbol: ANDA
+	Name: Andina Acquisition Corp. II
+Symbol: ANDAR
+	Name: Andina Acquisition Corp. II
+Symbol: ANDAU
+	Name: Andina Acquisition Corp. II
+Symbol: ANDAW
+	Name: Andina Acquisition Corp. II
+Symbol: ANDE
+	Name: The Andersons
+Symbol: ANGI
+	Name: Angie&
+Symbol: ANGO
+	Name: AngioDynamics
+Symbol: ANIK
+	Name: Anika Therapeutics Inc.
+Symbol: ANIP
+	Name: ANI Pharmaceuticals
+Symbol: ANSS
+	Name: ANSYS
+Symbol: ANTH
+	Name: Anthera Pharmaceuticals
+Symbol: ANY
+	Name: Sphere 3D Corp.
+Symbol: AOSL
+	Name: Alpha and Omega Semiconductor Limited
+Symbol: APDN
+	Name: Applied DNA Sciences Inc
+Symbol: APDNW
+	Name: Applied DNA Sciences Inc
+Symbol: APEI
+	Name: American Public Education
+Symbol: APIC
+	Name: Apigee Corporation
+Symbol: APLP
+	Name: Archrock Partners
+Symbol: APOG
+	Name: Apogee Enterprises
+Symbol: APOL
+	Name: Apollo Education Group
+Symbol: APPF
+	Name: AppFolio
+Symbol: APPS
+	Name: Digital Turbine
+Symbol: APPY
+	Name: Venaxis
+Symbol: APRI
+	Name: Apricus Biosciences
+Symbol: APTO
+	Name: Aptose Biosciences
+Symbol: APVOV
+	Name: Aptevo Therapeutics Inc.
+Symbol: APWC
+	Name: Asia Pacific Wire & Cable Corporation Limited
+Symbol: AQMS
+	Name: Aqua Metals
+Symbol: AQXP
+	Name: Aquinox Pharmaceuticals
+Symbol: ARAY
+	Name: Accuray Incorporated
+Symbol: ARCB
+	Name: ArcBest Corporation
+Symbol: ARCC
+	Name: Ares Capital Corporation
+Symbol: ARCI
+	Name: Appliance Recycling Centers of America
+Symbol: ARCW
+	Name: ARC Group Worldwide
+Symbol: ARDM
+	Name: Aradigm Corporation
+Symbol: ARDX
+	Name: Ardelyx
+Symbol: AREX
+	Name: Approach Resources Inc.
+Symbol: ARGS
+	Name: Argos Therapeutics
+Symbol: ARIA
+	Name: ARIAD Pharmaceuticals
+Symbol: ARII
+	Name: American Railcar Industries
+Symbol: ARIS
+	Name: ARI Network Services
+Symbol: ARKR
+	Name: Ark Restaurants Corp.
+Symbol: ARLP
+	Name: Alliance Resource Partners
+Symbol: ARLZ
+	Name: Aralez Pharmaceuticals Inc.
+Symbol: ARMH
+	Name: ARM Holdings plc
+Symbol: ARNA
+	Name: Arena Pharmaceuticals
+Symbol: AROW
+	Name: Arrow Financial Corporation
+Symbol: ARQL
+	Name: ArQule
+Symbol: ARRS
+	Name: ARRIS International plc
+Symbol: ARRY
+	Name: Array BioPharma Inc.
+Symbol: ARTNA
+	Name: Artesian Resources Corporation
+Symbol: ARTW
+	Name: Art&
+Symbol: ARTX
+	Name: Arotech Corporation
+Symbol: ARWA
+	Name: Arowana Inc.
+Symbol: ARWAR
+	Name: Arowana Inc.
+Symbol: ARWAU
+	Name: Arowana Inc.
+Symbol: ARWAW
+	Name: Arowana Inc.
+Symbol: ARWR
+	Name: Arrowhead Pharmaceuticals
+Symbol: ASBB
+	Name: ASB Bancorp
+Symbol: ASCMA
+	Name: Ascent Capital Group
+Symbol: ASEI
+	Name: American Science and Engineering
+Symbol: ASET
+	Name: FlexShares Real Assets Allocation Index Fund
+Symbol: ASFI
+	Name: Asta Funding
+Symbol: ASMB
+	Name: Assembly Biosciences
+Symbol: ASML
+	Name: ASML Holding N.V.
+Symbol: ASNA
+	Name: Ascena Retail Group
+Symbol: ASND
+	Name: Ascendis Pharma A/S
+Symbol: ASPS
+	Name: Altisource Portfolio Solutions S.A.
+Symbol: ASRV
+	Name: AmeriServ Financial Inc.
+Symbol: ASRVP
+	Name: AmeriServ Financial Inc.
+Symbol: ASTC
+	Name: Astrotech Corporation
+Symbol: ASTE
+	Name: Astec Industries
+Symbol: ASUR
+	Name: Asure Software Inc
+Symbol: ASYS
+	Name: Amtech Systems
+Symbol: ATAI
+	Name: ATA Inc.
+Symbol: ATAX
+	Name: America First Multifamily Investors
+Symbol: ATEC
+	Name: Alphatec Holdings
+Symbol: ATHN
+	Name: athenahealth
+Symbol: ATHX
+	Name: Athersys
+Symbol: ATLC
+	Name: Atlanticus Holdings Corporation
+Symbol: ATLO
+	Name: Ames National Corporation
+Symbol: ATNI
+	Name: ATN International
+Symbol: ATOS
+	Name: Atossa Genetics Inc.
+Symbol: ATRA
+	Name: Atara Biotherapeutics
+Symbol: ATRC
+	Name: AtriCure
+Symbol: ATRI
+	Name: ATRION Corporation
+Symbol: ATRO
+	Name: Astronics Corporation
+Symbol: ATRS
+	Name: Antares Pharma
+Symbol: ATSG
+	Name: Air Transport Services Group
+Symbol: ATTU
+	Name: Attunity Ltd.
+Symbol: ATVI
+	Name: Activision Blizzard
+Symbol: AUBN
+	Name: Auburn National Bancorporation
+Symbol: AUDC
+	Name: AudioCodes Ltd.
+Symbol: AUMA
+	Name: AR Capital Acquisition Corp.
+Symbol: AUMAU
+	Name: AR Capital Acquisition Corp.
+Symbol: AUMAW
+	Name: AR Capital Acquisition Corp.
+Symbol: AUPH
+	Name: Aurinia Pharmaceuticals Inc
+Symbol: AVAV
+	Name: AeroVironment
+Symbol: AVEO
+	Name: AVEO Pharmaceuticals
+Symbol: AVGO
+	Name: Broadcom Limited
+Symbol: AVGR
+	Name: Avinger
+Symbol: AVHI
+	Name: A V Homes
+Symbol: AVID
+	Name: Avid Technology
+Symbol: AVIR
+	Name: Aviragen Therapeutics
+Symbol: AVNW
+	Name: Aviat Networks
+Symbol: AVXL
+	Name: Anavex Life Sciences Corp.
+Symbol: AVXS
+	Name: AveXis
+Symbol: AWRE
+	Name: Aware
+Symbol: AXAS
+	Name: Abraxas Petroleum Corporation
+Symbol: AXDX
+	Name: Accelerate Diagnostics
+Symbol: AXGN
+	Name: AxoGen
+Symbol: AXSM
+	Name: Axsome Therapeutics
+Symbol: AXTI
+	Name: AXT Inc
+Symbol: AYA
+	Name: Amaya Inc.
+Symbol: AZPN
+	Name: Aspen Technology
+Symbol: BABY
+	Name: Natus Medical Incorporated
+Symbol: BANF
+	Name: BancFirst Corporation
+Symbol: BANFP
+	Name: BancFirst Corporation
+Symbol: BANR
+	Name: Banner Corporation
+Symbol: BANX
+	Name: StoneCastle Financial Corp
+Symbol: BASI
+	Name: Bioanalytical Systems
+Symbol: BATRA
+	Name: Liberty Media Corporation
+Symbol: BATRK
+	Name: Liberty Media Corporation
+Symbol: BBBY
+	Name: Bed Bath & Beyond Inc.
+Symbol: BBC
+	Name: BioShares Biotechnology Clinical Trials Fund
+Symbol: BBCN
+	Name: BBCN Bancorp
+Symbol: BBGI
+	Name: Beasley Broadcast Group
+Symbol: BBH
+	Name: VanEck Vectors Biotech ETF
+Symbol: BBOX
+	Name: Black Box Corporation
+Symbol: BBP
+	Name: BioShares Biotechnology Products Fund
+Symbol: BBRG
+	Name: Bravo Brio Restaurant Group
+Symbol: BBRY
+	Name: BlackBerry Limited
+Symbol: BBSI
+	Name: Barrett Business Services
+Symbol: BCBP
+	Name: BCB Bancorp
+Symbol: BCLI
+	Name: Brainstorm Cell Therapeutics Inc.
+Symbol: BCOM
+	Name: B Communications Ltd.
+Symbol: BCOR
+	Name: Blucora
+Symbol: BCOV
+	Name: Brightcove Inc.
+Symbol: BCPC
+	Name: Balchem Corporation
+Symbol: BCRX
+	Name: BioCryst Pharmaceuticals
+Symbol: BDE
+	Name: Black Diamond
+Symbol: BDGE
+	Name: Bridge Bancorp
+Symbol: BDSI
+	Name: BioDelivery Sciences International
+Symbol: BEAT
+	Name: BioTelemetry
+Symbol: BEAV
+	Name: B/E Aerospace
+Symbol: BEBE
+	Name: bebe stores
+Symbol: BECN
+	Name: Beacon Roofing Supply
+Symbol: BELFA
+	Name: Bel Fuse Inc.
+Symbol: BELFB
+	Name: Bel Fuse Inc.
+Symbol: BFIN
+	Name: BankFinancial Corporation
+Symbol: BFIT
+	Name: Global X Health & Wellness Thematic ETF
+Symbol: BGCP
+	Name: BGC Partners
+Symbol: BGFV
+	Name: Big 5 Sporting Goods Corporation
+Symbol: BGNE
+	Name: BeiGene
+Symbol: BHAC
+	Name: Barington/Hilco Acquisition Corp.
+Symbol: BHACR
+	Name: Barington/Hilco Acquisition Corp.
+Symbol: BHACU
+	Name: Barington/Hilco Acquisition Corp.
+Symbol: BHACW
+	Name: Barington/Hilco Acquisition Corp.
+Symbol: BHBK
+	Name: Blue Hills Bancorp
+Symbol: BIB
+	Name: ProShares Ultra Nasdaq Biotechnology
+Symbol: BICK
+	Name: First Trust BICK Index Fund
+Symbol: BIDU
+	Name: Baidu
+Symbol: BIIB
+	Name: Biogen Inc.
+Symbol: BIND
+	Name: BIND Therapeutics
+Symbol: BIOC
+	Name: Biocept
+Symbol: BIOD
+	Name: Biodel Inc.
+Symbol: BIOL
+	Name: Biolase
+Symbol: BIOS
+	Name: BioScrip
+Symbol: BIS
+	Name: ProShares UltraShort Nasdaq Biotechnology
+Symbol: BITE
+	Name: The Restaurant ETF
+Symbol: BJRI
+	Name: BJ&
+Symbol: BKCC
+	Name: BlackRock Capital Investment Corporation
+Symbol: BKEP
+	Name: Blueknight Energy Partners L.P.
+Symbol: BKEPP
+	Name: Blueknight Energy Partners L.P.
+Symbol: BKMU
+	Name: Bank Mutual Corporation
+Symbol: BKSC
+	Name: Bank of South Carolina Corp.
+Symbol: BLBD
+	Name: Blue Bird Corporation
+Symbol: BLCM
+	Name: Bellicum Pharmaceuticals
+Symbol: BLDP
+	Name: Ballard Power Systems
+Symbol: BLDR
+	Name: Builders FirstSource
+Symbol: BLFS
+	Name: BioLife Solutions
+Symbol: BLIN      
+	Name: 
+Symbol: BLKB
+	Name: Blackbaud
+Symbol: BLMN
+	Name: Bloomin&
+Symbol: BLMT
+	Name: BSB Bancorp
+Symbol: BLPH
+	Name: Bellerophon Therapeutics
+Symbol: BLRX
+	Name: BioLineRx Ltd.
+Symbol: BLUE
+	Name: bluebird bio
+Symbol: BLVD
+	Name: Boulevard Acquisition Corp. II
+Symbol: BLVDU
+	Name: Boulevard Acquisition Corp. II
+Symbol: BLVDW
+	Name: Boulevard Acquisition Corp. II
+Symbol: BMCH
+	Name: BMC Stock Holdings
+Symbol: BMLA
+	Name: BullMark LatAm Select Leaders ETF
+Symbol: BMRC
+	Name: Bank of Marin Bancorp
+Symbol: BMRN
+	Name: BioMarin Pharmaceutical Inc.
+Symbol: BMTC
+	Name: Bryn Mawr Bank Corporation
+Symbol: BNCL
+	Name: Beneficial Bancorp
+Symbol: BNCN
+	Name: BNC Bancorp
+Symbol: BNDX
+	Name: Vanguard Total International Bond ETF
+Symbol: BNFT
+	Name: Benefitfocus
+Symbol: BNSO
+	Name: Bonso Electronics International
+Symbol: BNTC
+	Name: Benitec Biopharma Limited
+Symbol: BNTCW
+	Name: Benitec Biopharma Limited
+Symbol: BOBE
+	Name: Bob Evans Farms
+Symbol: BOCH
+	Name: Bank of Commerce Holdings (CA)
+Symbol: BOFI
+	Name: BofI Holding
+Symbol: BOFIL
+	Name: BofI Holding
+Symbol: BOJA
+	Name: Bojangles&
+Symbol: BOKF
+	Name: BOK Financial Corporation
+Symbol: BOKFL
+	Name: BOK Financial Corporation
+Symbol: BOLD
+	Name: Audentes Therapeutics
+Symbol: BONT
+	Name: The Bon-Ton Stores
+Symbol: BOOM
+	Name: Dynamic Materials Corporation
+Symbol: BOSC
+	Name: B.O.S. Better Online Solutions
+Symbol: BOTJ
+	Name: Bank of the James Financial Group
+Symbol: BPFH
+	Name: Boston Private Financial Holdings
+Symbol: BPFHP
+	Name: Boston Private Financial Holdings
+Symbol: BPFHW
+	Name: Boston Private Financial Holdings
+Symbol: BPMC
+	Name: Blueprint Medicines Corporation
+Symbol: BPOP
+	Name: Popular
+Symbol: BPOPM
+	Name: Popular
+Symbol: BPOPN
+	Name: Popular
+Symbol: BPTH
+	Name: Bio-Path Holdings
+Symbol: BRCD
+	Name: Brocade Communications Systems
+Symbol: BREW
+	Name: Craft Brew Alliance
+Symbol: BRID
+	Name: Bridgford Foods Corporation
+Symbol: BRKL
+	Name: Brookline Bancorp
+Symbol: BRKR
+	Name: Bruker Corporation
+Symbol: BRKS
+	Name: Brooks Automation
+Symbol: BSET
+	Name: Bassett Furniture Industries
+Symbol: BSF
+	Name: Bear State Financial
+Symbol: BSFT
+	Name: BroadSoft
+Symbol: BSPM
+	Name: Biostar Pharmaceuticals
+Symbol: BSQR
+	Name: BSQUARE Corporation
+Symbol: BSRR
+	Name: Sierra Bancorp
+Symbol: BSTC
+	Name: BioSpecifics Technologies Corp
+Symbol: BSTG
+	Name: Biostage
+Symbol: BUFF
+	Name: Blue Buffalo Pet Products
+Symbol: BUR
+	Name: Burcon Nutrascience Corp
+Symbol: BUSE
+	Name: First Busey Corporation
+Symbol: BV
+	Name: Bazaarvoice
+Symbol: BVA
+	Name: Cordia Bancorp Inc.
+Symbol: BVSN
+	Name: BroadVision
+Symbol: BVXV
+	Name: BiondVax Pharmaceuticals Ltd.
+Symbol: BVXVW
+	Name: BiondVax Pharmaceuticals Ltd.
+Symbol: BWEN
+	Name: Broadwind Energy
+Symbol: BWFG
+	Name: Bankwell Financial Group
+Symbol: BWINA
+	Name: Baldwin & Lyons
+Symbol: BWINB
+	Name: Baldwin & Lyons
+Symbol: BWLD
+	Name: Buffalo Wild Wings
+Symbol: BYBK
+	Name: Bay Bancorp
+Symbol: BYFC
+	Name: Broadway Financial Corporation
+Symbol: BZUN
+	Name: Baozun Inc.
+Symbol: CA
+	Name: CA Inc.
+Symbol: CAAS
+	Name: China Automotive Systems
+Symbol: CAC
+	Name: Camden National Corporation
+Symbol: CACB
+	Name: Cascade Bancorp
+Symbol: CACC
+	Name: Credit Acceptance Corporation
+Symbol: CACQ
+	Name: Caesars Acquisition Company
+Symbol: CADC
+	Name: China Advanced Construction Materials Group
+Symbol: CAFD
+	Name: 8point3 Energy Partners LP
+Symbol: CAKE
+	Name: The Cheesecake Factory Incorporated
+Symbol: CALA
+	Name: Calithera Biosciences
+Symbol: CALD
+	Name: Callidus Software
+Symbol: CALI
+	Name: China Auto Logistics Inc.
+Symbol: CALL
+	Name: magicJack VocalTec Ltd
+Symbol: CALM
+	Name: Cal-Maine Foods
+Symbol: CAMP
+	Name: CalAmp Corp.
+Symbol: CAMT
+	Name: Camtek Ltd.
+Symbol: CAPN
+	Name: Capnia
+Symbol: CAPNW
+	Name: Capnia
+Symbol: CAPR
+	Name: Capricor Therapeutics
+Symbol: CAPX
+	Name: Elkhorn S&P 500 Capital Expenditures Portfolio
+Symbol: CAR
+	Name: Avis Budget Group
+Symbol: CARA
+	Name: Cara Therapeutics
+Symbol: CARB
+	Name: Carbonite
+Symbol: CARO
+	Name: Carolina Financial Corporation
+Symbol: CART
+	Name: Carolina Trust Bank
+Symbol: CARV
+	Name: Carver Bancorp
+Symbol: CARZ
+	Name: First Trust NASDAQ Global Auto Index Fund
+Symbol: CASC
+	Name: Cascadian Therapeutics
+Symbol: CASH
+	Name: Meta Financial Group
+Symbol: CASI
+	Name: CASI Pharmaceuticals
+Symbol: CASM
+	Name: CAS Medical Systems
+Symbol: CASS
+	Name: Cass Information Systems
+Symbol: CASY
+	Name: Caseys General Stores
+Symbol: CATB
+	Name: Catabasis Pharmaceuticals
+Symbol: CATH
+	Name: Global X S&P 500 Catholic Values ETF
+Symbol: CATM
+	Name: Cardtronics plc
+Symbol: CATY
+	Name: Cathay General Bancorp
+Symbol: CATYW
+	Name: Cathay General Bancorp
+Symbol: CAVM
+	Name: Cavium
+Symbol: CBAK
+	Name: China BAK Battery
+Symbol: CBAN
+	Name: Colony Bankcorp
+Symbol: CBAY
+	Name: Cymabay Therapeutics Inc.
+Symbol: CBF
+	Name: Capital Bank Financial Corp.
+Symbol: CBFV
+	Name: CB Financial Services
+Symbol: CBIO
+	Name: Catalyst Biosciences
+Symbol: CBLI
+	Name: Cleveland BioLabs
+Symbol: CBMG
+	Name: Cellular Biomedicine Group
+Symbol: CBMX
+	Name: CombiMatrix Corporation
+Symbol: CBMXW
+	Name: CombiMatrix Corporation
+Symbol: CBNK
+	Name: Chicopee Bancorp
+Symbol: CBOE
+	Name: CBOE Holdings
+Symbol: CBPO
+	Name: China Biologic Products
+Symbol: CBRL
+	Name: Cracker Barrel Old Country Store
+Symbol: CBSH
+	Name: Commerce Bancshares
+Symbol: CBSHP
+	Name: Commerce Bancshares
+Symbol: CBYL
+	Name: Carbylan Therapeutics
+Symbol: CCBG
+	Name: Capital City Bank Group
+Symbol: CCCL
+	Name: China Ceramics Co.
+Symbol: CCCR
+	Name: China Commercial Credit
+Symbol: CCD
+	Name: Calamos Dynamic Convertible & Income Fund
+Symbol: CCIH
+	Name: ChinaCache International Holdings Ltd.
+Symbol: CCLP
+	Name: CSI Compressco LP
+Symbol: CCMP
+	Name: Cabot Microelectronics Corporation
+Symbol: CCNE
+	Name: CNB Financial Corporation
+Symbol: CCOI
+	Name: Cogent Communications Holdings
+Symbol: CCRC
+	Name: China Customer Relations Centers
+Symbol: CCRN
+	Name: Cross Country Healthcare
+Symbol: CCUR
+	Name: Concurrent Computer Corporation
+Symbol: CCXI
+	Name: ChemoCentryx
+Symbol: CDC
+	Name: Victory CEMP US EQ Income Enhanced Volatility Wtd Index ETF
+Symbol: CDK
+	Name: CDK Global
+Symbol: CDL
+	Name: Victory CEMP US Large Cap High Div Volatility Wtd Index ETF
+Symbol: CDNA
+	Name: CareDx
+Symbol: CDNS
+	Name: Cadence Design Systems
+Symbol: CDOR
+	Name: Condor Hospitality Trust
+Symbol: CDTI
+	Name: Clean Diesel Technologies
+Symbol: CDTX
+	Name: Cidara Therapeutics
+Symbol: CDW
+	Name: CDW Corporation
+Symbol: CDXC
+	Name: ChromaDex Corporation
+Symbol: CDXS
+	Name: Codexis
+Symbol: CDZI
+	Name: Cadiz
+Symbol: CECE
+	Name: CECO Environmental Corp.
+Symbol: CECO
+	Name: Career Education Corporation
+Symbol: CELG
+	Name: Celgene Corporation
+Symbol: CELGZ
+	Name: Celgene Corporation
+Symbol: CEMI
+	Name: Chembio Diagnostics
+Symbol: CEMP
+	Name: Cempra
+Symbol: CENT
+	Name: Central Garden & Pet Company
+Symbol: CENTA
+	Name: Central Garden & Pet Company
+Symbol: CENX
+	Name: Century Aluminum Company
+Symbol: CERC
+	Name: Cerecor Inc.
+Symbol: CERCW
+	Name: Cerecor Inc.
+Symbol: CERCZ
+	Name: Cerecor Inc.
+Symbol: CERE
+	Name: Ceres
+Symbol: CERN
+	Name: Cerner Corporation
+Symbol: CERS
+	Name: Cerus Corporation
+Symbol: CERU
+	Name: Cerulean Pharma Inc.
+Symbol: CETC
+	Name: Hongli Clean Energy Technologies Corp.
+Symbol: CETV
+	Name: Central European Media Enterprises Ltd.
+Symbol: CETX
+	Name: Cemtrex Inc.
+Symbol: CEVA
+	Name: CEVA
+Symbol: CEZ
+	Name: Victory CEMP Emerging Market Volatility Wtd Index ETF
+Symbol: CFA
+	Name: Victory CEMP US 500 Volatility Wtd Index ETF
+Symbol: CFBK
+	Name: Central Federal Corporation
+Symbol: CFCB
+	Name: Centrue Financial Corporation
+Symbol: CFCO
+	Name: CF Corporation
+Symbol: CFCOU
+	Name: CF Corporation
+Symbol: CFCOW
+	Name: CF Corporation
+Symbol: CFFI
+	Name: C&F Financial Corporation
+Symbol: CFFN
+	Name: Capitol Federal Financial
+Symbol: CFGE
+	Name: Calamos Focus Growth ETF
+Symbol: CFMS
+	Name: ConforMIS
+Symbol: CFNB
+	Name: California First National Bancorp
+Symbol: CFNL
+	Name: Cardinal Financial Corporation
+Symbol: CFO
+	Name: Victory CEMP US 500 Enhanced Volatility Wtd Index ETF
+Symbol: CFRX
+	Name: ContraFect Corporation
+Symbol: CFRXW
+	Name: ContraFect Corporation
+Symbol: CG
+	Name: The Carlyle Group L.P.
+Symbol: CGEN
+	Name: Compugen Ltd.
+Symbol: CGIX
+	Name: Cancer Genetics
+Symbol: CGNT
+	Name: Cogentix Medical
+Symbol: CGNX
+	Name: Cognex Corporation
+Symbol: CGO
+	Name: Calamos Global Total Return Fund
+Symbol: CHCI
+	Name: Comstock Holding Companies
+Symbol: CHCO
+	Name: City Holding Company
+Symbol: CHDN
+	Name: Churchill Downs
+Symbol: CHEF
+	Name: The Chefs&
+Symbol: CHEK
+	Name: Check-Cap Ltd.
+Symbol: CHEKW
+	Name: Check-Cap Ltd.
+Symbol: CHFC
+	Name: Chemical Financial Corporation
+Symbol: CHFN
+	Name: Charter Financial Corp.
+Symbol: CHI
+	Name: Calamos Convertible Opportunities and Income Fund
+Symbol: CHIAV
+	Name: CommerceHub
+Symbol: CHIKV
+	Name: CommerceHub
+Symbol: CHKE
+	Name: Cherokee Inc.
+Symbol: CHKP
+	Name: Check Point Software Technologies Ltd.
+Symbol: CHMA
+	Name: Chiasma
+Symbol: CHMG
+	Name: Chemung Financial Corp
+Symbol: CHNR
+	Name: China Natural Resources
+Symbol: CHRS
+	Name: Coherus BioSciences
+Symbol: CHRW
+	Name: C.H. Robinson Worldwide
+Symbol: CHSCL
+	Name: CHS Inc
+Symbol: CHSCM
+	Name: CHS Inc
+Symbol: CHSCN
+	Name: CHS Inc
+Symbol: CHSCO
+	Name: CHS Inc
+Symbol: CHSCP
+	Name: CHS Inc
+Symbol: CHTR
+	Name: Charter Communications
+Symbol: CHUY
+	Name: Chuy&
+Symbol: CHW
+	Name: Calamos Global Dynamic Income Fund
+Symbol: CHY
+	Name: Calamos Convertible and High Income Fund
+Symbol: CIBR
+	Name: First Trust NASDAQ Cybersecurity ETF
+Symbol: CID
+	Name: Victory CEMP International High Div Volatility Wtd Index ETF
+Symbol: CIDM
+	Name: Cinedigm Corp
+Symbol: CIFC
+	Name: CIFC LLC
+Symbol: CIGI
+	Name: Colliers International Group Inc. 
+Symbol: CIL
+	Name: Victory CEMP International Volatility Wtd Index ETF
+Symbol: CINF
+	Name: Cincinnati Financial Corporation
+Symbol: CISG
+	Name: CNinsure Inc.
+Symbol: CIVB
+	Name: Civista Bancshares
+Symbol: CIVBP
+	Name: Civista Bancshares
+Symbol: CIZ
+	Name: Victory CEMP Developed Enhanced Volatility Wtd Index ETF
+Symbol: CIZN
+	Name: Citizens Holding Company
+Symbol: CJJD
+	Name: China Jo-Jo Drugstores
+Symbol: CKEC
+	Name: Carmike Cinemas
+Symbol: CLAC
+	Name: Capitol Acquisition Corp. III
+Symbol: CLACU
+	Name: Capitol Acquisition Corp. III
+Symbol: CLACW
+	Name: Capitol Acquisition Corp. III
+Symbol: CLBH
+	Name: Carolina Bank Holdings Inc.
+Symbol: CLBS
+	Name: Caladrius Biosciences
+Symbol: CLCD
+	Name: CoLucid Pharmaceuticals
+Symbol: CLCT
+	Name: Collectors Universe
+Symbol: CLDC
+	Name: China Lending Corporation
+Symbol: CLDCW
+	Name: China Lending Corporation
+Symbol: CLDX
+	Name: Celldex Therapeutics
+Symbol: CLFD
+	Name: Clearfield
+Symbol: CLIR
+	Name: ClearSign Combustion Corporation
+Symbol: CLLS
+	Name: Cellectis S.A.
+Symbol: CLMS
+	Name: Calamos Asset Management
+Symbol: CLMT
+	Name: Calumet Specialty Products Partners
+Symbol: CLNE
+	Name: Clean Energy Fuels Corp.
+Symbol: CLNT
+	Name: Cleantech Solutions International
+Symbol: CLRB
+	Name: Cellectar Biosciences
+Symbol: CLRBW
+	Name: Cellectar Biosciences
+Symbol: CLRBZ
+	Name: Cellectar Biosciences
+Symbol: CLRO
+	Name: ClearOne
+Symbol: CLSD
+	Name: Clearside Biomedical
+Symbol: CLSN
+	Name: Celsion Corporation
+Symbol: CLUB
+	Name: Town Sports International Holdings
+Symbol: CLVS
+	Name: Clovis Oncology
+Symbol: CLWT
+	Name: Euro Tech Holdings Company Limited
+Symbol: CMCO
+	Name: Columbus McKinnon Corporation
+Symbol: CMCSA
+	Name: Comcast Corporation
+Symbol: CMCT
+	Name: CIM Commercial Trust Corporation
+Symbol: CME
+	Name: CME Group Inc.
+Symbol: CMFN
+	Name: CM Finance Inc
+Symbol: CMLS
+	Name: Cumulus Media Inc.
+Symbol: CMPR
+	Name: Cimpress N.V
+Symbol: CMRX
+	Name: Chimerix
+Symbol: CMTL
+	Name: Comtech Telecommunications Corp.
+Symbol: CNAT
+	Name: Conatus Pharmaceuticals Inc.
+Symbol: CNBKA
+	Name: Century Bancorp
+Symbol: CNCE
+	Name: Concert Pharmaceuticals
+Symbol: CNCR
+	Name: Loncar Cancer Immunotherapy ETF
+Symbol: CNET
+	Name: ChinaNet Online Holdings
+Symbol: CNFR
+	Name: Conifer Holdings
+Symbol: CNIT
+	Name: China Information Technology
+Symbol: CNMD
+	Name: CONMED Corporation
+Symbol: CNOB
+	Name: ConnectOne Bancorp
+Symbol: CNSL
+	Name: Consolidated Communications Holdings
+Symbol: CNTF
+	Name: China TechFaith Wireless Communication Technology Limited
+Symbol: CNTY
+	Name: Century Casinos
+Symbol: CNV
+	Name: Cnova N.V.
+Symbol: CNXR
+	Name: Connecture
+Symbol: COB
+	Name: CommunityOne Bancorp
+Symbol: COBZ
+	Name: CoBiz Financial Inc.
+Symbol: COHR
+	Name: Coherent
+Symbol: COHU
+	Name: Cohu
+Symbol: COKE
+	Name: Coca-Cola Bottling Co. Consolidated
+Symbol: COLB
+	Name: Columbia Banking System
+Symbol: COLL
+	Name: Collegium Pharmaceutical
+Symbol: COLM
+	Name: Columbia Sportswear Company
+Symbol: COMM
+	Name: CommScope Holding Company
+Symbol: COMT
+	Name: iShares Commodities Select Strategy ETF
+Symbol: CONE
+	Name: CyrusOne Inc
+Symbol: CONN
+	Name: Conn&
+Symbol: COOL
+	Name: Majesco Entertainment Company
+Symbol: CORE
+	Name: Core-Mark Holding Company
+Symbol: CORI
+	Name: Corium International
+Symbol: CORT
+	Name: Corcept Therapeutics Incorporated
+Symbol: COSI
+	Name: Cosi
+Symbol: COST
+	Name: Costco Wholesale Corporation
+Symbol: COVS
+	Name: Covisint Corporation
+Symbol: COWN
+	Name: Cowen Group
+Symbol: COWNL
+	Name: Cowen Group
+Symbol: COYN
+	Name: COPsync
+Symbol: COYNW
+	Name: COPsync
+Symbol: CPAAU
+	Name: Conyers Park Acquisition Corp.
+Symbol: CPAH
+	Name: CounterPath Corporation
+Symbol: CPHC
+	Name: Canterbury Park Holding Corporation
+Symbol: CPHD
+	Name: CEPHEID
+Symbol: CPHR
+	Name: Cipher Pharmaceuticals Inc.
+Symbol: CPIX
+	Name: Cumberland Pharmaceuticals Inc.
+Symbol: CPLA
+	Name: Capella Education Company
+Symbol: CPLP
+	Name: Capital Product Partners L.P.
+Symbol: CPRT
+	Name: Copart
+Symbol: CPRX
+	Name: Catalyst Pharmaceuticals
+Symbol: CPSH
+	Name: CPS Technologies Corp.
+Symbol: CPSI
+	Name: Computer Programs and Systems
+Symbol: CPSS
+	Name: Consumer Portfolio Services
+Symbol: CPST
+	Name: Capstone Turbine Corporation
+Symbol: CPTA
+	Name: Capitala Finance Corp.
+Symbol: CRAI
+	Name: CRA International
+Symbol: CRAY
+	Name: Cray Inc
+Symbol: CRBP
+	Name: Corbus Pharmaceuticals Holdings
+Symbol: CRDS
+	Name: Crossroads Systems
+Symbol: CRDT
+	Name: WisdomTree Strategic Corporate Bond Fund
+Symbol: CREE
+	Name: Cree
+Symbol: CREG
+	Name: China Recycling Energy Corporation
+Symbol: CRESY
+	Name: Cresud S.A.C.I.F. y A.
+Symbol: CRIS
+	Name: Curis
+Symbol: CRME
+	Name: Cardiome Pharma Corporation
+Symbol: CRMT
+	Name: America&
+Symbol: CRNT
+	Name: Ceragon Networks Ltd.
+Symbol: CROX
+	Name: Crocs
+Symbol: CRTN
+	Name: Cartesian
+Symbol: CRTO
+	Name: Criteo S.A.
+Symbol: CRUS
+	Name: Cirrus Logic
+Symbol: CRVL
+	Name: CorVel Corp.
+Symbol: CRVS
+	Name: Corvus Pharmaceuticals
+Symbol: CRWS
+	Name: Crown Crafts
+Symbol: CRZO
+	Name: Carrizo Oil & Gas
+Symbol: CSA
+	Name: Victory CEMP US Small Cap Volatility Wtd Index ETF
+Symbol: CSAL
+	Name: Communications Sales & Leasing
+Symbol: CSB
+	Name: Victory CEMP US Small Cap High Div Volatility Wtd Index ETF
+Symbol: CSBK
+	Name: Clifton Bancorp Inc.
+Symbol: CSBR
+	Name: Champions Oncology
+Symbol: CSCO
+	Name: Cisco Systems
+Symbol: CSF
+	Name: Victory CEMP US Discovery Enhanced Volatility Wtd Index ETF
+Symbol: CSFL
+	Name: CenterState Banks
+Symbol: CSGP
+	Name: CoStar Group
+Symbol: CSGS
+	Name: CSG Systems International
+Symbol: CSII
+	Name: Cardiovascular Systems
+Symbol: CSIQ
+	Name: Canadian Solar Inc.
+Symbol: CSOD
+	Name: Cornerstone OnDemand
+Symbol: CSPI
+	Name: CSP Inc.
+Symbol: CSQ
+	Name: Calamos Strategic Total Return Fund
+Symbol: CSTE
+	Name: Caesarstone Ltd.
+Symbol: CSWC
+	Name: Capital Southwest Corporation
+Symbol: CSWI
+	Name: CSW Industrials
+Symbol: CSX
+	Name: CSX Corporation
+Symbol: CTAS
+	Name: Cintas Corporation
+Symbol: CTBI
+	Name: Community Trust Bancorp
+Symbol: CTG
+	Name: Computer Task Group
+Symbol: CTHR
+	Name: Charles & Colvard Ltd
+Symbol: CTIB
+	Name: CTI Industries Corporation
+Symbol: CTIC
+	Name: CTI BioPharma Corp.
+Symbol: CTMX
+	Name: CytomX Therapeutics
+Symbol: CTRE
+	Name: CareTrust REIT
+Symbol: CTRL
+	Name: Control4 Corporation
+Symbol: CTRN
+	Name: Citi Trends
+Symbol: CTRP
+	Name: Ctrip.com International
+Symbol: CTRV
+	Name: ContraVir Pharmaceuticals Inc
+Symbol: CTSH
+	Name: Cognizant Technology Solutions Corporation
+Symbol: CTSO
+	Name: Cytosorbents Corporation
+Symbol: CTWS
+	Name: Connecticut Water Service
+Symbol: CTXS
+	Name: Citrix Systems
+Symbol: CUBA
+	Name: The Herzfeld Caribbean Basin Fund
+Symbol: CUBN
+	Name: Commerce Union Bancshares
+Symbol: CUI
+	Name: CUI Global
+Symbol: CUNB
+	Name: CU Bancorp (CA)
+Symbol: CUR
+	Name: Neuralstem
+Symbol: CUTR
+	Name: Cutera
+Symbol: CVBF
+	Name: CVB Financial Corporation
+Symbol: CVCO
+	Name: Cavco Industries
+Symbol: CVCY
+	Name: Central Valley Community Bancorp
+Symbol: CVGI
+	Name: Commercial Vehicle Group
+Symbol: CVGW
+	Name: Calavo Growers
+Symbol: CVLT
+	Name: CommVault Systems
+Symbol: CVLY
+	Name: Codorus Valley Bancorp
+Symbol: CVTI
+	Name: Covenant Transportation Group
+Symbol: CVV
+	Name: CVD Equipment Corporation
+Symbol: CWAY
+	Name: Coastway Bancorp
+Symbol: CWBC
+	Name: Community West Bancshares
+Symbol: CWCO
+	Name: Consolidated Water Co. Ltd.
+Symbol: CWST
+	Name: Casella Waste Systems
+Symbol: CXDC
+	Name: China XD Plastics Company Limited
+Symbol: CXRX
+	Name: Concordia International Corp.
+Symbol: CXSE
+	Name: WisdomTree China ex-State-Owned Enterprises Fund
+Symbol: CY
+	Name: Cypress Semiconductor Corporation
+Symbol: CYAD
+	Name: Celyad SA
+Symbol: CYAN
+	Name: Cyanotech Corporation
+Symbol: CYBE
+	Name: CyberOptics Corporation
+Symbol: CYBR
+	Name: CyberArk Software Ltd.
+Symbol: CYCC
+	Name: Cyclacel Pharmaceuticals
+Symbol: CYCCP
+	Name: Cyclacel Pharmaceuticals
+Symbol: CYHHZ
+	Name: Community Health Systems
+Symbol: CYNA
+	Name: Cynapsus Therapeutics Inc.
+Symbol: CYNO
+	Name: Cynosure
+Symbol: CYOU
+	Name: Changyou.com Limited
+Symbol: CYRN
+	Name: CYREN Ltd.
+Symbol: CYRX
+	Name: CryoPort
+Symbol: CYRXW
+	Name: CryoPort
+Symbol: CYTK
+	Name: Cytokinetics
+Symbol: CYTR
+	Name: CytRx Corporation
+Symbol: CYTX
+	Name: Cytori Therapeutics Inc
+Symbol: CYTXW
+	Name: Cytori Therapeutics Inc
+Symbol: CZFC
+	Name: Citizens First Corporation
+Symbol: CZNC
+	Name: Citizens & Northern Corp
+Symbol: CZR
+	Name: Caesars Entertainment Corporation
+Symbol: CZWI
+	Name: Citizens Community Bancorp
+Symbol: DAIO
+	Name: Data I/O Corporation
+Symbol: DAKT
+	Name: Daktronics
+Symbol: DAVE
+	Name: Famous Dave&
+Symbol: DAX
+	Name: Recon Capital DAX Germany ETF
+Symbol: DBVT
+	Name: DBV Technologies S.A.
+Symbol: DCIX
+	Name: Diana Containerships Inc.
+Symbol: DCOM
+	Name: Dime Community Bancshares
+Symbol: DCTH
+	Name: Delcath Systems
+Symbol: DDBI
+	Name: Legg Mason Developed EX-US Diversified Core ETF
+Symbol: DELT
+	Name: Delta Technology Holdings Limited
+Symbol: DELTW
+	Name: Delta Technology Holdings Limited
+Symbol: DENN
+	Name: Denny&
+Symbol: DEPO
+	Name: Depomed
+Symbol: DERM
+	Name: Dermira
+Symbol: DEST
+	Name: Destination Maternity Corporation
+Symbol: DFBG
+	Name: Differential Brands Group Inc.
+Symbol: DFRG
+	Name: Del Frisco&
+Symbol: DFVL
+	Name: region
+Symbol: DFVS
+	Name: region
+Symbol: DGAS
+	Name: Delta Natural Gas Company
+Symbol: DGICA
+	Name: Donegal Group
+Symbol: DGICB
+	Name: Donegal Group
+Symbol: DGII
+	Name: Digi International Inc.
+Symbol: DGLD
+	Name: region
+Symbol: DGLY
+	Name: Digital Ally
+Symbol: DGRE
+	Name: WisdomTree Emerging Markets Quality Dividend Growth Fund
+Symbol: DGRS
+	Name: WisdomTree U.S. SmallCap Quality Dividend Growth Fund
+Symbol: DGRW
+	Name: WisdomTree U.S. Quality Dividend Growth Fund
+Symbol: DHIL
+	Name: Diamond Hill Investment Group
+Symbol: DHRM
+	Name: Dehaier Medical Systems Limited
+Symbol: DHXM
+	Name: DHX Media Ltd.
+Symbol: DIOD
+	Name: Diodes Incorporated
+Symbol: DISCA
+	Name: Discovery Communications
+Symbol: DISCB
+	Name: Discovery Communications
+Symbol: DISCK
+	Name: Discovery Communications
+Symbol: DISH
+	Name: DISH Network Corporation
+Symbol: DJCO
+	Name: Daily Journal Corp. (S.C.)
+Symbol: DLBL
+	Name: region
+Symbol: DLBS
+	Name: region
+Symbol: DLHC
+	Name: DLH Holdings Corp.
+Symbol: DLTH
+	Name: Duluth Holdings Inc.
+Symbol: DLTR
+	Name: Dollar Tree
+Symbol: DMLP
+	Name: Dorchester Minerals
+Symbol: DMPI
+	Name: DelMar Pharmaceuticals
+Symbol: DMRC
+	Name: Digimarc Corporation
+Symbol: DMTX
+	Name: Dimension Therapeutics
+Symbol: DNAI
+	Name: ProNAi Therapeutics
+Symbol: DNBF
+	Name: DNB Financial Corp
+Symbol: DNKN
+	Name: Dunkin&
+Symbol: DORM
+	Name: Dorman Products
+Symbol: DOX
+	Name: Amdocs Limited
+Symbol: DPRX
+	Name: Dipexium Pharmaceuticals
+Symbol: DRAD
+	Name: Digirad Corporation
+Symbol: DRAM
+	Name: Dataram Corporation
+Symbol: DRIO
+	Name: LabStyle Innovations Corp.
+Symbol: DRIOW
+	Name: LabStyle Innovations Corp.
+Symbol: DRNA
+	Name: Dicerna Pharmaceuticals
+Symbol: DRRX
+	Name: Durect Corporation
+Symbol: DRWI
+	Name: DragonWave Inc
+Symbol: DRWIW
+	Name: DragonWave Inc
+Symbol: DRYS
+	Name: DryShips Inc.
+Symbol: DSCI
+	Name: Derma Sciences
+Symbol: DSGX
+	Name: The Descartes Systems Group Inc.
+Symbol: DSKX
+	Name: DS Healthcare Group
+Symbol: DSKY
+	Name: iDreamSky Technology Limited
+Symbol: DSLV
+	Name: region
+Symbol: DSPG
+	Name: DSP Group
+Symbol: DSWL
+	Name: Deswell Industries
+Symbol: DTEA
+	Name: DAVIDsTEA Inc.
+Symbol: DTLK
+	Name: Datalink Corporation
+Symbol: DTRM
+	Name: Determine
+Symbol: DTSI
+	Name: DTS
+Symbol: DTUL
+	Name: region
+Symbol: DTUS
+	Name: region
+Symbol: DTYL
+	Name: region
+Symbol: DTYS
+	Name: region
+Symbol: DVAX
+	Name: Dynavax Technologies Corporation
+Symbol: DVCR
+	Name: Diversicare Healthcare Services Inc.
+Symbol: DWA
+	Name: Dreamworks Animation SKG
+Symbol: DWAT
+	Name: Arrow DWA Tactical ETF
+Symbol: DWCH
+	Name: Datawatch Corporation
+Symbol: DWFI
+	Name: SPDR Dorsey Wright Fixed Income Allocation ETF
+Symbol: DWIN
+	Name: PowerShares DWA Tactical Multi-Asset Income Portfolio
+Symbol: DWLV
+	Name: PowerShares DWA Momentum & Low Volatility Rotation Portfolio
+Symbol: DWSN
+	Name: Dawson Geophysical Company
+Symbol: DWTR
+	Name: PowerShares DWA Tactical Sector Rotation Portfolio
+Symbol: DXCM
+	Name: DexCom
+Symbol: DXGE
+	Name: WisdomTree Germany Hedged Equity Fund
+Symbol: DXJS
+	Name: WisdomTree Japan Hedged SmallCap Equity Fund
+Symbol: DXKW
+	Name: WisdomTree Korea Hedged Equity Fund
+Symbol: DXLG
+	Name: Destination XL Group
+Symbol: DXPE
+	Name: DXP Enterprises
+Symbol: DXPS
+	Name: WisdomTree United Kingdom Hedged Equity Fund
+Symbol: DXTR
+	Name: Dextera Surgical Inc.
+Symbol: DXYN
+	Name: The Dixie Group
+Symbol: DYNT
+	Name: Dynatronics Corporation
+Symbol: DYSL
+	Name: Dynasil Corporation of America
+Symbol: EA
+	Name: Electronic Arts Inc.
+Symbol: EAC       
+	Name: 
+Symbol: EACQ
+	Name: Easterly Acquisition Corp.
+Symbol: EACQU
+	Name: Easterly Acquisition Corp.
+Symbol: EACQW
+	Name: Easterly Acquisition Corp.
+Symbol: EAGL
+	Name: Double Eagle Acquisition Corp.
+Symbol: EAGLU
+	Name: Double Eagle Acquisition Corp.
+Symbol: EAGLW
+	Name: Double Eagle Acquisition Corp.
+Symbol: EARS
+	Name: Auris Medical Holding AG
+Symbol: EBAY
+	Name: eBay Inc.
+Symbol: EBAYL
+	Name: eBay Inc.
+Symbol: EBIO
+	Name: Eleven Biotherapeutics
+Symbol: EBIX
+	Name: Ebix
+Symbol: EBMT
+	Name: Eagle Bancorp Montana
+Symbol: EBSB
+	Name: Meridian Bancorp
+Symbol: EBTC
+	Name: Enterprise Bancorp Inc
+Symbol: ECAC
+	Name: E-compass Acquisition Corp.
+Symbol: ECACR
+	Name: E-compass Acquisition Corp.
+Symbol: ECACU
+	Name: E-compass Acquisition Corp.
+Symbol: ECHO
+	Name: Echo Global Logistics
+Symbol: ECOL
+	Name: US Ecology
+Symbol: ECPG
+	Name: Encore Capital Group Inc
+Symbol: ECYT
+	Name: Endocyte
+Symbol: EDAP
+	Name: EDAP TMS S.A.
+Symbol: EDBI
+	Name: Legg Mason Emerging Markets Diversified Core ETF
+Symbol: EDGE
+	Name: Edge Therapeutics
+Symbol: EDGW
+	Name: Edgewater Technology
+Symbol: EDIT
+	Name: Editas Medicine
+Symbol: EDUC
+	Name: Educational Development Corporation
+Symbol: EEFT
+	Name: Euronet Worldwide
+Symbol: EEI
+	Name: Ecology and Environment
+Symbol: EEMA
+	Name: iShares MSCI Emerging Markets Asia Index Fund
+Symbol: EEML
+	Name: iShares MSCI Emerging Markets Latin America Index Fund
+Symbol: EFII
+	Name: Electronics for Imaging
+Symbol: EFOI
+	Name: Energy Focus
+Symbol: EFSC
+	Name: Enterprise Financial Services Corporation
+Symbol: EFUT
+	Name: eFuture Holding Inc.
+Symbol: EGAN
+	Name: eGain Corporation
+Symbol: EGBN
+	Name: Eagle Bancorp
+Symbol: EGHT
+	Name: 8x8 Inc
+Symbol: EGLE
+	Name: Eagle Bulk Shipping Inc.
+Symbol: EGLT
+	Name: Egalet Corporation
+Symbol: EGOV
+	Name: NIC Inc.
+Symbol: EGRX
+	Name: Eagle Pharmaceuticals
+Symbol: EGT
+	Name: Entertainment Gaming Asia Incorporated
+Symbol: EHTH
+	Name: eHealth
+Symbol: EIGI
+	Name: Endurance International Group Holdings
+Symbol: EIGR
+	Name: Eiger BioPharmaceuticals
+Symbol: ELEC
+	Name: Electrum Special Acquisition Corporation
+Symbol: ELECU
+	Name: Electrum Special Acquisition Corporation
+Symbol: ELECW
+	Name: Electrum Special Acquisition Corporation
+Symbol: ELGX
+	Name: Endologix
+Symbol: ELNK
+	Name: EarthLink Holdings Corp.
+Symbol: ELON
+	Name: Echelon Corporation
+Symbol: ELOS
+	Name: Syneron Medical Ltd.
+Symbol: ELRC
+	Name: Electro Rent Corporation
+Symbol: ELSE
+	Name: Electro-Sensors
+Symbol: ELTK
+	Name: Eltek Ltd.
+Symbol: EMCB
+	Name: WisdomTree Emerging Markets Corporate Bond Fund
+Symbol: EMCF
+	Name: Emclaire Financial Corp
+Symbol: EMCG
+	Name: WisdomTree Emerging Markets Consumer Growth Fund
+Symbol: EMCI
+	Name: EMC Insurance Group Inc.
+Symbol: EMIF
+	Name: iShares S&P Emerging Markets Infrastructure Index Fund
+Symbol: EMITF
+	Name: Elbit Imaging Ltd.
+Symbol: EMKR
+	Name: EMCORE Corporation
+Symbol: EML
+	Name: Eastern Company (The)
+Symbol: EMMS
+	Name: Emmis Communications Corporation
+Symbol: ENDP
+	Name: Endo International plc
+Symbol: ENFC
+	Name: Entegra Financial Corp.
+Symbol: ENG
+	Name: ENGlobal Corporation
+Symbol: ENOC
+	Name: EnerNOC
+Symbol: ENPH
+	Name: Enphase Energy
+Symbol: ENSG
+	Name: The Ensign Group
+Symbol: ENT
+	Name: Global Eagle Entertainment Inc.
+Symbol: ENTA
+	Name: Enanta Pharmaceuticals
+Symbol: ENTG
+	Name: Entegris
+Symbol: ENTL
+	Name: Entellus Medical
+Symbol: ENZL
+	Name: iShares MSCI New Zealand Capped ETF
+Symbol: ENZY      
+	Name: 
+Symbol: EPAY
+	Name: Bottomline Technologies
+Symbol: EPIQ
+	Name: EPIQ Systems
+Symbol: EPIX
+	Name: ESSA Pharma Inc.
+Symbol: EPRS
+	Name: EPIRUS Biopharmaceuticals
+Symbol: EPZM
+	Name: Epizyme
+Symbol: EQBK
+	Name: Equity Bancshares
+Symbol: EQFN
+	Name: Equitable Financial Corp.
+Symbol: EQIX
+	Name: Equinix
+Symbol: ERI
+	Name: Eldorado Resorts
+Symbol: ERIC
+	Name: Ericsson
+Symbol: ERIE
+	Name: Erie Indemnity Company
+Symbol: ERII
+	Name: Energy Recovery
+Symbol: ERS
+	Name: Empire Resources
+Symbol: ESBK
+	Name: Elmira Savings Bank NY (The)
+Symbol: ESCA
+	Name: Escalade
+Symbol: ESEA
+	Name: Euroseas Ltd.
+Symbol: ESES
+	Name: Eco-Stim Energy Solutions
+Symbol: ESG
+	Name: FlexShares STOXX US ESG Impact Index Fund
+Symbol: ESGD
+	Name: iShares MSCI EAFE ESG Select ETF
+Symbol: ESGE
+	Name: iShares MSCI EM ESG Select ETF
+Symbol: ESGG
+	Name: FlexShares STOXX Global ESG Impact Index Fund
+Symbol: ESGR
+	Name: Enstar Group Limited
+Symbol: ESIO
+	Name: Electro Scientific Industries
+Symbol: ESLT
+	Name: Elbit Systems Ltd.
+Symbol: ESMC
+	Name: Escalon Medical Corp.
+Symbol: ESND
+	Name: Essendant Inc.
+Symbol: ESPR
+	Name: Esperion Therapeutics
+Symbol: ESRX
+	Name: Express Scripts Holding Company
+Symbol: ESSA
+	Name: ESSA Bancorp
+Symbol: ESXB
+	Name: Community Bankers Trust Corporation.
+Symbol: ETFC
+	Name: E*TRADE Financial Corporation
+Symbol: ETRM
+	Name: EnteroMedics Inc.
+Symbol: ETSY
+	Name: Etsy
+Symbol: EUFN
+	Name: iShares MSCI Europe Financials Sector Index Fund
+Symbol: EVAR
+	Name: Lombard Medical
+Symbol: EVBS
+	Name: Eastern Virginia Bankshares
+Symbol: EVEP
+	Name: EV Energy Partners
+Symbol: EVGBC
+	Name: Eaton Vance NextShares Trust
+Symbol: EVK
+	Name: Ever-Glory International Group
+Symbol: EVLMC
+	Name: Eaton Vance NextShares Trust II
+Symbol: EVLV
+	Name: EVINE Live Inc.
+Symbol: EVOK
+	Name: Evoke Pharma
+Symbol: EVOL
+	Name: Evolving Systems
+Symbol: EVSTC
+	Name: Eaton Vance NextShares Trust
+Symbol: EWBC
+	Name: East West Bancorp
+Symbol: EWZS
+	Name: iShares MSCI Brazil Small-Cap ETF
+Symbol: EXA
+	Name: Exa Corporation
+Symbol: EXAC
+	Name: Exactech
+Symbol: EXAS
+	Name: EXACT Sciences Corporation
+Symbol: EXEL
+	Name: Exelixis
+Symbol: EXFO
+	Name: EXFO Inc
+Symbol: EXLS
+	Name: ExlService Holdings
+Symbol: EXPD
+	Name: Expeditors International of Washington
+Symbol: EXPE
+	Name: Expedia
+Symbol: EXPO
+	Name: Exponent
+Symbol: EXTR
+	Name: Extreme Networks
+Symbol: EYEG
+	Name: Eyegate Pharmaceuticals
+Symbol: EYEGW
+	Name: Eyegate Pharmaceuticals
+Symbol: EYES
+	Name: Second Sight Medical Products
+Symbol: EZPW
+	Name: EZCORP
+Symbol: FAAR
+	Name: First Trust Alternative Absolute Return Strategy ETF
+Symbol: FAB
+	Name: First Trust Multi Cap Value AlphaDEX Fund
+Symbol: FAD
+	Name: First Trust Multi Cap Growth AlphaDEX Fund
+Symbol: FALC
+	Name: FalconStor Software
+Symbol: FALN
+	Name: iShares Fallen Angels USD Bond ETF
+Symbol: FANG
+	Name: Diamondback Energy
+Symbol: FARM
+	Name: Farmer Brothers Company
+Symbol: FARO
+	Name: FARO Technologies
+Symbol: FAST
+	Name: Fastenal Company
+Symbol: FATE
+	Name: Fate Therapeutics
+Symbol: FB
+	Name: Facebook
+Symbol: FBIO
+	Name: Fortress Biotech
+Symbol: FBIZ
+	Name: First Business Financial Services
+Symbol: FBMS
+	Name: The First Bancshares
+Symbol: FBNC
+	Name: First Bancorp
+Symbol: FBNK
+	Name: First Connecticut Bancorp
+Symbol: FBRC
+	Name: FBR & Co
+Symbol: FBSS
+	Name: Fauquier Bankshares
+Symbol: FBZ
+	Name: First Trust Brazil AlphaDEX Fund
+Symbol: FCA
+	Name: First Trust China AlphaDEX Fund
+Symbol: FCAN
+	Name: First Trust Canada AlphaDEX Fund
+Symbol: FCAP
+	Name: First Capital
+Symbol: FCBC
+	Name: First Community Bancshares
+Symbol: FCCO
+	Name: First Community Corporation
+Symbol: FCCY
+	Name: 1st Constitution Bancorp (NJ)
+Symbol: FCEL
+	Name: FuelCell Energy
+Symbol: FCFP
+	Name: First Community Financial Partners
+Symbol: FCFS
+	Name: First Cash Financial Services
+Symbol: FCLF
+	Name: First Clover Leaf Financial Corp.
+Symbol: FCNCA
+	Name: First Citizens BancShares
+Symbol: FCS
+	Name: Fairchild Semiconductor International
+Symbol: FCSC
+	Name: Fibrocell Science Inc
+Symbol: FCVT
+	Name: First Trust SSI Strategic Convertible Securities ETF
+Symbol: FDEF
+	Name: First Defiance Financial Corp.
+Symbol: FDIV
+	Name: First Trust Strategic Income ETF
+Symbol: FDML
+	Name: Federal-Mogul Holdings Corporation
+Symbol: FDT
+	Name: First Trust Developed Markets Ex-US AlphaDEX Fund
+Symbol: FDTS
+	Name: First Trust Developed Markets ex-US Small Cap AlphaDEX Fund
+Symbol: FDUS
+	Name: Fidus Investment Corporation
+Symbol: FEIC
+	Name: FEI Company
+Symbol: FEIM
+	Name: Frequency Electronics
+Symbol: FELE
+	Name: Franklin Electric Co.
+Symbol: FEM
+	Name: First Trust Emerging Markets AlphaDEX Fund
+Symbol: FEMB
+	Name: First Trust Emerging Markets Local Currency Bond ETF
+Symbol: FEMS
+	Name: First Trust Emerging Markets Small Cap AlphaDEX Fund
+Symbol: FENX
+	Name: Fenix Parts
+Symbol: FEP
+	Name: First Trust Europe AlphaDEX Fund
+Symbol: FES
+	Name: Forbes Energy Services Ltd
+Symbol: FEUZ
+	Name: First Trust Eurozone AlphaDEX ETF
+Symbol: FEX
+	Name: First Trust Large Cap Core AlphaDEX Fund
+Symbol: FEYE
+	Name: FireEye
+Symbol: FFBC
+	Name: First Financial Bancorp.
+Symbol: FFBCW
+	Name: First Financial Bancorp.
+Symbol: FFHL
+	Name: Fuwei Films (Holdings) Co.
+Symbol: FFIC
+	Name: Flushing Financial Corporation
+Symbol: FFIN
+	Name: First Financial Bankshares
+Symbol: FFIV
+	Name: F5 Networks
+Symbol: FFKT
+	Name: Farmers Capital Bank Corporation
+Symbol: FFNW
+	Name: First Financial Northwest
+Symbol: FFWM
+	Name: First Foundation Inc.
+Symbol: FGBI
+	Name: First Guaranty Bancshares
+Symbol: FGEN
+	Name: FibroGen
+Symbol: FGM
+	Name: First Trust Germany AlphaDEX Fund
+Symbol: FH
+	Name: FORM Holdings Corp.
+Symbol: FHCO
+	Name: Female Health Company (The)
+Symbol: FHK
+	Name: First Trust Hong Kong AlphaDEX Fund
+Symbol: FIBK
+	Name: First Interstate BancSystem
+Symbol: FINL
+	Name: The Finish Line
+Symbol: FISI
+	Name: Financial Institutions
+Symbol: FISV
+	Name: Fiserv
+Symbol: FITB
+	Name: Fifth Third Bancorp
+Symbol: FITBI
+	Name: Fifth Third Bancorp
+Symbol: FITS
+	Name: The Health and Fitness ETF
+Symbol: FIVE
+	Name: Five Below
+Symbol: FIVN
+	Name: Five9
+Symbol: FIZZ
+	Name: National Beverage Corp.
+Symbol: FJP
+	Name: First Trust Japan AlphaDEX Fund
+Symbol: FKO
+	Name: First Trust South Korea AlphaDEX Fund
+Symbol: FKU
+	Name: First Trust United Kingdom AlphaDEX Fund
+Symbol: FLAG
+	Name: WeatherStorm Forensic Accounting Long Short ETF
+Symbol: FLAT
+	Name: region
+Symbol: FLDM
+	Name: Fluidigm Corporation
+Symbol: FLEX
+	Name: Flextronics International Ltd.
+Symbol: FLIC
+	Name: The First of Long Island Corporation
+Symbol: FLIR
+	Name: FLIR Systems
+Symbol: FLKS
+	Name: Flex Pharma
+Symbol: FLL
+	Name: Full House Resorts
+Symbol: FLML
+	Name: Flamel Technologies S.A.
+Symbol: FLN
+	Name: First Trust Latin America AlphaDEX Fund
+Symbol: FLWS
+	Name: 1-800 FLOWERS.COM
+Symbol: FLXN
+	Name: Flexion Therapeutics
+Symbol: FLXS
+	Name: Flexsteel Industries
+Symbol: FMB
+	Name: First Trust Managed Municipal ETF
+Symbol: FMBH
+	Name: First Mid-Illinois Bancshares
+Symbol: FMBI
+	Name: First Midwest Bancorp
+Symbol: FMER
+	Name: FirstMerit Corporation
+Symbol: FMI
+	Name: Foundation Medicine
+Symbol: FMK
+	Name: First Trust Mega Cap AlphaDEX Fund
+Symbol: FMNB
+	Name: Farmers National Banc Corp.
+Symbol: FNBC
+	Name: First NBC Bank Holding Company
+Symbol: FNCX
+	Name: Function(x) Inc.
+Symbol: FNFG
+	Name: First Niagara Financial Group Inc.
+Symbol: FNGN
+	Name: Financial Engines
+Symbol: FNHC
+	Name: Federated National Holding Company
+Symbol: FNJN
+	Name: Finjan Holdings
+Symbol: FNK
+	Name: First Trust Mid Cap Value AlphaDEX Fund
+Symbol: FNLC
+	Name: First Bancorp
+Symbol: FNSR
+	Name: Finisar Corporation
+Symbol: FNTC
+	Name: FinTech Acquisition Corp.
+Symbol: FNTCU
+	Name: FinTech Acquisition Corp.
+Symbol: FNTCW
+	Name: FinTech Acquisition Corp.
+Symbol: FNWB
+	Name: First Northwest Bancorp
+Symbol: FNX
+	Name: First Trust Mid Cap Core AlphaDEX Fund
+Symbol: FNY
+	Name: First Trust Mid Cap Growth AlphaDEX Fund
+Symbol: FOGO
+	Name: Fogo de Chao
+Symbol: FOLD
+	Name: Amicus Therapeutics
+Symbol: FOMX
+	Name: Foamix Pharmaceuticals Ltd.
+Symbol: FONE
+	Name: First Trust NASDAQ Smartphone Index Fund
+Symbol: FONR
+	Name: Fonar Corporation
+Symbol: FORD
+	Name: Forward Industries
+Symbol: FORK
+	Name: Fuling Global Inc.
+Symbol: FORM
+	Name: FormFactor
+Symbol: FORR
+	Name: Forrester Research
+Symbol: FORTY
+	Name: Formula Systems (1985) Ltd.
+Symbol: FOSL
+	Name: Fossil Group
+Symbol: FOX
+	Name: Twenty-First Century Fox
+Symbol: FOXA
+	Name: Twenty-First Century Fox
+Symbol: FOXF
+	Name: Fox Factory Holding Corp.
+Symbol: FPA
+	Name: First Trust Asia Pacific Ex-Japan AlphaDEX Fund
+Symbol: FPRX
+	Name: Five Prime Therapeutics
+Symbol: FPXI
+	Name: First Trust International IPO ETF
+Symbol: FRAN
+	Name: Francesca&
+Symbol: FRBA
+	Name: First Bank
+Symbol: FRBK
+	Name: Republic First Bancorp
+Symbol: FRED
+	Name: Fred&
+Symbol: FRGI
+	Name: Fiesta Restaurant Group
+Symbol: FRME
+	Name: First Merchants Corporation
+Symbol: FRP
+	Name: FairPoint Communications
+Symbol: FRPH
+	Name: FRP Holdings
+Symbol: FRPT
+	Name: Freshpet
+Symbol: FRSH
+	Name: Papa Murphy&
+Symbol: FSAM
+	Name: Fifth Street Asset Management Inc.
+Symbol: FSBC
+	Name: FSB Bancorp
+Symbol: FSBK
+	Name: First South Bancorp Inc
+Symbol: FSBW
+	Name: FS Bancorp
+Symbol: FSC
+	Name: Fifth Street Finance Corp.
+Symbol: FSCFL
+	Name: Fifth Street Finance Corp.
+Symbol: FSFG
+	Name: First Savings Financial Group
+Symbol: FSFR
+	Name: Fifth Street Senior Floating Rate Corp.
+Symbol: FSLR
+	Name: First Solar
+Symbol: FSNN
+	Name: Fusion Telecommunications International
+Symbol: FSTR
+	Name: L.B. Foster Company
+Symbol: FSV
+	Name: FirstService Corporation
+Symbol: FSZ
+	Name: First Trust Switzerland AlphaDEX Fund
+Symbol: FTA
+	Name: First Trust Large Cap Value AlphaDEX Fund
+Symbol: FTAG
+	Name: First Trust Indxx Global Agriculture ETF
+Symbol: FTC
+	Name: First Trust Large Cap Growth AlphaDEX Fund
+Symbol: FTCS
+	Name: First Trust Capital Strength ETF
+Symbol: FTD
+	Name: FTD Companies
+Symbol: FTEK
+	Name: Fuel Tech
+Symbol: FTEO
+	Name: FRONTEO
+Symbol: FTGC
+	Name: First Trust Global Tactical Commodity Strategy Fund
+Symbol: FTHI
+	Name: First Trust High Income ETF
+Symbol: FTLB
+	Name: First Trust Low Beta Income ETF
+Symbol: FTNT
+	Name: Fortinet
+Symbol: FTR
+	Name: Frontier Communications Corporation
+Symbol: FTRI
+	Name: First Trust Indxx Global Natural Resources Income ETF
+Symbol: FTRPR
+	Name: Frontier Communications Corporation
+Symbol: FTSL
+	Name: First Trust Senior Loan Fund ETF
+Symbol: FTSM
+	Name: First Trust Enhanced Short Maturity ETF
+Symbol: FTW
+	Name: First Trust Taiwan AlphaDEX Fund
+Symbol: FUEL
+	Name: Rocket Fuel Inc.
+Symbol: FULL
+	Name: Full Circle Capital Corporation
+Symbol: FULLL
+	Name: Full Circle Capital Corporation
+Symbol: FULT
+	Name: Fulton Financial Corporation
+Symbol: FUNC
+	Name: First United Corporation
+Symbol: FUND
+	Name: Sprott Focus Trust
+Symbol: FV
+	Name: First Trust Dorsey Wright Focus 5 ETF
+Symbol: FVC
+	Name: First Trust Dorsey Wright Dynamic Focus 5 ETF
+Symbol: FVE
+	Name: Five Star Quality Care
+Symbol: FWP
+	Name: Forward Pharma A/S
+Symbol: FWRD
+	Name: Forward Air Corporation
+Symbol: FYC
+	Name: First Trust Small Cap Growth AlphaDEX Fund
+Symbol: FYT
+	Name: First Trust Small Cap Value AlphaDEX Fund
+Symbol: FYX
+	Name: First Trust Small Cap Core AlphaDEX Fund
+Symbol: GABC
+	Name: German American Bancorp
+Symbol: GAIA
+	Name: Gaia
+Symbol: GAIN
+	Name: Gladstone Investment Corporation
+Symbol: GAINN
+	Name: Gladstone Investment Corporation
+Symbol: GAINO
+	Name: Gladstone Investment Corporation
+Symbol: GAINP
+	Name: Gladstone Investment Corporation
+Symbol: GALE
+	Name: Galena Biopharma
+Symbol: GALT
+	Name: Galectin Therapeutics Inc.
+Symbol: GALTU
+	Name: Galectin Therapeutics Inc.
+Symbol: GALTW
+	Name: Galectin Therapeutics Inc.
+Symbol: GARS
+	Name: Garrison Capital Inc.
+Symbol: GASS
+	Name: StealthGas
+Symbol: GBCI
+	Name: Glacier Bancorp
+Symbol: GBDC
+	Name: Golub Capital BDC
+Symbol: GBIM
+	Name: GlobeImmune
+Symbol: GBLI
+	Name: Global Indemnity plc
+Symbol: GBLIZ
+	Name: Global Indemnity plc
+Symbol: GBNK
+	Name: Guaranty Bancorp
+Symbol: GBSN
+	Name: Great Basin Scientific
+Symbol: GBT
+	Name: GLOBAL BLOOD THERAPEUTICS
+Symbol: GCBC
+	Name: Greene County Bancorp
+Symbol: GCVRZ
+	Name: Sanofi
+Symbol: GDEN
+	Name: Golden Entertainment
+Symbol: GEC
+	Name: Great Elm Capital Group
+Symbol: GEMP
+	Name: Gemphire Therapeutics Inc.
+Symbol: GENC
+	Name: Gencor Industries Inc.
+Symbol: GENE
+	Name: Genetic Technologies Ltd
+Symbol: GEOS
+	Name: Geospace Technologies Corporation
+Symbol: GERN
+	Name: Geron Corporation
+Symbol: GEVO
+	Name: Gevo
+Symbol: GFED
+	Name: Guaranty Federal Bancshares
+Symbol: GFN
+	Name: General Finance Corporation
+Symbol: GFNCP
+	Name: General Finance Corporation
+Symbol: GFNSL
+	Name: General Finance Corporation
+Symbol: GGAC
+	Name: Garnero Group Acquisition Company
+Symbol: GGACR
+	Name: Garnero Group Acquisition Company
+Symbol: GGACU
+	Name: Garnero Group Acquisition Company
+Symbol: GGACW
+	Name: Garnero Group Acquisition Company
+Symbol: GGAL
+	Name: Grupo Financiero Galicia S.A.
+Symbol: GHDX
+	Name: Genomic Health
+Symbol: GIFI
+	Name: Gulf Island Fabrication
+Symbol: GIGA
+	Name: Giga-tronics Incorporated
+Symbol: GIGM
+	Name: GigaMedia Limited
+Symbol: GIII
+	Name: G-III Apparel Group
+Symbol: GILD
+	Name: Gilead Sciences
+Symbol: GILT
+	Name: Gilat Satellite Networks Ltd.
+Symbol: GK
+	Name: G&K Services
+Symbol: GLAD
+	Name: Gladstone Capital Corporation
+Symbol: GLADO
+	Name: Gladstone Capital Corporation
+Symbol: GLBL
+	Name: TerraForm Global
+Symbol: GLBS
+	Name: Globus Maritime Limited
+Symbol: GLBZ
+	Name: Glen Burnie Bancorp
+Symbol: GLDC
+	Name: Golden Enterprises
+Symbol: GLDD
+	Name: Great Lakes Dredge & Dock Corporation
+Symbol: GLDI
+	Name: region
+Symbol: GLMD
+	Name: Galmed Pharmaceuticals Ltd.
+Symbol: GLNG
+	Name: Golar LNG Limited
+Symbol: GLPG
+	Name: Galapagos NV
+Symbol: GLPI
+	Name: Gaming and Leisure Properties
+Symbol: GLRE
+	Name: Greenlight Reinsurance
+Symbol: GLRI
+	Name: Glori Energy Inc
+Symbol: GLUU
+	Name: Glu Mobile Inc.
+Symbol: GLYC
+	Name: GlycoMimetics
+Symbol: GMAN
+	Name: Gordmans Stores
+Symbol: GMLP
+	Name: Golar LNG Partners LP
+Symbol: GNBC
+	Name: Green Bancorp
+Symbol: GNCA
+	Name: Genocea Biosciences
+Symbol: GNCMA
+	Name: General Communication
+Symbol: GNMA
+	Name: iShares GNMA Bond ETF
+Symbol: GNMK
+	Name: GenMark Diagnostics
+Symbol: GNRX
+	Name: VanEck Vectors Generic Drugs ETF
+Symbol: GNTX
+	Name: Gentex Corporation
+Symbol: GNVC
+	Name: GenVec
+Symbol: GOGL
+	Name: Golden Ocean Group Limited
+Symbol: GOGO
+	Name: Gogo Inc.
+Symbol: GOLD
+	Name: Randgold Resources Limited
+Symbol: GOOD
+	Name: Gladstone Commercial Corporation
+Symbol: GOODM
+	Name: Gladstone Commercial Corporation
+Symbol: GOODN
+	Name: Gladstone Commercial Corporation
+Symbol: GOODO
+	Name: Gladstone Commercial Corporation
+Symbol: GOODP
+	Name: Gladstone Commercial Corporation
+Symbol: GOOG
+	Name: Alphabet Inc.
+Symbol: GOOGL
+	Name: Alphabet Inc.
+Symbol: GOV
+	Name: Government Properties Income Trust
+Symbol: GOVNI
+	Name: Government Properties Income Trust
+Symbol: GPAC
+	Name: Global Partner Acquisition Corp.
+Symbol: GPACU
+	Name: Global Partner Acquisition Corp.
+Symbol: GPACW
+	Name: Global Partner Acquisition Corp.
+Symbol: GPIA
+	Name: GP Investments Acquisition Corp.
+Symbol: GPIAU
+	Name: GP Investments Acquisition Corp.
+Symbol: GPIAW
+	Name: GP Investments Acquisition Corp.
+Symbol: GPIC
+	Name: Gaming Partners International Corporation
+Symbol: GPOR
+	Name: Gulfport Energy Corporation
+Symbol: GPP
+	Name: Green Plains Partners LP
+Symbol: GPRE
+	Name: Green Plains
+Symbol: GPRO
+	Name: GoPro
+Symbol: GRBK
+	Name: Green Brick Partners
+Symbol: GRFS
+	Name: Grifols
+Symbol: GRID
+	Name: First Trust NASDAQ Clean Edge Smart Grid Infrastructure Index 
+Symbol: GRIF
+	Name: Griffin Industrial Realty
+Symbol: GRMN
+	Name: Garmin Ltd.
+Symbol: GROW
+	Name: U.S. Global Investors
+Symbol: GRPN
+	Name: Groupon
+Symbol: GRSH
+	Name: Gores Holdings
+Symbol: GRSHU
+	Name: Gores Holdings
+Symbol: GRSHW
+	Name: Gores Holdings
+Symbol: GRVY
+	Name: GRAVITY Co.
+Symbol: GSBC
+	Name: Great Southern Bancorp
+Symbol: GSIT
+	Name: GSI Technology
+Symbol: GSM
+	Name: Ferroglobe PLC
+Symbol: GSOL
+	Name: Global Sources Ltd.
+Symbol: GSVC
+	Name: GSV Capital Corp
+Symbol: GT
+	Name: The Goodyear Tire & Rubber Company
+Symbol: GTIM
+	Name: Good Times Restaurants Inc.
+Symbol: GTLS
+	Name: Chart Industries
+Symbol: GTWN
+	Name: Georgetown Bancorp
+Symbol: GTXI
+	Name: GTx
+Symbol: GUID
+	Name: Guidance Software
+Symbol: GULF
+	Name: WisdomTree Middle East Dividend Fund
+Symbol: GURE
+	Name: Gulf Resources
+Symbol: GWGH
+	Name: GWG Holdings
+Symbol: GWPH
+	Name: GW Pharmaceuticals Plc
+Symbol: GWRS
+	Name: Global Water Resources
+Symbol: GYRO
+	Name: Gyrodyne 
+Symbol: HA
+	Name: Hawaiian Holdings
+Symbol: HABT
+	Name: The Habit Restaurants
+Symbol: HAFC
+	Name: Hanmi Financial Corporation
+Symbol: HAIN
+	Name: The Hain Celestial Group
+Symbol: HALL
+	Name: Hallmark Financial Services
+Symbol: HALO
+	Name: Halozyme Therapeutics
+Symbol: HAS
+	Name: Hasbro
+Symbol: HAWK
+	Name: Blackhawk Network Holdings
+Symbol: HAYN
+	Name: Haynes International
+Symbol: HBAN
+	Name: Huntington Bancshares Incorporated
+Symbol: HBANO
+	Name: Huntington Bancshares Incorporated
+Symbol: HBANP
+	Name: Huntington Bancshares Incorporated
+Symbol: HBCP
+	Name: Home Bancorp
+Symbol: HBHC
+	Name: Hancock Holding Company
+Symbol: HBHCL
+	Name: Hancock Holding Company
+Symbol: HBIO
+	Name: Harvard Bioscience
+Symbol: HBK
+	Name: Hamilton Bancorp
+Symbol: HBMD
+	Name: Howard Bancorp
+Symbol: HBNC
+	Name: Horizon Bancorp (IN)
+Symbol: HBP
+	Name: Huttig Building Products
+Symbol: HCAC
+	Name: Hennessy Capital Acquisition Corp. II
+Symbol: HCACU
+	Name: Hennessy Capital Acquisition Corp. II
+Symbol: HCACW
+	Name: Hennessy Capital Acquisition Corp. II
+Symbol: HCAP
+	Name: Harvest Capital Credit Corporation
+Symbol: HCAPL
+	Name: Harvest Capital Credit Corporation
+Symbol: HCCI
+	Name: Heritage-Crystal Clean
+Symbol: HCKT
+	Name: The Hackett Group
+Symbol: HCM
+	Name: Hutchison China MediTech Limited
+Symbol: HCOM
+	Name: Hawaiian Telcom Holdco
+Symbol: HCSG
+	Name: Healthcare Services Group
+Symbol: HDNG
+	Name: Hardinge
+Symbol: HDP
+	Name: Hortonworks
+Symbol: HDRA
+	Name: Hydra Industries Acquisition Corp.
+Symbol: HDRAR
+	Name: Hydra Industries Acquisition Corp.
+Symbol: HDRAU
+	Name: Hydra Industries Acquisition Corp.
+Symbol: HDRAW
+	Name: Hydra Industries Acquisition Corp.
+Symbol: HDS
+	Name: HD Supply Holdings
+Symbol: HDSN
+	Name: Hudson Technologies
+Symbol: HEAR
+	Name: Turtle Beach Corporation
+Symbol: HEES
+	Name: H&E Equipment Services
+Symbol: HELE
+	Name: Helen of Troy Limited
+Symbol: HEOP
+	Name: Heritage Oaks Bancorp
+Symbol: HFBC
+	Name: HopFed Bancorp
+Symbol: HFBL
+	Name: Home Federal Bancorp
+Symbol: HFWA
+	Name: Heritage Financial Corporation
+Symbol: HGSH
+	Name: China HGS Real Estate
+Symbol: HIBB
+	Name: Hibbett Sports
+Symbol: HIFS
+	Name: Hingham Institution for Savings
+Symbol: HIHO
+	Name: Highway Holdings Limited
+Symbol: HIIQ
+	Name: Health Insurance Innovations
+Symbol: HIMX
+	Name: Himax Technologies
+Symbol: HLG
+	Name: Hailiang Education Group Inc.
+Symbol: HLIT
+	Name: Harmonic Inc.
+Symbol: HMHC
+	Name: Houghton Mifflin Harcourt Company
+Symbol: HMNF
+	Name: HMN Financial
+Symbol: HMNY
+	Name: Helios and Matheson Analytics Inc
+Symbol: HMPR
+	Name: Hampton Roads Bankshares Inc
+Symbol: HMST
+	Name: HomeStreet
+Symbol: HMSY
+	Name: HMS Holdings Corp
+Symbol: HMTV
+	Name: Hemisphere Media Group
+Symbol: HNH
+	Name: Handy & Harman Ltd.
+Symbol: HNNA
+	Name: Hennessy Advisors
+Symbol: HNRG
+	Name: Hallador Energy Company
+Symbol: HNSN
+	Name: Hansen Medical
+Symbol: HOFT
+	Name: Hooker Furniture Corporation
+Symbol: HOLI
+	Name: Hollysys Automation Technologies
+Symbol: HOLX
+	Name: Hologic
+Symbol: HOMB
+	Name: Home BancShares
+Symbol: HONE
+	Name: HarborOne Bancorp
+Symbol: HOTR
+	Name: Chanticleer Holdings
+Symbol: HOTRW
+	Name: Chanticleer Holdings
+Symbol: HOVNP
+	Name: Hovnanian Enterprises Inc
+Symbol: HPJ
+	Name: Highpower International Inc
+Symbol: HPT
+	Name: Hospitality Properties Trust
+Symbol: HPTRP
+	Name: Hospitality Properties Trust
+Symbol: HQCL
+	Name: Hanwha Q CELLS Co.
+Symbol: HQY
+	Name: HealthEquity
+Symbol: HRMN
+	Name: Harmony Merger Corp.
+Symbol: HRMNU
+	Name: Harmony Merger Corp.
+Symbol: HRMNW
+	Name: Harmony Merger Corp.
+Symbol: HRTX
+	Name: Heron Therapeutics
+Symbol: HRZN
+	Name: Horizon Technology Finance Corporation
+Symbol: HSGX
+	Name: Histogenics Corporation
+Symbol: HSIC
+	Name: Henry Schein
+Symbol: HSII
+	Name: Heidrick & Struggles International
+Symbol: HSKA
+	Name: Heska Corporation
+Symbol: HSNI
+	Name: HSN
+Symbol: HSON
+	Name: Hudson Global
+Symbol: HSTM
+	Name: HealthStream
+Symbol: HTBI
+	Name: HomeTrust Bancshares
+Symbol: HTBK
+	Name: Heritage Commerce Corp
+Symbol: HTBX
+	Name: Heat Biologics
+Symbol: HTCH
+	Name: Hutchinson Technology Incorporated
+Symbol: HTGM
+	Name: HTG Molecular Diagnostics
+Symbol: HTHT
+	Name: China Lodging Group
+Symbol: HTLD
+	Name: Heartland Express
+Symbol: HTLF
+	Name: Heartland Financial USA
+Symbol: HTWR
+	Name: Heartware International
+Symbol: HUBG
+	Name: Hub Group
+Symbol: HURC
+	Name: Hurco Companies
+Symbol: HURN
+	Name: Huron Consulting Group Inc.
+Symbol: HWAY
+	Name: Healthways
+Symbol: HWBK
+	Name: Hawthorn Bancshares
+Symbol: HWCC
+	Name: Houston Wire & Cable Company
+Symbol: HWKN
+	Name: Hawkins
+Symbol: HYGS
+	Name: Hydrogenics Corporation
+Symbol: HYLS
+	Name: First Trust High Yield Long/Short ETF
+Symbol: HYND
+	Name: WisdomTree BofA Merrill Lynch High Yield Bond Negative Duratio
+Symbol: HYXE
+	Name: iShares iBoxx $ High Yield ex Oil & Gas Corporate Bond ETF
+Symbol: HYZD
+	Name: WisdomTree BofA Merrill Lynch High Yield Bond Zero Duration Fu
+Symbol: HZNP
+	Name: Horizon Pharma plc
+Symbol: IAC
+	Name: IAC/InterActiveCorp
+Symbol: IART
+	Name: Integra LifeSciences Holdings Corporation
+Symbol: IBB
+	Name: iShares Nasdaq Biotechnology Index Fund
+Symbol: IBCP
+	Name: Independent Bank Corporation
+Symbol: IBKC
+	Name: IBERIABANK Corporation
+Symbol: IBKCO
+	Name: IBERIABANK Corporation
+Symbol: IBKCP
+	Name: IBERIABANK Corporation
+Symbol: IBKR
+	Name: Interactive Brokers Group
+Symbol: IBOC
+	Name: International Bancshares Corporation
+Symbol: IBTX
+	Name: Independent Bank Group
+Symbol: IBUY
+	Name: Amplify Online Retail ETF
+Symbol: ICAD
+	Name: icad inc.
+Symbol: ICBK
+	Name: County Bancorp
+Symbol: ICCC
+	Name: ImmuCell Corporation
+Symbol: ICFI
+	Name: ICF International
+Symbol: ICLD
+	Name: InterCloud Systems
+Symbol: ICLDW
+	Name: InterCloud Systems
+Symbol: ICLN
+	Name: iShares S&P Global Clean Energy Index Fund
+Symbol: ICLR
+	Name: ICON plc
+Symbol: ICON
+	Name: Iconix Brand Group
+Symbol: ICPT
+	Name: Intercept Pharmaceuticals
+Symbol: ICUI
+	Name: ICU Medical
+Symbol: IDCC
+	Name: InterDigital
+Symbol: IDLB
+	Name: PowerShares FTSE International Low Beta Equal Weight Portfolio
+Symbol: IDRA
+	Name: Idera Pharmaceuticals
+Symbol: IDSA
+	Name: Industrial Services of America
+Symbol: IDSY
+	Name: I.D. Systems
+Symbol: IDTI
+	Name: Integrated Device Technology
+Symbol: IDXG
+	Name: Interpace Diagnostics Group
+Symbol: IDXX
+	Name: IDEXX Laboratories
+Symbol: IEP
+	Name: Icahn Enterprises L.P.
+Symbol: IESC
+	Name: IES Holdings
+Symbol: IEUS
+	Name: iShares MSCI Europe Small-Cap ETF
+Symbol: IFEU
+	Name: iShares FTSE EPRA/NAREIT Europe Index Fund
+Symbol: IFGL
+	Name: iShares FTSE EPRA/NAREIT Global Real Estate ex-U.S. Index Fund
+Symbol: IFON
+	Name: InfoSonics Corp
+Symbol: IFV
+	Name: First Trust Dorsey Wright International Focus 5 ETF
+Symbol: IGF
+	Name: iShares Global Infrastructure ETF
+Symbol: IGLD
+	Name: Internet Gold Golden Lines Ltd.
+Symbol: IGOV
+	Name: iShares S&P/Citigroup International Treasury Bond Fund
+Symbol: III
+	Name: Information Services Group
+Symbol: IIIN
+	Name: Insteel Industries
+Symbol: IIJI
+	Name: Internet Initiative Japan
+Symbol: IILG
+	Name: Interval Leisure Group
+Symbol: IIN
+	Name: IntriCon Corporation
+Symbol: IIVI
+	Name: II-VI Incorporated
+Symbol: IKGH
+	Name: Iao Kun Group Holding Company Limited
+Symbol: IKNX
+	Name: Ikonics Corporation
+Symbol: ILMN
+	Name: Illumina
+Symbol: IMDZ
+	Name: Immune Design Corp.
+Symbol: IMGN
+	Name: ImmunoGen
+Symbol: IMI
+	Name: Intermolecular
+Symbol: IMKTA
+	Name: Ingles Markets
+Symbol: IMMR
+	Name: Immersion Corporation
+Symbol: IMMU
+	Name: Immunomedics
+Symbol: IMMY
+	Name: Imprimis Pharmaceuticals
+Symbol: IMNP      
+	Name: 
+Symbol: IMOS
+	Name: ChipMOS TECHNOLOGIES (Bermuda) LTD.
+Symbol: INAP
+	Name: Internap Corporation
+Symbol: INBK
+	Name: First Internet Bancorp
+Symbol: INCR
+	Name: INC Research Holdings
+Symbol: INCY
+	Name: Incyte Corporation
+Symbol: INDB
+	Name: Independent Bank Corp.
+Symbol: INDY
+	Name: iShares S&P India Nifty 50 Index Fund
+Symbol: INFI
+	Name: Infinity Pharmaceuticals
+Symbol: INFN
+	Name: Infinera Corporation
+Symbol: INFO
+	Name: IHS Markit Ltd.
+Symbol: INGN
+	Name: Inogen
+Symbol: ININ
+	Name: Interactive Intelligence Group
+Symbol: INNL
+	Name: Innocoll Holdings
+Symbol: INO
+	Name: Inovio Pharmaceuticals
+Symbol: INOD
+	Name: Innodata Inc.
+Symbol: INOV
+	Name: Inovalon Holdings
+Symbol: INSM
+	Name: Insmed
+Symbol: INSY
+	Name: Insys Therapeutics
+Symbol: INTC
+	Name: Intel Corporation
+Symbol: INTG
+	Name: The Intergroup Corporation
+Symbol: INTL
+	Name: INTL FCStone Inc.
+Symbol: INTLL
+	Name: INTL FCStone Inc.
+Symbol: INTU
+	Name: Intuit Inc.
+Symbol: INTX
+	Name: Intersections
+Symbol: INVA
+	Name: Innoviva
+Symbol: INVE
+	Name: Identiv
+Symbol: INVT
+	Name: Inventergy Global
+Symbol: INWK
+	Name: InnerWorkings
+Symbol: IONS
+	Name: Ionis Pharmaceuticals
+Symbol: IOSP
+	Name: Innospec Inc.
+Symbol: IOTS
+	Name: Adesto Technologies Corporation
+Symbol: IPAR
+	Name: Inter Parfums
+Symbol: IPAS
+	Name: iPass Inc.
+Symbol: IPCC
+	Name: Infinity Property and Casualty Corporation
+Symbol: IPCI
+	Name: Intellipharmaceutics International Inc.
+Symbol: IPDN
+	Name: Professional Diversity Network
+Symbol: IPGP
+	Name: IPG Photonics Corporation
+Symbol: IPHS
+	Name: Innophos Holdings
+Symbol: IPKW
+	Name: PowerShares International BuyBack Achievers Portfolio
+Symbol: IPWR
+	Name: Ideal Power Inc.
+Symbol: IPXL
+	Name: Impax Laboratories
+Symbol: IQNT
+	Name: Inteliquent
+Symbol: IRBT
+	Name: iRobot Corporation
+Symbol: IRCP
+	Name: IRSA Propiedades Comerciales S.A.
+Symbol: IRDM
+	Name: Iridium Communications Inc
+Symbol: IRDMB
+	Name: Iridium Communications Inc
+Symbol: IRG
+	Name: Ignite Restaurant Group
+Symbol: IRIX
+	Name: IRIDEX Corporation
+Symbol: IRMD
+	Name: iRadimed Corporation
+Symbol: IROQ
+	Name: IF Bancorp
+Symbol: IRWD
+	Name: Ironwood Pharmaceuticals
+Symbol: ISBC
+	Name: Investors Bancorp
+Symbol: ISCA
+	Name: International Speedway Corporation
+Symbol: ISHG
+	Name: iShares S&P/Citigroup 1-3 Year International Treasury Bond Fun
+Symbol: ISIG
+	Name: Insignia Systems
+Symbol: ISIL
+	Name: Intersil Corporation
+Symbol: ISLE
+	Name: Isle of Capri Casinos
+Symbol: ISM
+	Name: SLM Corporation
+Symbol: ISNS
+	Name: Image Sensing Systems
+Symbol: ISRG
+	Name: Intuitive Surgical
+Symbol: ISRL
+	Name: Isramco
+Symbol: ISSC
+	Name: Innovative Solutions and Support
+Symbol: ISTR
+	Name: Investar Holding Corporation
+Symbol: ITCI
+	Name: Intra-Cellular Therapies Inc.
+Symbol: ITEK
+	Name: Inotek Pharmaceuticals Corporation
+Symbol: ITEQ
+	Name: BlueStar TA-BIGITech Israel Technology ETF
+Symbol: ITI
+	Name: Iteris
+Symbol: ITIC
+	Name: Investors Title Company
+Symbol: ITRI
+	Name: Itron
+Symbol: ITRN
+	Name: Ituran Location and Control Ltd.
+Symbol: ITUS
+	Name: ITUS Corporation
+Symbol: IVAC
+	Name: Intevac
+Symbol: IVTY
+	Name: Invuity
+Symbol: IXUS
+	Name: iShares Core MSCI Total International Stock ETF
+Symbol: IXYS
+	Name: IXYS Corporation
+Symbol: IZEA
+	Name: IZEA Inc.
+Symbol: JACK
+	Name: Jack In The Box Inc.
+Symbol: JAGX
+	Name: Jaguar Animal Health
+Symbol: JAKK
+	Name: JAKKS Pacific
+Symbol: JASN
+	Name: Jason Industries
+Symbol: JASNW
+	Name: Jason Industries
+Symbol: JASO
+	Name: JA Solar Holdings
+Symbol: JAZZ
+	Name: Jazz Pharmaceuticals plc
+Symbol: JBHT
+	Name: J.B. Hunt Transport Services
+Symbol: JBLU
+	Name: JetBlue Airways Corporation
+Symbol: JBSS
+	Name: John B. Sanfilippo & Son
+Symbol: JCOM
+	Name: j2 Global
+Symbol: JCS
+	Name: Communications Systems
+Symbol: JCTCF
+	Name: Jewett-Cameron Trading Company
+Symbol: JD
+	Name: JD.com
+Symbol: JGBB
+	Name: WisdomTree Japan Interest Rate Strategy Fund
+Symbol: JIVE
+	Name: Jive Software
+Symbol: JJSF
+	Name: J & J Snack Foods Corp.
+Symbol: JKHY
+	Name: Jack Henry & Associates
+Symbol: JKI
+	Name: iShares Morningstar Mid-Cap ETF
+Symbol: JMBA
+	Name: Jamba
+Symbol: JMU
+	Name: Wowo Limited
+Symbol: JNP
+	Name: Juniper Pharmaceuticals
+Symbol: JOBS
+	Name: 51job
+Symbol: JOUT
+	Name: Johnson Outdoors Inc.
+Symbol: JRJC
+	Name: China Finance Online Co. Limited
+Symbol: JRVR
+	Name: James River Group Holdings
+Symbol: JSM
+	Name: SLM Corporation
+Symbol: JSMD
+	Name: Janus Small/Mid Cap Growth Alpha ETF
+Symbol: JSML
+	Name: Janus Small Cap Growth Alpha ETF
+Symbol: JSYN
+	Name: Jensyn Acquistion Corp.
+Symbol: JSYNR
+	Name: Jensyn Acquistion Corp.
+Symbol: JSYNU
+	Name: Jensyn Acquistion Corp.
+Symbol: JSYNW
+	Name: Jensyn Acquistion Corp.
+Symbol: JTPY
+	Name: JetPay Corporation
+Symbol: JUNO
+	Name: Juno Therapeutics
+Symbol: JVA
+	Name: Coffee Holding Co.
+Symbol: JXSB
+	Name: Jacksonville Bancorp Inc.
+Symbol: JYNT
+	Name: The Joint Corp.
+Symbol: KALU
+	Name: Kaiser Aluminum Corporation
+Symbol: KANG
+	Name: iKang Healthcare Group
+Symbol: KBAL
+	Name: Kimball International
+Symbol: KBSF
+	Name: KBS Fashion Group Limited
+Symbol: KCAP
+	Name: KCAP Financial
+Symbol: KE
+	Name: Kimball Electronics
+Symbol: KELYA
+	Name: Kelly Services
+Symbol: KELYB
+	Name: Kelly Services
+Symbol: KEQU
+	Name: Kewaunee Scientific Corporation
+Symbol: KERX
+	Name: Keryx Biopharmaceuticals
+Symbol: KEYW
+	Name: The KEYW Holding Corporation
+Symbol: KFFB
+	Name: Kentucky First Federal Bancorp
+Symbol: KFRC
+	Name: Kforce
+Symbol: KGJI
+	Name: Kingold Jewelry Inc.
+Symbol: KHC
+	Name: The Kraft Heinz Company
+Symbol: KIN
+	Name: Kindred Biosciences
+Symbol: KINS
+	Name: Kingstone Companies
+Symbol: KIRK
+	Name: Kirkland&
+Symbol: KITE
+	Name: Kite Pharma
+Symbol: KLAC
+	Name: KLA-Tencor Corporation
+Symbol: KLIC
+	Name: Kulicke and Soffa Industries
+Symbol: KLRE
+	Name: KLR Energy Acquisition Corp.
+Symbol: KLREU
+	Name: KLR Energy Acquisition Corp.
+Symbol: KLREW
+	Name: KLR Energy Acquisition Corp.
+Symbol: KLXI
+	Name: KLX Inc.
+Symbol: KMDA
+	Name: Kamada Ltd.
+Symbol: KMPH
+	Name: KemPharm
+Symbol: KNDI
+	Name: Kandi Technologies Group
+Symbol: KONA
+	Name: Kona Grill
+Symbol: KONE
+	Name: Kingtone Wirelessinfo Solution Holding Ltd
+Symbol: KOOL
+	Name: Cesca Therapeutics Inc.
+Symbol: KOPN
+	Name: Kopin Corporation
+Symbol: KOSS
+	Name: Koss Corporation
+Symbol: KPTI
+	Name: Karyopharm Therapeutics Inc.
+Symbol: KRMA
+	Name: Global X Conscious Companies ETF
+Symbol: KRNT
+	Name: Kornit Digital Ltd.
+Symbol: KRNY
+	Name: Kearny Financial
+Symbol: KTCC
+	Name: Key Tronic Corporation
+Symbol: KTEC
+	Name: Key Technology
+Symbol: KTOS
+	Name: Kratos Defense & Security Solutions
+Symbol: KTOV
+	Name: Kitov Pharmaceuticals Holdings Ltd.
+Symbol: KTOVW
+	Name: Kitov Pharmaceuticals Holdings Ltd.
+Symbol: KTWO
+	Name: K2M Group Holdings
+Symbol: KURA
+	Name: Kura Oncology
+Symbol: KVHI
+	Name: KVH Industries
+Symbol: KWEB
+	Name: KraneShares CSI China Internet ETF
+Symbol: KZ
+	Name: KongZhong Corporation
+Symbol: LABL
+	Name: Multi-Color Corporation
+Symbol: LAKE
+	Name: Lakeland Industries
+Symbol: LALT
+	Name: PowerShares Multi-Strategy Alternative Portfolio
+Symbol: LAMR
+	Name: Lamar Advertising Company
+Symbol: LANC
+	Name: Lancaster Colony Corporation
+Symbol: LAND
+	Name: Gladstone Land Corporation
+Symbol: LARK
+	Name: Landmark Bancorp Inc.
+Symbol: LAWS
+	Name: Lawson Products
+Symbol: LAYN
+	Name: Layne Christensen Company
+Symbol: LBAI
+	Name: Lakeland Bancorp
+Symbol: LBIO
+	Name: Lion Biotechnologies
+Symbol: LBIX
+	Name: Leading Brands Inc
+Symbol: LBRDA
+	Name: Liberty Broadband Corporation
+Symbol: LBRDK
+	Name: Liberty Broadband Corporation
+Symbol: LBTYA
+	Name: Liberty Global plc
+Symbol: LBTYB
+	Name: Liberty Global plc
+Symbol: LBTYK
+	Name: Liberty Global plc
+Symbol: LCA
+	Name: Landcadia Holdings
+Symbol: LCAHU
+	Name: Landcadia Holdings
+Symbol: LCAHW
+	Name: Landcadia Holdings
+Symbol: LCNB
+	Name: LCNB Corporation
+Symbol: LCUT
+	Name: Lifetime Brands
+Symbol: LDRI
+	Name: PowerShares LadderRite 0-5 Year Corporate Bond Portfolio
+Symbol: LE
+	Name: Lands&
+Symbol: LECO
+	Name: Lincoln Electric Holdings
+Symbol: LEDS
+	Name: SemiLEDS Corporation
+Symbol: LENS
+	Name: Presbia PLC
+Symbol: LFUS
+	Name: Littelfuse
+Symbol: LFVN
+	Name: Lifevantage Corporation
+Symbol: LGCY
+	Name: Legacy Reserves LP
+Symbol: LGCYO
+	Name: Legacy Reserves LP
+Symbol: LGCYP
+	Name: Legacy Reserves LP
+Symbol: LGIH
+	Name: LGI Homes
+Symbol: LGND
+	Name: Ligand Pharmaceuticals Incorporated
+Symbol: LHCG
+	Name: LHC Group
+Symbol: LIFE
+	Name: aTyr Pharma
+Symbol: LILA
+	Name: Liberty Global plc
+Symbol: LILAK
+	Name: Liberty Global plc
+Symbol: LIME
+	Name: Lime Energy Co.
+Symbol: LINC
+	Name: Lincoln Educational Services Corporation
+Symbol: LIND
+	Name: Lindblad Expeditions Holdings Inc.
+Symbol: LINDW
+	Name: Lindblad Expeditions Holdings Inc.
+Symbol: LINK
+	Name: Interlink Electronics
+Symbol: LION
+	Name: Fidelity Southern Corporation
+Symbol: LIOX
+	Name: Lionbridge Technologies
+Symbol: LITE
+	Name: Lumentum Holdings Inc.
+Symbol: LIVE
+	Name: Live Ventures Incorporated
+Symbol: LIVN
+	Name: LivaNova PLC
+Symbol: LJPC
+	Name: La Jolla Pharmaceutical Company
+Symbol: LKFN
+	Name: Lakeland Financial Corporation
+Symbol: LKOR
+	Name: FlexShares Credit-Scored US Long Corporate Bond Index Fund
+Symbol: LKQ
+	Name: LKQ Corporation
+Symbol: LLNW
+	Name: Limelight Networks
+Symbol: LLTC
+	Name: Linear Technology Corporation
+Symbol: LMAT
+	Name: LeMaitre Vascular
+Symbol: LMBS
+	Name: First Trust Low Duration Opportunities ETF
+Symbol: LMCA
+	Name: Liberty Media Corporation
+Symbol: LMCK
+	Name: Liberty Media Corporation
+Symbol: LMFA
+	Name: LM Funding America
+Symbol: LMFAW
+	Name: LM Funding America
+Symbol: LMIA
+	Name: LMI Aerospace
+Symbol: LMNR
+	Name: Limoneira Co
+Symbol: LMNX
+	Name: Luminex Corporation
+Symbol: LMOS
+	Name: Lumos Networks Corp.
+Symbol: LMRK
+	Name: Landmark Infrastructure Partners LP
+Symbol: LMRKP
+	Name: Landmark Infrastructure Partners LP
+Symbol: LNCE
+	Name: Snyder&
+Symbol: LNDC
+	Name: Landec Corporation
+Symbol: LNGR
+	Name: Global X Longevity Thematic ETF
+Symbol: LNTH
+	Name: Lantheus Holdings
+Symbol: LOAN
+	Name: Manhattan Bridge Capital
+Symbol: LOB
+	Name: Live Oak Bancshares
+Symbol: LOCO
+	Name: El Pollo Loco Holdings
+Symbol: LOGI
+	Name: Logitech International S.A.
+Symbol: LOGM
+	Name: LogMein
+Symbol: LONE
+	Name: Lonestar Resources US Inc.
+Symbol: LOPE
+	Name: Grand Canyon Education
+Symbol: LORL
+	Name: Loral Space and Communications
+Symbol: LOXO
+	Name: Loxo Oncology
+Symbol: LPCN
+	Name: Lipocine Inc.
+Symbol: LPLA
+	Name: LPL Financial Holdings Inc.
+Symbol: LPNT
+	Name: LifePoint Health
+Symbol: LPSN
+	Name: LivePerson
+Symbol: LPTH
+	Name: LightPath Technologies
+Symbol: LPTN
+	Name: Lpath
+Symbol: LQDT
+	Name: Liquidity Services
+Symbol: LRAD
+	Name: LRAD Corporation
+Symbol: LRCX
+	Name: Lam Research Corporation
+Symbol: LSBG
+	Name: Lake Sunapee Bank Group
+Symbol: LSBK
+	Name: Lake Shore Bancorp
+Symbol: LSCC
+	Name: Lattice Semiconductor Corporation
+Symbol: LSTR
+	Name: Landstar System
+Symbol: LSXMA
+	Name: Liberty Media Corporation
+Symbol: LSXMB
+	Name: Liberty Media Corporation
+Symbol: LSXMK
+	Name: Liberty Media Corporation
+Symbol: LTBR
+	Name: Lightbridge Corporation
+Symbol: LTRPA
+	Name: Liberty TripAdvisor Holdings
+Symbol: LTRPB
+	Name: Liberty TripAdvisor Holdings
+Symbol: LTRX
+	Name: Lantronix
+Symbol: LTXB
+	Name: LegacyTexas Financial Group
+Symbol: LULU
+	Name: lululemon athletica inc.
+Symbol: LUNA
+	Name: Luna Innovations Incorporated
+Symbol: LVHD
+	Name: Legg Mason Low Volatility High Dividend ETF
+Symbol: LVNTA
+	Name: Liberty Interactive Corporation
+Symbol: LVNTB
+	Name: Liberty Interactive Corporation
+Symbol: LWAY
+	Name: Lifeway Foods
+Symbol: LXRX
+	Name: Lexicon Pharmaceuticals
+Symbol: LYTS
+	Name: LSI Industries Inc.
+Symbol: MACK
+	Name: Merrimack Pharmaceuticals
+Symbol: MAGS
+	Name: Magal Security Systems Ltd.
+Symbol: MAMS
+	Name: MAM Software Group
+Symbol: MANH
+	Name: Manhattan Associates
+Symbol: MANT
+	Name: ManTech International Corporation
+Symbol: MAR
+	Name: Marriott International
+Symbol: MARA
+	Name: Marathon Patent Group
+Symbol: MARK
+	Name: Remark Media
+Symbol: MARPS
+	Name: Marine Petroleum Trust
+Symbol: MASI
+	Name: Masimo Corporation
+Symbol: MAT
+	Name: Mattel
+Symbol: MATN
+	Name: Mateon Therapeutics
+Symbol: MATR
+	Name: Mattersight Corporation
+Symbol: MATW
+	Name: Matthews International Corporation
+Symbol: MAUI
+	Name: AdvisorShares Market Adaptive Unconstrained Income ETF
+Symbol: MAYS
+	Name: J. W. Mays
+Symbol: MB
+	Name: MINDBODY
+Symbol: MBCN
+	Name: Middlefield Banc Corp.
+Symbol: MBFI
+	Name: MB Financial Inc.
+Symbol: MBFIP
+	Name: MB Financial Inc.
+Symbol: MBII
+	Name: Marrone Bio Innovations
+Symbol: MBLX
+	Name: Metabolix
+Symbol: MBRG
+	Name: Middleburg Financial Corporation
+Symbol: MBRX
+	Name: Moleculin Biotech
+Symbol: MBSD
+	Name: FlexShares Disciplined Duration MBS Index Fund
+Symbol: MBTF
+	Name: M B T Financial Corp
+Symbol: MBUU
+	Name: Malibu Boats
+Symbol: MBVT
+	Name: Merchants Bancshares
+Symbol: MBWM
+	Name: Mercantile Bank Corporation
+Symbol: MCBC
+	Name: Macatawa Bank Corporation
+Symbol: MCEP
+	Name: Mid-Con Energy Partners
+Symbol: MCFT
+	Name: MCBC Holdings
+Symbol: MCHI
+	Name: iShares MSCI China ETF
+Symbol: MCHP
+	Name: Microchip Technology Incorporated
+Symbol: MCHX
+	Name: Marchex
+Symbol: MCRB
+	Name: Seres Therapeutics
+Symbol: MCRI
+	Name: Monarch Casino & Resort
+Symbol: MCUR
+	Name: MACROCURE LTD.
+Symbol: MDCA
+	Name: MDC Partners Inc.
+Symbol: MDCO
+	Name: The Medicines Company
+Symbol: MDGS
+	Name: Medigus Ltd.
+Symbol: MDIV
+	Name: First Trust Multi-Asset Diversified Income Index Fund
+Symbol: MDLZ
+	Name: Mondelez International
+Symbol: MDM
+	Name: Mountain Province Diamonds Inc.
+Symbol: MDRX
+	Name: Allscripts Healthcare Solutions
+Symbol: MDSO
+	Name: Medidata Solutions
+Symbol: MDSY
+	Name: ModSys International Ltd.
+Symbol: MDVN
+	Name: Medivation
+Symbol: MDVX
+	Name: Medovex Corp.
+Symbol: MDVXW
+	Name: Medovex Corp.
+Symbol: MDWD
+	Name: MediWound Ltd.
+Symbol: MDXG
+	Name: MiMedx Group
+Symbol: MEET
+	Name: MeetMe
+Symbol: MEIP
+	Name: MEI Pharma
+Symbol: MELI
+	Name: MercadoLibre
+Symbol: MELR
+	Name: Melrose Bancorp
+Symbol: MEMP
+	Name: Memorial Production Partners LP
+Symbol: MENT
+	Name: Mentor Graphics Corporation
+Symbol: MEOH
+	Name: Methanex Corporation
+Symbol: MERC
+	Name: Mercer International Inc.
+Symbol: MESG
+	Name: Xura
+Symbol: MESO
+	Name: Mesoblast Limited
+Symbol: MFIN
+	Name: Medallion Financial Corp.
+Symbol: MFINL
+	Name: Medallion Financial Corp.
+Symbol: MFLX
+	Name: Multi-Fineline Electronix
+Symbol: MFNC
+	Name: Mackinac Financial Corporation
+Symbol: MFRI
+	Name: MFRI
+Symbol: MFRM
+	Name: Mattress Firm Holding Corp.
+Symbol: MFSF
+	Name: MutualFirst Financial Inc.
+Symbol: MGCD
+	Name: MGC Diagnostics Corporation
+Symbol: MGEE
+	Name: MGE Energy Inc.
+Symbol: MGI
+	Name: Moneygram International
+Symbol: MGIC
+	Name: Magic Software Enterprises Ltd.
+Symbol: MGLN
+	Name: Magellan Health
+Symbol: MGNX
+	Name: MacroGenics
+Symbol: MGPI
+	Name: MGP Ingredients
+Symbol: MGRC
+	Name: McGrath RentCorp
+Symbol: MGYR
+	Name: Magyar Bancorp
+Symbol: MHGC
+	Name: Morgans Hotel Group Co.
+Symbol: MHLD
+	Name: Maiden Holdings
+Symbol: MHLDO
+	Name: Maiden Holdings
+Symbol: MICT
+	Name: Micronet Enertec Technologies
+Symbol: MICTW
+	Name: Micronet Enertec Technologies
+Symbol: MIDD
+	Name: The Middleby Corporation
+Symbol: MIFI
+	Name: Novatel Wireless
+Symbol: MIIIU
+	Name: M III Acquisition Corp.
+Symbol: MIK
+	Name: The Michaels Companies
+Symbol: MILN
+	Name: Global X Millennials Thematic ETF
+Symbol: MIME
+	Name: Mimecast Limited
+Symbol: MIND
+	Name: Mitcham Industries
+Symbol: MINDP
+	Name: Mitcham Industries
+Symbol: MINI
+	Name: Mobile Mini
+Symbol: MIRN
+	Name: Mirna Therapeutics
+Symbol: MITK
+	Name: Mitek Systems
+Symbol: MITL
+	Name: Mitel Networks Corporation
+Symbol: MKSI
+	Name: MKS Instruments
+Symbol: MKTO
+	Name: Marketo
+Symbol: MKTX
+	Name: MarketAxess Holdings
+Symbol: MLAB
+	Name: Mesa Laboratories
+Symbol: MLHR
+	Name: Herman Miller
+Symbol: MLNK
+	Name: ModusLink Global Solutions
+Symbol: MLNX
+	Name: Mellanox Technologies
+Symbol: MLVF
+	Name: Malvern Bancorp
+Symbol: MMAC
+	Name: MMA Capital Management
+Symbol: MMLP
+	Name: Martin Midstream Partners L.P.
+Symbol: MMSI
+	Name: Merit Medical Systems
+Symbol: MMYT
+	Name: MakeMyTrip Limited
+Symbol: MNDO
+	Name: MIND C.T.I. Ltd.
+Symbol: MNGA
+	Name: MagneGas Corporation
+Symbol: MNKD
+	Name: MannKind Corporation
+Symbol: MNOV
+	Name: MediciNova
+Symbol: MNRO
+	Name: Monro Muffler Brake
+Symbol: MNST
+	Name: Monster Beverage Corporation
+Symbol: MNTA
+	Name: Momenta Pharmaceuticals
+Symbol: MNTX
+	Name: Manitex International
+Symbol: MOBI
+	Name: Sky-mobi Limited
+Symbol: MOBL
+	Name: MobileIron
+Symbol: MOCO
+	Name: MOCON
+Symbol: MOFG
+	Name: MidWestOne Financial Group
+Symbol: MOMO
+	Name: Momo Inc.
+Symbol: MORN
+	Name: Morningstar
+Symbol: MOSY
+	Name: MoSys
+Symbol: MPAA
+	Name: Motorcar Parts of America
+Symbol: MPB
+	Name: Mid Penn Bancorp
+Symbol: MPCT
+	Name: iShares Sustainable MSCI Global Impact ETF
+Symbol: MPEL
+	Name: Melco Crown Entertainment Limited
+Symbol: MPET
+	Name: Magellan Petroleum Corporation
+Symbol: MPWR
+	Name: Monolithic Power Systems
+Symbol: MRCC
+	Name: Monroe Capital Corporation
+Symbol: MRCY
+	Name: Mercury Systems Inc
+Symbol: MRD
+	Name: Memorial Resource Development Corp.
+Symbol: MRLN
+	Name: Marlin Business Services Corp.
+Symbol: MRNS
+	Name: Marinus Pharmaceuticals
+Symbol: MRTN
+	Name: Marten Transport
+Symbol: MRTX
+	Name: Mirati Therapeutics
+Symbol: MRUS
+	Name: Merus N.V.
+Symbol: MRVC
+	Name: MRV Communications
+Symbol: MRVL
+	Name: Marvell Technology Group Ltd.
+Symbol: MSBF
+	Name: MSB Financial Corp.
+Symbol: MSBI
+	Name: Midland States Bancorp
+Symbol: MSCC
+	Name: Microsemi Corporation
+Symbol: MSDI
+	Name: Monster Digital
+Symbol: MSDIW
+	Name: Monster Digital
+Symbol: MSEX
+	Name: Middlesex Water Company
+Symbol: MSFG
+	Name: MainSource Financial Group
+Symbol: MSFT
+	Name: Microsoft Corporation
+Symbol: MSG
+	Name: MSG Networks Inc.
+Symbol: MSLI
+	Name: Merus Labs International Inc.
+Symbol: MSON
+	Name: MISONIX
+Symbol: MSTR
+	Name: MicroStrategy Incorporated
+Symbol: MTBC
+	Name: Medical Transcription Billing
+Symbol: MTBCP
+	Name: Medical Transcription Billing
+Symbol: MTCH
+	Name: Match Group
+Symbol: MTEX
+	Name: Mannatech
+Symbol: MTGE
+	Name: American Capital Mortgage Investment Corp.
+Symbol: MTGEP
+	Name: American Capital Mortgage Investment Corp.
+Symbol: MTLS
+	Name: Materialise NV
+Symbol: MTP
+	Name: Midatech Pharma PLC
+Symbol: MTRX
+	Name: Matrix Service Company
+Symbol: MTSC
+	Name: MTS Systems Corporation
+Symbol: MTSI
+	Name: MACOM Technology Solutions Holdings
+Symbol: MTSL
+	Name: MER Telemanagement Solutions Ltd.
+Symbol: MU
+	Name: Micron Technology
+Symbol: MVIS
+	Name: Microvision
+Symbol: MXIM
+	Name: Maxim Integrated Products
+Symbol: MXPT
+	Name: MaxPoint Interactive
+Symbol: MXWL
+	Name: Maxwell Technologies
+Symbol: MYGN
+	Name: Myriad Genetics
+Symbol: MYL
+	Name: Mylan N.V.
+Symbol: MYOK
+	Name: MyoKardia
+Symbol: MYOS
+	Name: MYOS RENS Technology Inc.
+Symbol: MYRG
+	Name: MYR Group
+Symbol: MZOR
+	Name: Mazor Robotics Ltd.
+Symbol: NAII
+	Name: Natural Alternatives International
+Symbol: NAKD
+	Name: Naked Brand Group Inc.
+Symbol: NAME
+	Name: Rightside Group
+Symbol: NANO
+	Name: Nanometrics Incorporated
+Symbol: NATH
+	Name: Nathan&
+Symbol: NATI
+	Name: National Instruments Corporation
+Symbol: NATL
+	Name: National Interstate Corporation
+Symbol: NATR
+	Name: Nature&
+Symbol: NAUH
+	Name: National American University Holdings
+Symbol: NAVG
+	Name: The Navigators Group
+Symbol: NAVI
+	Name: Navient Corporation
+Symbol: NBIX
+	Name: Neurocrine Biosciences
+Symbol: NBN
+	Name: Northeast Bancorp
+Symbol: NBRV
+	Name: Nabriva Therapeutics AG
+Symbol: NBTB
+	Name: NBT Bancorp Inc.
+Symbol: NCBS
+	Name: Nicolet Bankshares Inc.
+Symbol: NCIT
+	Name: NCI
+Symbol: NCLH
+	Name: Norwegian Cruise Line Holdings Ltd.
+Symbol: NCMI
+	Name: National CineMedia
+Symbol: NCOM
+	Name: National Commerce Corporation
+Symbol: NCTY
+	Name: The9 Limited
+Symbol: NDAQ
+	Name: Nasdaq
+Symbol: NDLS
+	Name: Noodles & Company
+Symbol: NDRM
+	Name: NeuroDerm Ltd.
+Symbol: NDSN
+	Name: Nordson Corporation
+Symbol: NEO
+	Name: NeoGenomics
+Symbol: NEOG
+	Name: Neogen Corporation
+Symbol: NEON
+	Name: Neonode Inc.
+Symbol: NEOS
+	Name: Neos Therapeutics
+Symbol: NEOT
+	Name: Neothetics
+Symbol: NEPT
+	Name: Neptune Technologies & Bioresources Inc
+Symbol: NERV
+	Name: Minerva Neurosciences
+Symbol: NETE
+	Name: Net Element
+Symbol: NEWS
+	Name: NewStar Financial
+Symbol: NEWT
+	Name: Newtek Business Services Corp.
+Symbol: NEWTL
+	Name: Newtek Business Services Corp.
+Symbol: NEWTZ
+	Name: Newtek Business Services Corp.
+Symbol: NFBK
+	Name: Northfield Bancorp
+Symbol: NFEC
+	Name: NF Energy Saving Corporation
+Symbol: NFLX
+	Name: Netflix
+Symbol: NGHC
+	Name: National General Holdings Corp
+Symbol: NGHCN
+	Name: National General Holdings Corp
+Symbol: NGHCO
+	Name: National General Holdings Corp
+Symbol: NGHCP
+	Name: National General Holdings Corp
+Symbol: NGHCZ
+	Name: National General Holdings Corp
+Symbol: NH
+	Name: NantHealth
+Symbol: NHLD
+	Name: National Holdings Corporation
+Symbol: NHTC
+	Name: Natural Health Trends Corp.
+Symbol: NICE
+	Name: NICE Ltd
+Symbol: NICK
+	Name: Nicholas Financial
+Symbol: NIHD
+	Name: NII Holdings
+Symbol: NILE
+	Name: Blue Nile
+Symbol: NK
+	Name: NantKwest
+Symbol: NKSH
+	Name: National Bankshares
+Symbol: NKTR
+	Name: Nektar Therapeutics
+Symbol: NLNK
+	Name: NewLink Genetics Corporation
+Symbol: NLST
+	Name: Netlist
+Symbol: NMIH
+	Name: NMI Holdings Inc
+Symbol: NMRX
+	Name: Numerex Corp.
+Symbol: NNBR
+	Name: NN
+Symbol: NNDM
+	Name: Nano Dimension Ltd.
+Symbol: NOVT
+	Name: Novanta Inc.
+Symbol: NRCIA
+	Name: National Research Corporation
+Symbol: NRCIB
+	Name: National Research Corporation
+Symbol: NRIM
+	Name: Northrim BanCorp Inc
+Symbol: NSEC
+	Name: National Security Group
+Symbol: NSIT
+	Name: Insight Enterprises
+Symbol: NSSC
+	Name: NAPCO Security Technologies
+Symbol: NSTG
+	Name: NanoString Technologies
+Symbol: NSYS
+	Name: Nortech Systems Incorporated
+Symbol: NTAP
+	Name: NetApp
+Symbol: NTCT
+	Name: NetScout Systems
+Symbol: NTEC
+	Name: Intec Pharma Ltd.
+Symbol: NTES
+	Name: NetEase
+Symbol: NTGR
+	Name: NETGEAR
+Symbol: NTIC
+	Name: Northern Technologies International Corporation
+Symbol: NTK
+	Name: Nortek Inc.
+Symbol: NTLA
+	Name: Intellia Therapeutics
+Symbol: NTRA
+	Name: Natera
+Symbol: NTRI
+	Name: NutriSystem Inc
+Symbol: NTRS
+	Name: Northern Trust Corporation
+Symbol: NTRSP
+	Name: Northern Trust Corporation
+Symbol: NTWK
+	Name: NetSol Technologies Inc.
+Symbol: NUAN
+	Name: Nuance Communications
+Symbol: NURO
+	Name: NeuroMetrix
+Symbol: NUROW
+	Name: NeuroMetrix
+Symbol: NUTR
+	Name: Nutraceutical International Corporation
+Symbol: NUVA
+	Name: NuVasive
+Symbol: NVAX
+	Name: Novavax
+Symbol: NVCN
+	Name: Neovasc Inc.
+Symbol: NVCR
+	Name: NovoCure Limited
+Symbol: NVDA
+	Name: NVIDIA Corporation
+Symbol: NVDQ
+	Name: Novadaq Technologies Inc
+Symbol: NVEC
+	Name: NVE Corporation
+Symbol: NVEE
+	Name: NV5 Global
+Symbol: NVET
+	Name: Nexvet Biopharma plc
+Symbol: NVFY
+	Name: Nova Lifestyle
+Symbol: NVGN
+	Name: Novogen Limited
+Symbol: NVIV
+	Name: InVivo Therapeutics Holdings Corp.
+Symbol: NVLS
+	Name: Nivalis Therapeutics
+Symbol: NVMI
+	Name: Nova Measuring Instruments Ltd.
+Symbol: NVTR
+	Name: Nuvectra Corporation
+Symbol: NWBI
+	Name: Northwest Bancshares
+Symbol: NWBO
+	Name: Northwest Biotherapeutics
+Symbol: NWBOW
+	Name: Northwest Biotherapeutics
+Symbol: NWFL
+	Name: Norwood Financial Corp.
+Symbol: NWLI
+	Name: National Western Life Group
+Symbol: NWPX
+	Name: Northwest Pipe Company
+Symbol: NWS
+	Name: News Corporation
+Symbol: NWSA
+	Name: News Corporation
+Symbol: NXEO
+	Name: Nexeo Solutions
+Symbol: NXEOU
+	Name: Nexeo Solutions
+Symbol: NXEOW
+	Name: Nexeo Solutions
+Symbol: NXPI
+	Name: NXP Semiconductors N.V.
+Symbol: NXST
+	Name: Nexstar Broadcasting Group
+Symbol: NXTD
+	Name: NXT-ID Inc.
+Symbol: NXTDW
+	Name: NXT-ID Inc.
+Symbol: NXTM
+	Name: NxStage Medical
+Symbol: NYMT
+	Name: New York Mortgage Trust
+Symbol: NYMTO
+	Name: New York Mortgage Trust
+Symbol: NYMTP
+	Name: New York Mortgage Trust
+Symbol: NYMX
+	Name: Nymox Pharmaceutical Corporation
+Symbol: NYNY
+	Name: Empire Resorts
+Symbol: OACQ
+	Name: Origo Acquisition Corporation
+Symbol: OACQR
+	Name: Origo Acquisition Corporation
+Symbol: OACQU
+	Name: Origo Acquisition Corporation
+Symbol: OACQW
+	Name: Origo Acquisition Corporation
+Symbol: OASM
+	Name: Oasmia Pharmaceutical AB
+Symbol: OBAS
+	Name: Optibase Ltd.
+Symbol: OBCI
+	Name: Ocean Bio-Chem
+Symbol: OCC
+	Name: Optical Cable Corporation
+Symbol: OCFC
+	Name: OceanFirst Financial Corp.
+Symbol: OCLR
+	Name: Oclaro
+Symbol: OCLS
+	Name: Oculus Innovative Sciences
+Symbol: OCLSW
+	Name: Oculus Innovative Sciences
+Symbol: OCRX
+	Name: Ocera Therapeutics
+Symbol: OCUL
+	Name: Ocular Therapeutix
+Symbol: ODFL
+	Name: Old Dominion Freight Line
+Symbol: ODP
+	Name: Office Depot
+Symbol: OESX
+	Name: Orion Energy Systems
+Symbol: OFED
+	Name: Oconee Federal Financial Corp.
+Symbol: OFIX
+	Name: Orthofix International N.V.
+Symbol: OFLX
+	Name: Omega Flex
+Symbol: OFS
+	Name: OFS Capital Corporation
+Symbol: OGXI
+	Name: OncoGenex Pharmaceuticals Inc.
+Symbol: OHAI
+	Name: OHA Investment Corporation
+Symbol: OHGI
+	Name: One Horizon Group
+Symbol: OHRP
+	Name: Ohr Pharmaceuticals
+Symbol: OIIM
+	Name: O2Micro International Limited
+Symbol: OILD
+	Name: AccuShares S&P GSCI Crude Oil Excess Return Down Shares
+Symbol: OILU
+	Name: AccuShares S&P GSCI Crude Oil Excess Return Up Shares
+Symbol: OKSB
+	Name: Southwest Bancorp
+Symbol: OLBK
+	Name: Old Line Bancshares
+Symbol: OLD
+	Name: The Long-Term Care ETF
+Symbol: OLED
+	Name: Universal Display Corporation
+Symbol: OLLI
+	Name: Ollie&
+Symbol: OMAB
+	Name: Grupo Aeroportuario del Centro Norte S.A.B. de C.V.
+Symbol: OMCL
+	Name: Omnicell
+Symbol: OMED
+	Name: OncoMed Pharmaceuticals
+Symbol: OMER
+	Name: Omeros Corporation
+Symbol: OMEX
+	Name: Odyssey Marine Exploration
+Symbol: ON
+	Name: ON Semiconductor Corporation
+Symbol: ONB
+	Name: Old National Bancorp
+Symbol: ONCE
+	Name: Spark Therapeutics
+Symbol: ONCS
+	Name: OncoSec Medical Incorporated
+Symbol: ONEQ
+	Name: Fidelity Nasdaq Composite Index Tracking Stock
+Symbol: ONS
+	Name: Oncobiologics
+Symbol: ONSIW
+	Name: Oncobiologics
+Symbol: ONSIZ
+	Name: Oncobiologics
+Symbol: ONTX
+	Name: Onconova Therapeutics
+Symbol: ONVI
+	Name: Onvia
+Symbol: OPB
+	Name: Opus Bank
+Symbol: OPGN
+	Name: OpGen
+Symbol: OPGNW
+	Name: OpGen
+Symbol: OPHC
+	Name: OptimumBank Holdings
+Symbol: OPHT
+	Name: Ophthotech Corporation
+Symbol: OPK
+	Name: Opko Health
+Symbol: OPOF
+	Name: Old Point Financial Corporation
+Symbol: OPTT
+	Name: Ocean Power Technologies
+Symbol: OPXA
+	Name: Opexa Therapeutics
+Symbol: OPXAW
+	Name: Opexa Therapeutics
+Symbol: ORBC
+	Name: ORBCOMM Inc.
+Symbol: ORBK
+	Name: Orbotech Ltd.
+Symbol: OREX
+	Name: Orexigen Therapeutics
+Symbol: ORG
+	Name: The Organics ETF
+Symbol: ORIG
+	Name: Ocean Rig UDW Inc.
+Symbol: ORIT
+	Name: Oritani Financial Corp.
+Symbol: ORLY
+	Name: O&
+Symbol: ORMP
+	Name: Oramed Pharmaceuticals Inc.
+Symbol: ORPN
+	Name: Bio Blast Pharma Ltd.
+Symbol: ORRF
+	Name: Orrstown Financial Services Inc
+Symbol: OSBC
+	Name: Old Second Bancorp
+Symbol: OSBCP
+	Name: Old Second Bancorp
+Symbol: OSHC
+	Name: Ocean Shore Holding Co.
+Symbol: OSIR
+	Name: Osiris Therapeutics
+Symbol: OSIS
+	Name: OSI Systems
+Symbol: OSM
+	Name: SLM Corporation
+Symbol: OSN
+	Name: Ossen Innovation Co.
+Symbol: OSTK
+	Name: Overstock.com
+Symbol: OSUR
+	Name: OraSure Technologies
+Symbol: OTEL
+	Name: Otelco Inc.
+Symbol: OTEX
+	Name: Open Text Corporation
+Symbol: OTIC
+	Name: Otonomy
+Symbol: OTIV
+	Name: On Track Innovations Ltd
+Symbol: OTTR
+	Name: Otter Tail Corporation
+Symbol: OUTR
+	Name: Outerwall Inc.
+Symbol: OVAS
+	Name: Ovascience Inc.
+Symbol: OVBC
+	Name: Ohio Valley Banc Corp.
+Symbol: OVLY
+	Name: Oak Valley Bancorp (CA)
+Symbol: OXBR
+	Name: Oxbridge Re Holdings Limited
+Symbol: OXBRW
+	Name: Oxbridge Re Holdings Limited
+Symbol: OXFD
+	Name: Oxford Immunotec Global PLC
+Symbol: OXLC
+	Name: Oxford Lane Capital Corp.
+Symbol: OXLCN
+	Name: Oxford Lane Capital Corp.
+Symbol: OXLCO
+	Name: Oxford Lane Capital Corp.
+Symbol: OZRK
+	Name: Bank of the Ozarks
+Symbol: PAAC
+	Name: Pacific Special Acquisition Corp.
+Symbol: PAACR
+	Name: Pacific Special Acquisition Corp.
+Symbol: PAACU
+	Name: Pacific Special Acquisition Corp.
+Symbol: PAACW
+	Name: Pacific Special Acquisition Corp.
+Symbol: PAAS
+	Name: Pan American Silver Corp.
+Symbol: PACB
+	Name: Pacific Biosciences of California
+Symbol: PACE
+	Name: Pace Holdings Corp.
+Symbol: PACEU
+	Name: Pace Holdings Corp.
+Symbol: PACEW
+	Name: Pace Holdings Corp.
+Symbol: PACW
+	Name: PacWest Bancorp
+Symbol: PAGG
+	Name: PowerShares Global Agriculture Portfolio
+Symbol: PAHC
+	Name: Phibro Animal Health Corporation
+Symbol: PANL
+	Name: Pangaea Logistics Solutions Ltd.
+Symbol: PARN
+	Name: Parnell Pharmaceuticals Holdings Ltd
+Symbol: PATI
+	Name: Patriot Transportation Holding
+Symbol: PATK
+	Name: Patrick Industries
+Symbol: PAVMU
+	Name: PAVmed Inc.
+Symbol: PAYX
+	Name: Paychex
+Symbol: PBBI
+	Name: PB Bancorp
+Symbol: PBCT
+	Name: People&
+Symbol: PBHC
+	Name: Pathfinder Bancorp
+Symbol: PBIB
+	Name: Porter Bancorp
+Symbol: PBIP
+	Name: Prudential Bancorp
+Symbol: PBMD
+	Name: Prima BioMed Ltd
+Symbol: PBNC
+	Name: Paragon Commercial Corporation
+Symbol: PBPB
+	Name: Potbelly Corporation
+Symbol: PBSK
+	Name: Poage Bankshares
+Symbol: PCAR
+	Name: PACCAR Inc.
+Symbol: PCBK
+	Name: Pacific Continental Corporation (Ore)
+Symbol: PCCC
+	Name: PC Connection
+Symbol: PCH
+	Name: Potlatch Corporation
+Symbol: PCLN
+	Name: The Priceline Group Inc. 
+Symbol: PCMI
+	Name: PCM
+Symbol: PCO
+	Name: Pendrell Corporation
+Symbol: PCOM
+	Name: Points International
+Symbol: PCRX
+	Name: Pacira Pharmaceuticals
+Symbol: PCTI
+	Name: PC-Tel
+Symbol: PCTY
+	Name: Paylocity Holding Corporation
+Symbol: PCYG
+	Name: Park City Group
+Symbol: PCYO
+	Name: Pure Cycle Corporation
+Symbol: PDBC
+	Name: PowerShares DB Optimum Yield Diversified Commodity Strategy Po
+Symbol: PDCE
+	Name: PDC Energy
+Symbol: PDCO
+	Name: Patterson Companies
+Symbol: PDEX
+	Name: Pro-Dex
+Symbol: PDFS
+	Name: PDF Solutions
+Symbol: PDLI
+	Name: PDL BioPharma
+Symbol: PDVW
+	Name: pdvWireless
+Symbol: PEBK
+	Name: Peoples Bancorp of North Carolina
+Symbol: PEBO
+	Name: Peoples Bancorp Inc.
+Symbol: PEGA
+	Name: Pegasystems Inc.
+Symbol: PEGI
+	Name: Pattern Energy Group Inc.
+Symbol: PEIX
+	Name: Pacific Ethanol
+Symbol: PENN
+	Name: Penn National Gaming
+Symbol: PERF
+	Name: Perfumania Holdings
+Symbol: PERI
+	Name: Perion Network Ltd
+Symbol: PERY
+	Name: Perry Ellis International Inc.
+Symbol: PESI
+	Name: Perma-Fix Environmental Services
+Symbol: PETS
+	Name: PetMed Express
+Symbol: PETX
+	Name: Aratana Therapeutics
+Symbol: PFBC
+	Name: Preferred Bank
+Symbol: PFBI
+	Name: Premier Financial Bancorp
+Symbol: PFBX
+	Name: Peoples Financial Corporation
+Symbol: PFIE
+	Name: Profire Energy
+Symbol: PFIN
+	Name: P & F Industries
+Symbol: PFIS
+	Name: Peoples Financial Services Corp. 
+Symbol: PFLT
+	Name: PennantPark Floating Rate Capital Ltd.
+Symbol: PFMT
+	Name: Performant Financial Corporation
+Symbol: PFPT
+	Name: Proofpoint
+Symbol: PFSW
+	Name: PFSweb
+Symbol: PGC
+	Name: Peapack-Gladstone Financial Corporation
+Symbol: PGLC
+	Name: Pershing Gold Corporation
+Symbol: PGNX
+	Name: Progenics Pharmaceuticals Inc.
+Symbol: PGTI
+	Name: PGT
+Symbol: PHII
+	Name: PHI
+Symbol: PHIIK
+	Name: PHI
+Symbol: PHMD
+	Name: PhotoMedex
+Symbol: PI
+	Name: Impinj
+Symbol: PICO
+	Name: PICO Holdings Inc.
+Symbol: PIH
+	Name: 1347 Property Insurance Holdings
+Symbol: PINC
+	Name: Premier
+Symbol: PIRS
+	Name: Pieris Pharmaceuticals
+Symbol: PKBK
+	Name: Parke Bancorp
+Symbol: PKOH
+	Name: Park-Ohio Holdings Corp.
+Symbol: PLAB
+	Name: Photronics
+Symbol: PLAY
+	Name: Dave & Buster&
+Symbol: PLBC
+	Name: Plumas Bancorp
+Symbol: PLCE
+	Name: Children&
+Symbol: PLCM
+	Name: Polycom
+Symbol: PLKI
+	Name: Popeyes Louisiana Kitchen
+Symbol: PLPC
+	Name: Preformed Line Products Company
+Symbol: PLPM
+	Name: Planet Payment
+Symbol: PLSE
+	Name: Pulse Biosciences
+Symbol: PLUG
+	Name: Plug Power
+Symbol: PLUS
+	Name: ePlus inc.
+Symbol: PLXS
+	Name: Plexus Corp.
+Symbol: PMBC
+	Name: Pacific Mercantile Bancorp
+Symbol: PMD
+	Name: Psychemedics Corporation
+Symbol: PME
+	Name: Pingtan Marine Enterprise Ltd.
+Symbol: PMTS
+	Name: CPI Card Group Inc.
+Symbol: PNBK
+	Name: Patriot National Bancorp Inc.
+Symbol: PNFP
+	Name: Pinnacle Financial Partners
+Symbol: PNK
+	Name: Pinnacle Entertainment
+Symbol: PNNT
+	Name: PennantPark Investment Corporation
+Symbol: PNQI
+	Name: PowerShares Nasdaq Internet Portfolio
+Symbol: PNRA
+	Name: Panera Bread Company
+Symbol: PNRG
+	Name: PrimeEnergy Corporation
+Symbol: PNTR
+	Name: Pointer Telocation Ltd.
+Symbol: PODD
+	Name: Insulet Corporation
+Symbol: POOL
+	Name: Pool Corporation
+Symbol: POPE
+	Name: Pope Resources
+Symbol: POWI
+	Name: Power Integrations
+Symbol: POWL
+	Name: Powell Industries
+Symbol: PPBI
+	Name: Pacific Premier Bancorp Inc
+Symbol: PPC
+	Name: Pilgrim&
+Symbol: PPH
+	Name: VanEck Vectors Pharmaceutical ETF
+Symbol: PPHM
+	Name: Peregrine Pharmaceuticals Inc.
+Symbol: PPHMP
+	Name: Peregrine Pharmaceuticals Inc.
+Symbol: PPSI
+	Name: Pioneer Power Solutions
+Symbol: PRAA
+	Name: PRA Group
+Symbol: PRAH
+	Name: PRA Health Sciences
+Symbol: PRAN
+	Name: Prana Biotechnology Ltd
+Symbol: PRCP
+	Name: Perceptron
+Symbol: PRFT
+	Name: Perficient
+Symbol: PRFZ
+	Name: PowerShares FTSE RAFI US 1500 Small-Mid Portfolio
+Symbol: PRGS
+	Name: Progress Software Corporation
+Symbol: PRGX
+	Name: PRGX Global
+Symbol: PRIM
+	Name: Primoris Services Corporation
+Symbol: PRKR
+	Name: ParkerVision
+Symbol: PRMW
+	Name: Primo Water Corporation
+Symbol: PROV
+	Name: Provident Financial Holdings
+Symbol: PRPH
+	Name: ProPhase Labs
+Symbol: PRQR
+	Name: ProQR Therapeutics N.V.
+Symbol: PRSC
+	Name: The Providence Service Corporation
+Symbol: PRSS
+	Name: CafePress Inc.
+Symbol: PRTA
+	Name: Prothena Corporation plc
+Symbol: PRTK
+	Name: Paratek Pharmaceuticals
+Symbol: PRTO
+	Name: Proteon Therapeutics
+Symbol: PRTS
+	Name: U.S. Auto Parts Network
+Symbol: PRXL
+	Name: PAREXEL International Corporation
+Symbol: PRZM
+	Name: Prism Technologies Group
+Symbol: PSAU
+	Name: PowerShares Global Gold & Precious Metals Portfolio
+Symbol: PSCC
+	Name: PowerShares S&P SmallCap Consumer Staples Portfolio
+Symbol: PSCD
+	Name: PowerShares S&P SmallCap Consumer Discretionary Portfolio
+Symbol: PSCE
+	Name: PowerShares S&P SmallCap Energy Portfolio
+Symbol: PSCF
+	Name: PowerShares S&P SmallCap Financials Portfolio
+Symbol: PSCH
+	Name: PowerShares S&P SmallCap Health Care Portfolio
+Symbol: PSCI
+	Name: PowerShares S&P SmallCap Industrials Portfolio
+Symbol: PSCM
+	Name: PowerShares S&P SmallCap Materials Portfolio
+Symbol: PSCT
+	Name: PowerShares S&P SmallCap Information Technology Portfolio
+Symbol: PSCU
+	Name: PowerShares S&P SmallCap Utilities Portfolio
+Symbol: PSDV
+	Name: pSivida Corp.
+Symbol: PSEC
+	Name: Prospect Capital Corporation
+Symbol: PSET
+	Name: Principal Price Setters Index ETF
+Symbol: PSIX
+	Name: Power Solutions International
+Symbol: PSMT
+	Name: PriceSmart
+Symbol: PSTB
+	Name: Park Sterling Corporation
+Symbol: PSTI
+	Name: Pluristem Therapeutics
+Symbol: PTC
+	Name: PTC Inc.
+Symbol: PTCT
+	Name: PTC Therapeutics
+Symbol: PTEN
+	Name: Patterson-UTI Energy
+Symbol: PTI
+	Name: Proteostasis Therapeutics
+Symbol: PTIE
+	Name: Pain Therapeutics
+Symbol: PTLA
+	Name: Portola Pharmaceuticals
+Symbol: PTNR
+	Name: Partner Communications Company Ltd.
+Symbol: PTSI
+	Name: P.A.M. Transportation Services
+Symbol: PTX
+	Name: Pernix Therapeutics Holdings
+Symbol: PTXP
+	Name: PennTex Midstream Partners
+Symbol: PUB
+	Name: People&
+Symbol: PULM
+	Name: Pulmatrix
+Symbol: PVBC
+	Name: Provident Bancorp
+Symbol: PVTB
+	Name: PrivateBancorp
+Symbol: PVTBP
+	Name: PrivateBancorp
+Symbol: PWOD
+	Name: Penns Woods Bancorp
+Symbol: PWX
+	Name: Providence and Worcester Railroad Company
+Symbol: PXLW
+	Name: Pixelworks
+Symbol: PXS
+	Name: Pyxis Tankers Inc.
+Symbol: PY
+	Name: Principal Shareholder Yield Index ETF
+Symbol: PYDS
+	Name: Payment Data Systems
+Symbol: PYPL
+	Name: PayPal Holdings
+Symbol: PZRX
+	Name: PhaseRx
+Symbol: PZZA
+	Name: Papa John&
+Symbol: QABA
+	Name: First Trust NASDAQ ABA Community Bank Index Fund
+Symbol: QADA
+	Name: QAD Inc.
+Symbol: QADB
+	Name: QAD Inc.
+Symbol: QAT
+	Name: iShares MSCI Qatar Capped ETF
+Symbol: QBAK
+	Name: Qualstar Corporation
+Symbol: QCLN
+	Name: First Trust NASDAQ Clean Edge Green Energy Index Fund
+Symbol: QCOM
+	Name: QUALCOMM Incorporated
+Symbol: QCRH
+	Name: QCR Holdings
+Symbol: QDEL
+	Name: Quidel Corporation
+Symbol: QGEN
+	Name: Qiagen N.V.
+Symbol: QINC
+	Name: First Trust RBA Quality Income ETF
+Symbol: QIWI
+	Name: QIWI plc
+Symbol: QLC
+	Name: FlexShares US Quality Large Cap Index Fund
+Symbol: QLGC
+	Name: QLogic Corporation
+Symbol: QLIK
+	Name: Qlik Technologies Inc.
+Symbol: QLTI
+	Name: QLT Inc.
+Symbol: QLYS
+	Name: Qualys
+Symbol: QNST
+	Name: QuinStreet
+Symbol: QPAC
+	Name: Quinpario Acquisition Corp. 2
+Symbol: QPACU
+	Name: Quinpario Acquisition Corp. 2
+Symbol: QPACW
+	Name: Quinpario Acquisition Corp. 2
+Symbol: QQEW
+	Name: First Trust NASDAQ-100 Equal Weighted Index Fund
+Symbol: QQQ
+	Name: PowerShares QQQ Trust
+Symbol: QQQC
+	Name: Global X NASDAQ China Technology ETF
+Symbol: QQQX
+	Name: Nuveen NASDAQ 100 Dynamic Overwrite Fund
+Symbol: QQXT
+	Name: First Trust NASDAQ-100 Ex-Technology Sector Index Fund
+Symbol: QRHC
+	Name: Quest Resource Holding Corporation.
+Symbol: QRVO
+	Name: Qorvo
+Symbol: QSII
+	Name: Quality Systems
+Symbol: QTEC
+	Name: First Trust NASDAQ-100- Technology Index Fund
+Symbol: QTNT
+	Name: Quotient Limited
+Symbol: QUIK
+	Name: QuickLogic Corporation
+Symbol: QUMU
+	Name: Qumu Corporation
+Symbol: QUNR
+	Name: Qunar Cayman Islands Limited
+Symbol: QURE
+	Name: uniQure N.V.
+Symbol: QVCA
+	Name: Liberty Interactive Corporation
+Symbol: QVCB
+	Name: Liberty Interactive Corporation
+Symbol: QYLD
+	Name: Recon Capital NASDAQ-100 Covered Call ETF
+Symbol: RADA
+	Name: Rada Electronics Industries Limited
+Symbol: RAIL
+	Name: Freightcar America
+Symbol: RAND
+	Name: Rand Capital Corporation
+Symbol: RARE
+	Name: Ultragenyx Pharmaceutical Inc.
+Symbol: RAVE
+	Name: Rave Restaurant Group
+Symbol: RAVN
+	Name: Raven Industries
+Symbol: RBCAA
+	Name: Republic Bancorp
+Symbol: RBCN
+	Name: Rubicon Technology
+Symbol: RBPAA
+	Name: Royal Bancshares of Pennsylvania
+Symbol: RCII
+	Name: Rent-A-Center Inc.
+Symbol: RCKY
+	Name: Rocky Brands
+Symbol: RCMT
+	Name: RCM Technologies
+Symbol: RCON
+	Name: Recon Technology
+Symbol: RDCM
+	Name: Radcom Ltd.
+Symbol: RDEN
+	Name: Elizabeth Arden
+Symbol: RDHL
+	Name: Redhill Biopharma Ltd.
+Symbol: RDI
+	Name: Reading International Inc
+Symbol: RDIB
+	Name: Reading International Inc
+Symbol: RDNT
+	Name: RadNet
+Symbol: RDUS
+	Name: Radius Health
+Symbol: RDVY
+	Name: First Trust NASDAQ Rising Dividend Achievers ETF
+Symbol: RDWR
+	Name: Radware Ltd.
+Symbol: RECN
+	Name: Resources Connection
+Symbol: REFR
+	Name: Research Frontiers Incorporated
+Symbol: REGI
+	Name: Renewable Energy Group
+Symbol: REGN
+	Name: Regeneron Pharmaceuticals
+Symbol: REIS
+	Name: Reis
+Symbol: RELL
+	Name: Richardson Electronics
+Symbol: RELV
+	Name: Reliv&
+Symbol: RELY
+	Name: Real Industry
+Symbol: REPH
+	Name: Recro Pharma
+Symbol: RESN
+	Name: Resonant Inc.
+Symbol: RETA
+	Name: Reata Pharmaceuticals
+Symbol: REXI
+	Name: Resource America
+Symbol: REXX
+	Name: Rex Energy Corporation
+Symbol: RFAP
+	Name: First Trust RiverFront Dynamic Asia Pacific ETF
+Symbol: RFDI
+	Name: First Trust RiverFront Dynamic Developed International ETF
+Symbol: RFEM
+	Name: First Trust RiverFront Dynamic Emerging Markets ETF
+Symbol: RFEU
+	Name: First Trust RiverFront Dynamic Europe ETF
+Symbol: RFIL
+	Name: RF Industries
+Symbol: RGCO
+	Name: RGC Resources Inc.
+Symbol: RGEN
+	Name: Repligen Corporation
+Symbol: RGLD
+	Name: Royal Gold
+Symbol: RGLS
+	Name: Regulus Therapeutics Inc.
+Symbol: RGNX
+	Name: REGENXBIO Inc.
+Symbol: RGSE
+	Name: Real Goods Solar
+Symbol: RIBT
+	Name: RiceBran Technologies
+Symbol: RIBTW
+	Name: RiceBran Technologies
+Symbol: RICK
+	Name: RCI Hospitality Holdings
+Symbol: RIGL
+	Name: Rigel Pharmaceuticals
+Symbol: RILY
+	Name: B. Riley Financial
+Symbol: RKDA
+	Name: Arcadia Biosciences
+Symbol: RLJE
+	Name: RLJ Entertainment
+Symbol: RLOC
+	Name: ReachLocal
+Symbol: RLOG
+	Name: Rand Logistics
+Symbol: RLYP
+	Name: Relypsa
+Symbol: RMBS
+	Name: Rambus
+Symbol: RMCF
+	Name: Rocky Mountain Chocolate Factory
+Symbol: RMGN
+	Name: RMG Networks Holding Corporation
+Symbol: RMR
+	Name: The RMR Group Inc.
+Symbol: RMTI
+	Name: Rockwell Medical
+Symbol: RNDB
+	Name: Randolph Bancorp
+Symbol: RNET
+	Name: RigNet
+Symbol: RNST
+	Name: Renasant Corporation
+Symbol: RNVA
+	Name: Rennova Health
+Symbol: RNVAZ
+	Name: Rennova Health
+Symbol: RNWK
+	Name: RealNetworks
+Symbol: ROBO
+	Name: ROBO Global Robotics and Automation Index ETF
+Symbol: ROCK
+	Name: Gibraltar Industries
+Symbol: ROIA
+	Name: Radio One
+Symbol: ROIAK
+	Name: Radio One
+Symbol: ROIC
+	Name: Retail Opportunity Investments Corp.
+Symbol: ROKA
+	Name: Roka Bioscience
+Symbol: ROLL
+	Name: RBC Bearings Incorporated
+Symbol: ROSG
+	Name: Rosetta Genomics Ltd.
+Symbol: ROST
+	Name: Ross Stores
+Symbol: ROVI
+	Name: Rovi Corporation
+Symbol: RP
+	Name: RealPage
+Symbol: RPD
+	Name: Rapid7
+Symbol: RPRX
+	Name: Repros Therapeutics Inc.
+Symbol: RPTP
+	Name: Raptor Pharmaceutical Corp.
+Symbol: RPXC
+	Name: RPX Corporation
+Symbol: RRD
+	Name: R.R. Donnelley & Sons Company
+Symbol: RRGB
+	Name: Red Robin Gourmet Burgers
+Symbol: RRR
+	Name: Red Rock Resorts
+Symbol: RSTI
+	Name: Rofin-Sinar Technologies
+Symbol: RSYS
+	Name: RadiSys Corporation
+Symbol: RTIX
+	Name: RTI Surgical
+Symbol: RTK
+	Name: Rentech
+Symbol: RTRX
+	Name: Retrophin
+Symbol: RTTR
+	Name: Ritter Pharmaceuticals
+Symbol: RUN
+	Name: Sunrun Inc.
+Symbol: RUSHA
+	Name: Rush Enterprises
+Symbol: RUSHB
+	Name: Rush Enterprises
+Symbol: RUTH
+	Name: Ruth&
+Symbol: RVLT
+	Name: Revolution Lighting Technologies
+Symbol: RVNC
+	Name: Revance Therapeutics
+Symbol: RVSB
+	Name: Riverview Bancorp Inc
+Symbol: RWLK
+	Name: ReWalk Robotics Ltd
+Symbol: RXDX
+	Name: Ignyta
+Symbol: RXII
+	Name: RXI Pharmaceuticals Corporation
+Symbol: RYAAY
+	Name: Ryanair Holdings plc
+Symbol: SAAS
+	Name: inContact
+Symbol: SABR
+	Name: Sabre Corporation
+Symbol: SAEX
+	Name: SAExploration Holdings
+Symbol: SAFM
+	Name: Sanderson Farms
+Symbol: SAFT
+	Name: Safety Insurance Group
+Symbol: SAGE
+	Name: Sage Therapeutics
+Symbol: SAIA
+	Name: Saia
+Symbol: SAJA
+	Name: Sajan
+Symbol: SAL
+	Name: Salisbury Bancorp
+Symbol: SALE
+	Name: RetailMeNot
+Symbol: SALM
+	Name: Salem Media Group
+Symbol: SAMG
+	Name: Silvercrest Asset Management Group Inc.
+Symbol: SANM
+	Name: Sanmina Corporation
+Symbol: SANW
+	Name: S&W Seed Company
+Symbol: SASR
+	Name: Sandy Spring Bancorp
+Symbol: SATS
+	Name: EchoStar Corporation
+Symbol: SAUC
+	Name: Diversified Restaurant Holdings
+Symbol: SAVE
+	Name: Spirit Airlines
+Symbol: SBAC
+	Name: SBA Communications Corporation
+Symbol: SBBP
+	Name: Strongbridge Biopharma plc
+Symbol: SBBX
+	Name: Sussex Bancorp
+Symbol: SBCF
+	Name: Seacoast Banking Corporation of Florida
+Symbol: SBCP
+	Name: Sunshine Bancorp
+Symbol: SBFG
+	Name: SB Financial Group
+Symbol: SBFGP
+	Name: SB Financial Group
+Symbol: SBGI
+	Name: Sinclair Broadcast Group
+Symbol: SBLK
+	Name: Star Bulk Carriers Corp.
+Symbol: SBLKL
+	Name: Star Bulk Carriers Corp.
+Symbol: SBNY
+	Name: Signature Bank
+Symbol: SBNYW
+	Name: Signature Bank
+Symbol: SBOT
+	Name: Stellar Biotechnologies
+Symbol: SBPH
+	Name: Spring Bank Pharmaceuticals
+Symbol: SBRA
+	Name: Sabra Healthcare REIT
+Symbol: SBRAP
+	Name: Sabra Healthcare REIT
+Symbol: SBSA
+	Name: Spanish Broadcasting System
+Symbol: SBSI
+	Name: Southside Bancshares
+Symbol: SBUX
+	Name: Starbucks Corporation
+Symbol: SCAI
+	Name: Surgical Care Affiliates
+Symbol: SCHL
+	Name: Scholastic Corporation
+Symbol: SCHN
+	Name: Schnitzer Steel Industries
+Symbol: SCKT
+	Name: Socket Mobile
+Symbol: SCLN
+	Name: SciClone Pharmaceuticals
+Symbol: SCMP
+	Name: Sucampo Pharmaceuticals
+Symbol: SCON
+	Name: Superconductor Technologies Inc.
+Symbol: SCOR
+	Name: comScore
+Symbol: SCSC
+	Name: ScanSource
+Symbol: SCSS
+	Name: Select Comfort Corporation
+Symbol: SCTY
+	Name: SolarCity Corporation
+Symbol: SCVL
+	Name: Shoe Carnival
+Symbol: SCWX
+	Name: SecureWorks Corp.
+Symbol: SCYX
+	Name: SCYNEXIS
+Symbol: SCZ
+	Name: iShares MSCI EAFE Small-Cap ETF
+Symbol: SEAC
+	Name: SeaChange International
+Symbol: SEDG
+	Name: SolarEdge Technologies
+Symbol: SEED
+	Name: Origin Agritech Limited
+Symbol: SEIC
+	Name: SEI Investments Company
+Symbol: SELB
+	Name: Selecta Biosciences
+Symbol: SELF
+	Name: Global Self Storage
+Symbol: SEMI
+	Name: SunEdison Semiconductor Limited
+Symbol: SENEA
+	Name: Seneca Foods Corp.
+Symbol: SENEB
+	Name: Seneca Foods Corp.
+Symbol: SEV
+	Name: Sevcon
+Symbol: SFBC
+	Name: Sound Financial Bancorp
+Symbol: SFBS
+	Name: ServisFirst Bancshares
+Symbol: SFLY
+	Name: Shutterfly
+Symbol: SFM
+	Name: Sprouts Farmers Market
+Symbol: SFNC
+	Name: Simmons First National Corporation
+Symbol: SFST
+	Name: Southern First Bancshares
+Symbol: SGBK
+	Name: Stonegate Bank
+Symbol: SGC
+	Name: Superior Uniform Group
+Symbol: SGEN
+	Name: Seattle Genetics
+Symbol: SGI
+	Name: Silicon Graphics International Corp
+Symbol: SGMA
+	Name: SigmaTron International
+Symbol: SGMO
+	Name: Sangamo BioSciences
+Symbol: SGMS
+	Name: Scientific Games Corp
+Symbol: SGNL
+	Name: Signal Genetics
+Symbol: SGNT
+	Name: Sagent Pharmaceuticals
+Symbol: SGOC
+	Name: SGOCO Group
+Symbol: SGRP
+	Name: SPAR Group
+Symbol: SGRY
+	Name: Surgery Partners
+Symbol: SGYP
+	Name: Synergy Pharmaceuticals
+Symbol: SGYPU
+	Name: Synergy Pharmaceuticals
+Symbol: SGYPW
+	Name: Synergy Pharmaceuticals
+Symbol: SHBI
+	Name: Shore Bancshares Inc
+Symbol: SHEN
+	Name: Shenandoah Telecommunications Co
+Symbol: SHIP
+	Name: Seanergy Maritime Holdings Corp
+Symbol: SHLD
+	Name: Sears Holdings Corporation
+Symbol: SHLDW
+	Name: Sears Holdings Corporation
+Symbol: SHLM
+	Name: A. Schulman
+Symbol: SHLO
+	Name: Shiloh Industries
+Symbol: SHOO
+	Name: Steven Madden
+Symbol: SHOR
+	Name: ShoreTel
+Symbol: SHOS
+	Name: Sears Hometown and Outlet Stores
+Symbol: SHPG
+	Name: Shire plc
+Symbol: SHSP
+	Name: SharpSpring
+Symbol: SIEB
+	Name: Siebert Financial Corp.
+Symbol: SIEN
+	Name: Sientra
+Symbol: SIFI
+	Name: SI Financial Group
+Symbol: SIFY
+	Name: Sify Technologies Limited
+Symbol: SIGI
+	Name: Selective Insurance Group
+Symbol: SIGM
+	Name: Sigma Designs
+Symbol: SILC
+	Name: Silicom Ltd
+Symbol: SIMO
+	Name: Silicon Motion Technology Corporation
+Symbol: SINA
+	Name: Sina Corporation
+Symbol: SINO
+	Name: Sino-Global Shipping America
+Symbol: SIR
+	Name: Select Income REIT
+Symbol: SIRI
+	Name: Sirius XM Holdings Inc.
+Symbol: SITO
+	Name: SITO Mobile
+Symbol: SIVB
+	Name: SVB Financial Group
+Symbol: SIVBO
+	Name: SVB Financial Group
+Symbol: SKIS
+	Name: Peak Resorts
+Symbol: SKLN
+	Name: Skyline Medical Inc.
+Symbol: SKOR
+	Name: FlexShares Credit-Scored US Corporate Bond Index Fund
+Symbol: SKUL
+	Name: Skullcandy
+Symbol: SKYS
+	Name: Sky Solar Holdings
+Symbol: SKYW
+	Name: SkyWest
+Symbol: SKYY
+	Name: First Trust ISE Cloud Computing Index Fund
+Symbol: SLAB
+	Name: Silicon Laboratories
+Symbol: SLCT
+	Name: Select Bancorp
+Symbol: SLGN
+	Name: Silgan Holdings Inc.
+Symbol: SLIM
+	Name: The Obesity ETF
+Symbol: SLM
+	Name: SLM Corporation
+Symbol: SLMAP
+	Name: SLM Corporation
+Symbol: SLMBP
+	Name: SLM Corporation
+Symbol: SLP
+	Name: Simulations Plus
+Symbol: SLQD
+	Name: iShares 0-5 Year Investment Grade Corporate Bond ETF
+Symbol: SLRC
+	Name: Solar Capital Ltd.
+Symbol: SLVO
+	Name: region
+Symbol: SMBC
+	Name: Southern Missouri Bancorp
+Symbol: SMBK
+	Name: SmartFinancial
+Symbol: SMCI
+	Name: Super Micro Computer
+Symbol: SMCP
+	Name: AlphaMark Actively Managed Small Cap ETF
+Symbol: SMED
+	Name: Sharps Compliance Corp
+Symbol: SMIT
+	Name: Schmitt Industries
+Symbol: SMLR
+	Name: Semler Scientific
+Symbol: SMMF
+	Name: Summit Financial Group
+Symbol: SMMT
+	Name: Summit Therapeutics plc
+Symbol: SMRT
+	Name: Stein Mart
+Symbol: SMSI
+	Name: Smith Micro Software
+Symbol: SMT
+	Name: SMART Technologies Inc.
+Symbol: SMTC
+	Name: Semtech Corporation
+Symbol: SMTX
+	Name: SMTC Corporation
+Symbol: SNAK
+	Name: Inventure Foods
+Symbol: SNBC
+	Name: Sun Bancorp
+Symbol: SNC
+	Name: State National Companies
+Symbol: SNCR
+	Name: Synchronoss Technologies
+Symbol: SNDX
+	Name: Syndax Pharmaceuticals
+Symbol: SNFCA
+	Name: Security National Financial Corporation
+Symbol: SNH
+	Name: Senior Housing Properties Trust
+Symbol: SNHNI
+	Name: Senior Housing Properties Trust
+Symbol: SNHNL
+	Name: Senior Housing Properties Trust
+Symbol: SNHY
+	Name: Sun Hydraulics Corporation
+Symbol: SNI
+	Name: Scripps Networks Interactive
+Symbol: SNMX
+	Name: Senomyx
+Symbol: SNPS
+	Name: Synopsys
+Symbol: SNSS
+	Name: Sunesis Pharmaceuticals
+Symbol: SNTA
+	Name: Synta Pharmaceuticals Corp.
+Symbol: SOCL
+	Name: Global X Social Media Index ETF
+Symbol: SODA
+	Name: SodaStream International Ltd.
+Symbol: SOFO
+	Name: Sonic Foundry
+Symbol: SOHO
+	Name: Sotherly Hotels Inc.
+Symbol: SOHOL
+	Name: Sotherly Hotels LP
+Symbol: SOHOM
+	Name: Sotherly Hotels LP
+Symbol: SOHU
+	Name: Sohu.com Inc.
+Symbol: SONA
+	Name: Southern National Bancorp of Virginia
+Symbol: SONC
+	Name: Sonic Corp.
+Symbol: SONS
+	Name: Sonus Networks
+Symbol: SORL
+	Name: SORL Auto Parts
+Symbol: SOXX
+	Name: iShares PHLX SOX Semiconductor Sector Index Fund
+Symbol: SP
+	Name: SP Plus Corporation
+Symbol: SPAN
+	Name: Span-America Medical Systems
+Symbol: SPAR
+	Name: Spartan Motors
+Symbol: SPCB
+	Name: SuperCom
+Symbol: SPEX
+	Name: Spherix Incorporated
+Symbol: SPHS
+	Name: Sophiris Bio
+Symbol: SPI
+	Name: SPI Energy Co.
+Symbol: SPIL
+	Name: Siliconware Precision Industries Company
+Symbol: SPKE
+	Name: Spark Energy
+Symbol: SPLK
+	Name: Splunk Inc.
+Symbol: SPLS
+	Name: Staples
+Symbol: SPNC
+	Name: The Spectranetics Corporation
+Symbol: SPNE
+	Name: SeaSpine Holdings Corporation
+Symbol: SPNS
+	Name: Sapiens International Corporation N.V.
+Symbol: SPOK
+	Name: Spok Holdings
+Symbol: SPPI
+	Name: Spectrum Pharmaceuticals
+Symbol: SPRT
+	Name: support.com
+Symbol: SPSC
+	Name: SPS Commerce
+Symbol: SPTN
+	Name: SpartanNash Company
+Symbol: SPU
+	Name: SkyPeople Fruit Juice
+Symbol: SPWH
+	Name: Sportsman&
+Symbol: SPWR
+	Name: SunPower Corporation
+Symbol: SQBG
+	Name: Sequential Brands Group
+Symbol: SQI
+	Name: SciQuest
+Symbol: SQNM
+	Name: Sequenom
+Symbol: SQQQ
+	Name: ProShares UltraPro Short QQQ
+Symbol: SRAQ
+	Name: Silver Run Acquisition Corporation
+Symbol: SRAQU
+	Name: Silver Run Acquisition Corporation
+Symbol: SRAQW
+	Name: Silver Run Acquisition Corporation
+Symbol: SRCE
+	Name: 1st Source Corporation
+Symbol: SRCL
+	Name: Stericycle
+Symbol: SRCLP
+	Name: Stericycle
+Symbol: SRDX
+	Name: SurModics
+Symbol: SRET
+	Name: Global X SuperDividend REIT ETF
+Symbol: SREV
+	Name: ServiceSource International
+Symbol: SRNE
+	Name: Sorrento Therapeutics
+Symbol: SRPT
+	Name: Sarepta Therapeutics
+Symbol: SRSC
+	Name: Sears Canada Inc. 
+Symbol: SRTSU
+	Name: Sensus Healthcare
+Symbol: SSB
+	Name: South State Corporation
+Symbol: SSBI
+	Name: Summit State Bank
+Symbol: SSFN
+	Name: Stewardship Financial Corp
+Symbol: SSH
+	Name: Sunshine Heart Inc
+Symbol: SSKN
+	Name: Strata Skin Sciences
+Symbol: SSNC
+	Name: SS&C Technologies Holdings
+Symbol: SSRI
+	Name: Silver Standard Resources Inc.
+Symbol: SSYS
+	Name: Stratasys
+Symbol: STAA
+	Name: STAAR Surgical Company
+Symbol: STAF
+	Name: Staffing 360 Solutions
+Symbol: STB
+	Name: Student Transportation Inc
+Symbol: STBA
+	Name: S&T Bancorp
+Symbol: STBZ
+	Name: State Bank Financial Corporation.
+Symbol: STDY
+	Name: SteadyMed Ltd.
+Symbol: STEM
+	Name: StemCells
+Symbol: STFC
+	Name: State Auto Financial Corporation
+Symbol: STKL
+	Name: SunOpta
+Symbol: STKS
+	Name: The ONE Group Hospitality
+Symbol: STLD
+	Name: Steel Dynamics
+Symbol: STLY
+	Name: Stanley Furniture Company
+Symbol: STML
+	Name: Stemline Therapeutics
+Symbol: STMP
+	Name: Stamps.com Inc.
+Symbol: STPP
+	Name: region
+Symbol: STRA
+	Name: Strayer Education
+Symbol: STRL
+	Name: Sterling Construction Company Inc
+Symbol: STRM
+	Name: Streamline Health Solutions
+Symbol: STRS
+	Name: Stratus Properties
+Symbol: STRT
+	Name: Strattec Security Corporation
+Symbol: STRZA
+	Name: Starz
+Symbol: STRZB
+	Name: Starz
+Symbol: STX
+	Name: Seagate Technology PLC
+Symbol: STXS
+	Name: Stereotaxis
+Symbol: SUMR
+	Name: Summer Infant
+Symbol: SUNS
+	Name: Solar Senior Capital Ltd.
+Symbol: SUNW
+	Name: Sunworks
+Symbol: SUPN
+	Name: Supernus Pharmaceuticals
+Symbol: SVA
+	Name: Sinovac Biotech
+Symbol: SVBI
+	Name: Severn Bancorp Inc
+Symbol: SVVC
+	Name: Firsthand Technology Value Fund
+Symbol: SWHC
+	Name: Smith & Wesson Holding Corporation
+Symbol: SWIR
+	Name: Sierra Wireless
+Symbol: SWKS
+	Name: Skyworks Solutions
+Symbol: SYBT
+	Name: Stock Yards Bancorp
+Symbol: SYKE
+	Name: Sykes Enterprises
+Symbol: SYMC
+	Name: Symantec Corporation
+Symbol: SYMX
+	Name: Synthesis Energy Systems
+Symbol: SYNA
+	Name: Synaptics Incorporated
+Symbol: SYNC
+	Name: Synacor
+Symbol: SYNL
+	Name: Synalloy Corporation
+Symbol: SYNT
+	Name: Syntel
+Symbol: SYPR
+	Name: Sypris Solutions
+Symbol: SYRS
+	Name: Syros Pharmaceuticals
+Symbol: SYRX
+	Name: Sysorex Global
+Symbol: SYUT
+	Name: Synutra International
+Symbol: SZMK
+	Name: Sizmek Inc.
+Symbol: TA
+	Name: TravelCenters of America LLC
+Symbol: TACO
+	Name: Del Taco Restaurants
+Symbol: TACOW
+	Name: Del Taco Restaurants
+Symbol: TACT
+	Name: TransAct Technologies Incorporated
+Symbol: TAIT
+	Name: Taitron Components Incorporated
+Symbol: TALL
+	Name: Royal Bank Of Canada
+Symbol: TANH
+	Name: Tantech Holdings Ltd.
+Symbol: TANNI
+	Name: TravelCenters of America LLC
+Symbol: TANNL
+	Name: TravelCenters of America LLC
+Symbol: TANNZ
+	Name: TravelCenters of America LLC
+Symbol: TAPR
+	Name: region
+Symbol: TASR
+	Name: TASER International
+Symbol: TAST
+	Name: Carrols Restaurant Group
+Symbol: TATT
+	Name: TAT Technologies Ltd.
+Symbol: TAX
+	Name: Liberty Tax
+Symbol: TAYD
+	Name: Taylor Devices
+Symbol: TBBK
+	Name: The Bancorp
+Symbol: TBIO
+	Name: Transgenomic
+Symbol: TBK
+	Name: Triumph Bancorp
+Symbol: TBNK
+	Name: Territorial Bancorp Inc.
+Symbol: TBPH
+	Name: Theravance Biopharma
+Symbol: TBRA
+	Name: Tobira Therapeutics
+Symbol: TCBI
+	Name: Texas Capital Bancshares
+Symbol: TCBIL
+	Name: Texas Capital Bancshares
+Symbol: TCBIP
+	Name: Texas Capital Bancshares
+Symbol: TCBIW
+	Name: Texas Capital Bancshares
+Symbol: TCBK
+	Name: TriCo Bancshares
+Symbol: TCCO
+	Name: Technical Communications Corporation
+Symbol: TCFC
+	Name: The Community Financial Corporation
+Symbol: TCON
+	Name: TRACON Pharmaceuticals
+Symbol: TCPC
+	Name: TCP Capital Corp.
+Symbol: TCRD
+	Name: THL Credit
+Symbol: TCX
+	Name: Tucows Inc.
+Symbol: TDIV
+	Name: First Trust NASDAQ Technology Dividend Index Fund
+Symbol: TEAM
+	Name: Atlassian Corporation Plc
+Symbol: TEAR
+	Name: TearLab Corporation
+Symbol: TECD
+	Name: Tech Data Corporation
+Symbol: TECH
+	Name: Bio-Techne Corp
+Symbol: TEDU
+	Name: Tarena International
+Symbol: TENX
+	Name: Tenax Therapeutics
+Symbol: TERP
+	Name: TerraForm Power
+Symbol: TESO
+	Name: Tesco Corporation
+Symbol: TESS
+	Name: TESSCO Technologies Incorporated
+Symbol: TFSL
+	Name: TFS Financial Corporation
+Symbol: TGA
+	Name: Transglobe Energy Corp
+Symbol: TGEN
+	Name: Tecogen Inc.
+Symbol: TGLS
+	Name: Tecnoglass Inc.
+Symbol: TGTX
+	Name: TG Therapeutics
+Symbol: THFF
+	Name: First Financial Corporation Indiana
+Symbol: THLD
+	Name: Threshold Pharmaceuticals
+Symbol: THRM
+	Name: Gentherm Inc
+Symbol: THST
+	Name: Truett-Hurst
+Symbol: TICC
+	Name: TICC Capital Corp.
+Symbol: TIL
+	Name: Till Capital Ltd.
+Symbol: TILE
+	Name: Interface
+Symbol: TINY
+	Name: Harris & Harris Group
+Symbol: TIPT
+	Name: Tiptree Financial Inc.
+Symbol: TISA
+	Name: Top Image Systems
+Symbol: TITN
+	Name: Titan Machinery Inc.
+Symbol: TIVO
+	Name: TiVo Inc.
+Symbol: TKAI
+	Name: Tokai Pharmaceuticals
+Symbol: TLF
+	Name: Tandy Leather Factory
+Symbol: TLGT
+	Name: Teligent
+Symbol: TLMR
+	Name: Talmer Bancorp
+Symbol: TLOG
+	Name: TetraLogic Pharmaceuticals Corporation
+Symbol: TLT
+	Name: iShares 20+ Year Treasury Bond ETF
+Symbol: TMUS
+	Name: T-Mobile US
+Symbol: TMUSP
+	Name: T-Mobile US
+Symbol: TNAV
+	Name: TeleNav
+Symbol: TNDM
+	Name: Tandem Diabetes Care
+Symbol: TNGO
+	Name: Tangoe
+Symbol: TNXP
+	Name: Tonix Pharmaceuticals Holding Corp.
+Symbol: TOPS
+	Name: TOP Ships Inc.
+Symbol: TORM      
+	Name: 
+Symbol: TOUR
+	Name: Tuniu Corporation
+Symbol: TOWN
+	Name: Towne Bank
+Symbol: TPIC
+	Name: TPI Composites
+Symbol: TQQQ
+	Name: ProShares UltraPro QQQ
+Symbol: TRCB
+	Name: Two River Bancorp
+Symbol: TRCH
+	Name: Torchlight Energy Resources
+Symbol: TREE
+	Name: LendingTree
+Symbol: TRIB
+	Name: Trinity Biotech plc
+Symbol: TRIL
+	Name: Trillium Therapeutics Inc.
+Symbol: TRIP
+	Name: TripAdvisor
+Symbol: TRMB
+	Name: Trimble Navigation Limited
+Symbol: TRMK
+	Name: Trustmark Corporation
+Symbol: TRNC
+	Name: tronc
+Symbol: TRNS
+	Name: Transcat
+Symbol: TROV
+	Name: TrovaGene
+Symbol: TROVU
+	Name: TrovaGene
+Symbol: TROVW
+	Name: TrovaGene
+Symbol: TROW
+	Name: T. Rowe Price Group
+Symbol: TRS
+	Name: TriMas Corporation
+Symbol: TRST
+	Name: TrustCo Bank Corp NY
+Symbol: TRTL
+	Name: Terrapin 3 Acquisition Corporation
+Symbol: TRTLU
+	Name: Terrapin 3 Acquisition Corporation
+Symbol: TRTLW
+	Name: Terrapin 3 Acquisition Corporation
+Symbol: TRUE
+	Name: TrueCar
+Symbol: TRUP
+	Name: Trupanion
+Symbol: TRVN
+	Name: Trevena
+Symbol: TSBK
+	Name: Timberland Bancorp
+Symbol: TSC
+	Name: TriState Capital Holdings
+Symbol: TSCO
+	Name: Tractor Supply Company
+Symbol: TSEM
+	Name: Tower Semiconductor Ltd.
+Symbol: TSLA
+	Name: Tesla Motors
+Symbol: TSRA
+	Name: Tessera Technologies
+Symbol: TSRI
+	Name: TSR
+Symbol: TSRO
+	Name: TESARO
+Symbol: TST
+	Name: TheStreet
+Symbol: TTEC
+	Name: TeleTech Holdings
+Symbol: TTEK
+	Name: Tetra Tech
+Symbol: TTGT
+	Name: TechTarget
+Symbol: TTHI
+	Name: Transition Therapeutics
+Symbol: TTMI
+	Name: TTM Technologies
+Symbol: TTNP
+	Name: Titan Pharmaceuticals
+Symbol: TTOO
+	Name: T2 Biosystems
+Symbol: TTPH
+	Name: Tetraphase Pharmaceuticals
+Symbol: TTS
+	Name: Tile Shop Hldgs
+Symbol: TTWO
+	Name: Take-Two Interactive Software
+Symbol: TUBE
+	Name: TubeMogul
+Symbol: TUES
+	Name: Tuesday Morning Corp.
+Symbol: TUSA
+	Name: First Trust Total US Market AlphaDEX ETF
+Symbol: TUTI
+	Name: Tuttle Tactical Management Multi-Strategy Income ETF
+Symbol: TUTT
+	Name: Tuttle Tactical Management U.S. Core ETF
+Symbol: TVIA
+	Name: TerraVia Holdings
+Symbol: TVIX
+	Name: region
+Symbol: TVIZ
+	Name: region
+Symbol: TWER
+	Name: Towerstream Corporation
+Symbol: TWIN
+	Name: Twin Disc
+Symbol: TWMC
+	Name: Trans World Entertainment Corp.
+Symbol: TWOU
+	Name: 2U
+Symbol: TXN
+	Name: Texas Instruments Incorporated
+Symbol: TXRH
+	Name: Texas Roadhouse
+Symbol: TYPE
+	Name: Monotype Imaging Holdings Inc.
+Symbol: TZOO
+	Name: Travelzoo Inc.
+Symbol: UAE
+	Name: iShares MSCI UAE Capped ETF
+Symbol: UAVS
+	Name: AgEagle Aerial Systems Inc.
+Symbol: UBCP
+	Name: United Bancorp
+Symbol: UBFO
+	Name: United Security Bancshares
+Symbol: UBIO
+	Name: Proshares UltraPro Nasdaq Biotechnology
+Symbol: UBND
+	Name: WisdomTree Western Asset Unconstrained Bond Fund
+Symbol: UBNK
+	Name: United Financial Bancorp
+Symbol: UBNT
+	Name: Ubiquiti Networks
+Symbol: UBOH
+	Name: United Bancshares
+Symbol: UBSH
+	Name: Union Bankshares Corporation
+Symbol: UBSI
+	Name: United Bankshares
+Symbol: UCBA
+	Name: United Community Bancorp
+Symbol: UCBI
+	Name: United Community Banks
+Symbol: UCFC
+	Name: United Community Financial Corp.
+Symbol: UCTT
+	Name: Ultra Clean Holdings
+Symbol: UDBI
+	Name: Legg Mason US Diversified Core ETF
+Symbol: UDF
+	Name: United Development Funding IV
+Symbol: UEIC
+	Name: Universal Electronics Inc.
+Symbol: UEPS
+	Name: Net 1 UEPS Technologies
+Symbol: UFCS
+	Name: United Fire Group
+Symbol: UFPI
+	Name: Universal Forest Products
+Symbol: UFPT
+	Name: UFP Technologies
+Symbol: UG
+	Name: United-Guardian
+Symbol: UGLD
+	Name: region
+Symbol: UHAL
+	Name: Amerco
+Symbol: UIHC
+	Name: United Insurance Holdings Corp.
+Symbol: ULBI
+	Name: Ultralife Corporation
+Symbol: ULH
+	Name: Universal Logistics Holdings
+Symbol: ULTA
+	Name: Ulta Salon
+Symbol: ULTI
+	Name: The Ultimate Software Group
+Symbol: ULTR
+	Name: Ultrapetrol (Bahamas) Limited
+Symbol: UMBF
+	Name: UMB Financial Corporation
+Symbol: UMPQ
+	Name: Umpqua Holdings Corporation
+Symbol: UNAM
+	Name: Unico American Corporation
+Symbol: UNB
+	Name: Union Bankshares
+Symbol: UNFI
+	Name: United Natural Foods
+Symbol: UNIS
+	Name: Unilife Corporation
+Symbol: UNTY
+	Name: Unity Bancorp
+Symbol: UNXL
+	Name: Uni-Pixel
+Symbol: UPLD
+	Name: Upland Software
+Symbol: URBN
+	Name: Urban Outfitters
+Symbol: URRE
+	Name: Uranium Resources
+Symbol: USAK
+	Name: USA Truck
+Symbol: USAP
+	Name: Universal Stainless & Alloy Products
+Symbol: USAT
+	Name: USA Technologies
+Symbol: USATP
+	Name: USA Technologies
+Symbol: USBI
+	Name: United Security Bancshares
+Symbol: USCR
+	Name: U S Concrete
+Symbol: USEG
+	Name: U.S. Energy Corp.
+Symbol: USLB
+	Name: PowerShares Russell 1000 Low Beta Equal Weight Portfolio
+Symbol: USLM
+	Name: United States Lime & Minerals
+Symbol: USLV
+	Name: region
+Symbol: USMD
+	Name: USMD Holdings
+Symbol: UTEK
+	Name: Ultratech
+Symbol: UTES
+	Name: Reaves Utilities ETF
+Symbol: UTHR
+	Name: United Therapeutics Corporation
+Symbol: UTMD
+	Name: Utah Medical Products
+Symbol: UTSI
+	Name: UTStarcom Holdings Corp
+Symbol: UVSP
+	Name: Univest Corporation of Pennsylvania
+Symbol: VA
+	Name: Virgin America Inc.
+Symbol: VALU
+	Name: Value Line
+Symbol: VALX
+	Name: Validea Market Legends ETF
+Symbol: VASC
+	Name: Vascular Solutions
+Symbol: VBFC
+	Name: Village Bank and Trust Financial Corp.
+Symbol: VBIV
+	Name: VBI Vaccines
+Symbol: VBLT
+	Name: Vascular Biogenics Ltd.
+Symbol: VBND
+	Name: Vident Core U.S. Bond Strategy Fund
+Symbol: VBTX
+	Name: Veritex Holdings
+Symbol: VCEL
+	Name: Vericel Corporation
+Symbol: VCIT
+	Name: Vanguard Intermediate-Term Corporate Bond ETF
+Symbol: VCLT
+	Name: Vanguard Long-Term Corporate Bond ETF
+Symbol: VCSH
+	Name: Vanguard Short-Term Corporate Bond ETF
+Symbol: VCYT
+	Name: Veracyte
+Symbol: VDSI
+	Name: VASCO Data Security International
+Symbol: VDTH
+	Name: Videocon d2h Limited
+Symbol: VECO
+	Name: Veeco Instruments Inc.
+Symbol: VGIT
+	Name: Vanguard Intermediate -Term Government Bond ETF
+Symbol: VGLT
+	Name: Vanguard Long-Term Government Bond ETF
+Symbol: VGSH
+	Name: Vanguard Short-Term Government ETF
+Symbol: VIA
+	Name: Viacom Inc.
+Symbol: VIAB
+	Name: Viacom Inc.
+Symbol: VIAV
+	Name: Viavi Solutions Inc.
+Symbol: VICL
+	Name: Vical Incorporated
+Symbol: VICR
+	Name: Vicor Corporation
+Symbol: VIDI
+	Name: Vident International Equity Fund
+Symbol: VIGI
+	Name: Vanguard International Dividend Appreciation ETF
+Symbol: VIIX
+	Name: region
+Symbol: VIIZ
+	Name: region
+Symbol: VIP
+	Name: VimpelCom Ltd.
+Symbol: VIRC
+	Name: Virco Manufacturing Corporation
+Symbol: VIRT
+	Name: Virtu Financial
+Symbol: VISN
+	Name: VisionChina Media
+Symbol: VIVE
+	Name: Viveve Medical
+Symbol: VIVO
+	Name: Meridian Bioscience Inc.
+Symbol: VKTX
+	Name: Viking Therapeutics
+Symbol: VKTXW
+	Name: Viking Therapeutics
+Symbol: VLGEA
+	Name: Village Super Market
+Symbol: VLTC
+	Name: Voltari Corporation
+Symbol: VMBS
+	Name: Vanguard Mortgage-Backed Securities ETF
+Symbol: VNDA
+	Name: Vanda Pharmaceuticals Inc.
+Symbol: VNET
+	Name: 21Vianet Group
+Symbol: VNOM
+	Name: Viper Energy Partners LP
+Symbol: VNQI
+	Name: Vanguard Global ex-U.S. Real Estate ETF
+Symbol: VNR
+	Name: Vanguard Natural Resources LLC
+Symbol: VNRAP
+	Name: Vanguard Natural Resources LLC
+Symbol: VNRBP
+	Name: Vanguard Natural Resources LLC
+Symbol: VNRCP
+	Name: Vanguard Natural Resources LLC
+Symbol: VOD
+	Name: Vodafone Group Plc
+Symbol: VONE
+	Name: Vanguard Russell 1000 ETF
+Symbol: VONG
+	Name: Vanguard Russell 1000 Growth ETF
+Symbol: VONV
+	Name: Vanguard Russell 1000 Value ETF
+Symbol: VOXX
+	Name: VOXX International Corporation
+Symbol: VRA
+	Name: Vera Bradley
+Symbol: VRAY
+	Name: ViewRay
+Symbol: VRML
+	Name: Vermillion
+Symbol: VRNS
+	Name: Varonis Systems
+Symbol: VRNT
+	Name: Verint Systems Inc.
+Symbol: VRSK
+	Name: Verisk Analytics
+Symbol: VRSN
+	Name: VeriSign
+Symbol: VRTB
+	Name: Vestin Realty Mortgage II
+Symbol: VRTS
+	Name: Virtus Investment Partners
+Symbol: VRTU
+	Name: Virtusa Corporation
+Symbol: VRTX
+	Name: Vertex Pharmaceuticals Incorporated
+Symbol: VSAR
+	Name: Versartis
+Symbol: VSAT
+	Name: ViaSat
+Symbol: VSEC
+	Name: VSE Corporation
+Symbol: VSTM
+	Name: Verastem
+Symbol: VTAE
+	Name: Vitae Pharmaceuticals
+Symbol: VTGN
+	Name: VistaGen Therapeutics
+Symbol: VTHR
+	Name: Vanguard Russell 3000 ETF
+Symbol: VTIP
+	Name: Vanguard Short-Term Inflation-Protected Securities Index Fund
+Symbol: VTL
+	Name: Vital Therapies
+Symbol: VTNR
+	Name: Vertex Energy
+Symbol: VTVT
+	Name: vTv Therapeutics Inc.
+Symbol: VTWG
+	Name: Vanguard Russell 2000 Growth ETF
+Symbol: VTWO
+	Name: Vanguard Russell 2000 ETF
+Symbol: VTWV
+	Name: Vanguard Russell 2000 Value ETF
+Symbol: VUSE
+	Name: Vident Core US Equity ETF
+Symbol: VUZI
+	Name: Vuzix Corporation
+Symbol: VVUS
+	Name: VIVUS
+Symbol: VWOB
+	Name: Vanguard Emerging Markets Government Bond ETF
+Symbol: VWR
+	Name: VWR Corporation
+Symbol: VXDN
+	Name: AccuShares Spot CBOE VIX Down Shares
+Symbol: VXUP
+	Name: AccuShares Spot CBOE VIX Up Shares
+Symbol: VXUS
+	Name: Vanguard Total International Stock ETF
+Symbol: VYGR
+	Name: Voyager Therapeutics
+Symbol: VYMI
+	Name: Vanguard International High Dividend Yield ETF
+Symbol: WABC
+	Name: Westamerica Bancorporation
+Symbol: WAFD
+	Name: Washington Federal
+Symbol: WAFDW
+	Name: Washington Federal
+Symbol: WASH
+	Name: Washington Trust Bancorp
+Symbol: WATT
+	Name: Energous Corporation
+Symbol: WAYN
+	Name: Wayne Savings Bancshares Inc.
+Symbol: WB
+	Name: Weibo Corporation
+Symbol: WBA
+	Name: Walgreens Boots Alliance
+Symbol: WBB
+	Name: Westbury Bancorp
+Symbol: WBKC
+	Name: Wolverine Bancorp
+Symbol: WBMD
+	Name: WebMD Health Corp
+Symbol: WCFB
+	Name: WCF Bancorp
+Symbol: WDC
+	Name: Western Digital Corporation
+Symbol: WDFC
+	Name: WD-40 Company
+Symbol: WEB
+	Name: Web.com Group
+Symbol: WEBK
+	Name: Wellesley Bancorp
+Symbol: WEN
+	Name: Wendy&
+Symbol: WERN
+	Name: Werner Enterprises
+Symbol: WETF
+	Name: WisdomTree Investments
+Symbol: WEYS
+	Name: Weyco Group
+Symbol: WFBI
+	Name: WashingtonFirst Bankshares Inc
+Symbol: WFD
+	Name: Westfield Financial
+Symbol: WFM
+	Name: Whole Foods Market
+Symbol: WGBS
+	Name: WaferGen Bio-systems
+Symbol: WHF
+	Name: WhiteHorse Finance
+Symbol: WHFBL
+	Name: WhiteHorse Finance
+Symbol: WHLM
+	Name: Wilhelmina International
+Symbol: WHLR
+	Name: Wheeler Real Estate Investment Trust
+Symbol: WHLRP
+	Name: Wheeler Real Estate Investment Trust
+Symbol: WHLRW
+	Name: Wheeler Real Estate Investment Trust
+Symbol: WIBC
+	Name: Wilshire Bancorp
+Symbol: WIFI
+	Name: Boingo Wireless
+Symbol: WILC
+	Name: G. Willi-Food International
+Symbol: WILN
+	Name: Wi-Lan Inc
+Symbol: WIN
+	Name: Windstream Holdings
+Symbol: WINA
+	Name: Winmark Corporation
+Symbol: WING
+	Name: Wingstop Inc.
+Symbol: WINS
+	Name: Wins Finance Holdings Inc.
+Symbol: WINT
+	Name: Windtree Therapeutics
+Symbol: WIRE
+	Name: Encore Wire Corporation
+Symbol: WIX
+	Name: Wix.com Ltd.
+Symbol: WKHS
+	Name: Workhorse Group
+Symbol: WLB
+	Name: Westmoreland Coal Company
+Symbol: WLDN
+	Name: Willdan Group
+Symbol: WLFC
+	Name: Willis Lease Finance Corporation
+Symbol: WLTW
+	Name: Willis Towers Watson Public Limited Company
+Symbol: WMAR
+	Name: West Marine
+Symbol: WMGI
+	Name: Wright Medical Group N.V.
+Symbol: WMGIZ
+	Name: Wright Medical Group N.V.
+Symbol: WMIH
+	Name: WMIH Corp.
+Symbol: WOOD
+	Name: iShares S&P Global Timber & Forestry Index Fund
+Symbol: WOOF
+	Name: VCA Inc. 
+Symbol: WPCS
+	Name: WPCS International Incorporated
+Symbol: WPPGY
+	Name: WPP plc
+Symbol: WPRT
+	Name: Westport Fuel Systems Inc
+Symbol: WRLD
+	Name: World Acceptance Corporation
+Symbol: WSBC
+	Name: WesBanco
+Symbol: WSBF
+	Name: Waterstone Financial
+Symbol: WSCI
+	Name: WSI Industries Inc.
+Symbol: WSFS
+	Name: WSFS Financial Corporation
+Symbol: WSFSL
+	Name: WSFS Financial Corporation
+Symbol: WSTC
+	Name: West Corporation
+Symbol: WSTG
+	Name: Wayside Technology Group
+Symbol: WSTL
+	Name: Westell Technologies
+Symbol: WTBA
+	Name: West Bancorporation
+Symbol: WTFC
+	Name: Wintrust Financial Corporation
+Symbol: WTFCM
+	Name: Wintrust Financial Corporation
+Symbol: WTFCW
+	Name: Wintrust Financial Corporation
+Symbol: WVE
+	Name: WAVE Life Sciences Ltd.
+Symbol: WVFC
+	Name: WVS Financial Corp.
+Symbol: WVVI
+	Name: Willamette Valley Vineyards
+Symbol: WVVIP
+	Name: Willamette Valley Vineyards
+Symbol: WWD
+	Name: Woodward
+Symbol: WYIG
+	Name: JM Global Holding Company
+Symbol: WYIGU
+	Name: JM Global Holding Company
+Symbol: WYIGW
+	Name: JM Global Holding Company
+Symbol: WYNN
+	Name: Wynn Resorts
+Symbol: XBIT
+	Name: XBiotech Inc.
+Symbol: XBKS
+	Name: Xenith Bankshares
+Symbol: XCOM
+	Name: Xtera Communications
+Symbol: XCRA
+	Name: Xcerra Corporation
+Symbol: XELB
+	Name: Xcel Brands
+Symbol: XENE
+	Name: Xenon Pharmaceuticals Inc.
+Symbol: XENT
+	Name: Intersect ENT
+Symbol: XGTI
+	Name: XG Technology
+Symbol: XGTIW
+	Name: XG Technology
+Symbol: XIV
+	Name: region
+Symbol: XLNX
+	Name: Xilinx
+Symbol: XLRN
+	Name: Acceleron Pharma Inc.
+Symbol: XNCR
+	Name: Xencor
+Symbol: XNET
+	Name: Xunlei Limited
+Symbol: XOMA
+	Name: XOMA Corporation
+Symbol: XONE
+	Name: The ExOne Company
+Symbol: XPLR
+	Name: Xplore Technologies Corp
+Symbol: XRAY
+	Name: DENTSPLY SIRONA Inc.
+Symbol: XRDC
+	Name: Crossroads Capital
+Symbol: XTLB
+	Name: XTL Biopharmaceuticals Ltd.
+Symbol: XXIA
+	Name: Ixia
+Symbol: YCB
+	Name: Your Community Bankshares
+Symbol: YDIV
+	Name: First Trust International Multi-Asset Diversified Income Index
+Symbol: YECO
+	Name: Yulong Eco-Materials Limited
+Symbol: YHOO
+	Name: Yahoo! Inc.
+Symbol: YIN
+	Name: Yintech Investment Holdings Limited
+Symbol: YLCO
+	Name: Global X Yieldco Index ETF
+Symbol: YNDX
+	Name: Yandex N.V.
+Symbol: YOD
+	Name: You On Demand Holdings
+Symbol: YORW
+	Name: The York Water Company
+Symbol: YPRO
+	Name: AdvisorShares YieldPro ETF
+Symbol: YRCW
+	Name: YRC Worldwide
+Symbol: YY
+	Name: YY Inc.
+Symbol: Z
+	Name: Zillow Group
+Symbol: ZAGG
+	Name: ZAGG Inc
+Symbol: ZAIS
+	Name: ZAIS Group Holdings
+Symbol: ZBIO
+	Name: ProShares UltraPro Short NASDAQ Biotechnology
+Symbol: ZBRA
+	Name: Zebra Technologies Corporation
+Symbol: ZEUS
+	Name: Olympic Steel
+Symbol: ZFGN
+	Name: Zafgen
+Symbol: ZG
+	Name: Zillow Group
+Symbol: ZGNX
+	Name: Zogenix
+Symbol: ZHNE
+	Name: Zhone Technologies
+Symbol: ZION
+	Name: Zions Bancorporation
+Symbol: ZIONW
+	Name: Zions Bancorporation
+Symbol: ZIONZ
+	Name: Zions Bancorporation
+Symbol: ZIOP
+	Name: ZIOPHARM Oncology Inc
+Symbol: ZIV
+	Name: region
+Symbol: ZIXI
+	Name: Zix Corporation
+Symbol: ZLTQ
+	Name: ZELTIQ Aesthetics
+Symbol: ZN
+	Name: Zion Oil & Gas Inc
+Symbol: ZNGA
+	Name: Zynga Inc.
+Symbol: ZNWAA
+	Name: Zion Oil & Gas Inc
+Symbol: ZSAN
+	Name: Zosano Pharma Corporation
+Symbol: ZUMZ
+	Name: Zumiez Inc.
+Symbol: ZYNE
+	Name: Zynerba Pharmaceuticals
+databases closed.
