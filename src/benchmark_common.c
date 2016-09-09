@@ -19,6 +19,8 @@
 
 #include "benchmark_common.h"
 
+char *symbolsArr[] = {"YHOO", "AAPL", "GOOG", "MSFT", "PIH", "FLWS", "SRCE", "VNET", "TWOU", "JOBS"};
+
 static int 
 show_stock_item(void *);
 
@@ -27,6 +29,9 @@ get_account_id(DB *sdbp,          /* secondary db handle */
               const DBT *pkey,   /* primary db record's key */
               const DBT *pdata,  /* primary db record's data */
               DBT *skey);         /* secondary db record's key */
+
+static int 
+create_portfolio(char *account_id, char *symbol, float price, int amount, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
 
 /*=============== STATIC FUNCTIONS =======================*/
 static int
@@ -820,10 +825,12 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
   char      to_buy;
   int       number_buy;
   int       price_buy;
+  PORTFOLIOS *portfolioP;
 
   size_t buf_pos = 0;
   char *buf = (char *)vBuf;
 
+#if 0
   portfolio_id = buf;
   buf_pos += ID_SZ;
   
@@ -852,7 +859,7 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
   buf_pos += sizeof(int);
 
   price_buy = *((int *)(buf + buf_pos));
- 
+
   /* Display all this information */
   printf("Portfolio ID: %s\n", portfolio_id);
   printf("\tAccount ID: %s\n", account_id);
@@ -865,9 +872,243 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
   printf("\t# Stocks to buy: %d\n", number_buy);
   printf("\tPrice to buy: %d\n", price_buy);
 
+#else
+  
+  portfolioP = (PORTFOLIOS *)vBuf;
+  /* Display all this information */
+  printf("Portfolio ID: %s\n", portfolioP->portfolio_id);
+  printf("\tAccount ID: %s\n", portfolioP->account_id);
+  printf("\tSymbol ID: %s\n", portfolioP->symbol);
+  printf("\t# Stocks Hold: %d\n", portfolioP->hold_stocks);
+  printf("\tSell?: %d\n", portfolioP->to_sell);
+  printf("\t# Stocks to sell: %d\n", portfolioP->number_sell);
+  printf("\tPrice to sell: %d\n", portfolioP->price_sell);
+  printf("\tBuy?: %d\n", portfolioP->to_buy);
+  printf("\t# Stocks to buy: %d\n", portfolioP->number_buy);
+  printf("\tPrice to buy: %d\n", portfolioP->price_buy);
+
   if (symbolIdPP) {
     *symbolIdPP = symbol; 
   }
-
+#endif
   return 0;
 }
+
+int 
+place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP)
+{
+  int rc = 0;
+  DB_TXN *txnP = NULL;
+  DB_ENV  *envP = NULL;
+  DBT key, data;
+  char    account_id[ID_SZ];
+  int exists = 0;
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  sprintf(account_id, "%d", account);
+
+  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Transaction begin failed.");
+    goto failXit; 
+  }
+
+  /* 1) search the account */
+  exists = account_exists(account_id, txnP, benchmarkP);
+  if (!exists) {
+    fprintf(stderr, "%s: This user account does not exist.\n", __func__);
+    goto failXit; 
+  }
+
+  /* 2) search the symbol */
+  exists = symbol_exists(symbol, txnP, benchmarkP);
+  if (!exists) {
+    fprintf(stderr, "%s: This symbol does not exist.\n", __func__);
+    goto failXit; 
+  }
+
+  /* 3) exists portfolio */
+  /* 3.1) if so, update */
+  /* 3.2) otherwise, create a new portfolio */
+  rc = create_portfolio(account_id, symbol, price, amount, txnP, benchmarkP);
+
+  rc = txnP->commit(txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Transaction commit failed.");
+    goto failXit; 
+  }
+
+  goto cleanup;
+
+failXit:
+  if (txnP != NULL) {
+    rc = txnP->abort(txnP);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction abort failed.");
+      goto failXit; 
+    }
+  }
+
+  rc = 1;
+
+cleanup:
+  return rc;
+}
+
+int
+symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP) 
+{
+  DBC *cursorp = NULL;
+  DB  *stocksdbP = NULL;
+  DBT key, data;
+  int exists = 0;
+  int ret = 0;
+
+  if (symbol == NULL || symbol[0] == '\0' || txnP == NULL || benchmarkP == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  stocksdbP = benchmarkP->stocks_dbp;
+  if (stocksdbP == NULL) {
+    fprintf(stderr, "%s: Stocks database is not open\n", __func__);
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  key.data = symbol;
+  key.size = (u_int32_t) strlen(symbol) + 1;
+  stocksdbP->cursor(stocksdbP, txnP, &cursorp, 0);
+
+  /* Position the cursor */
+  ret = cursorp->get(cursorp, &key, &data, DB_SET);
+  if (ret == 0) {
+    exists = 1;
+  }
+
+  goto cleanup;
+
+failXit:
+cleanup:
+  if (cursorp != NULL) {
+      cursorp->close(cursorp);
+  }
+
+  return exists;
+}
+
+int
+account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP) 
+{
+  DBC *cursorp = NULL;
+  DB  *personaldbP = NULL;
+  DBT key, data;
+  int exists = 0;
+  int ret = 0;
+
+  if (account_id == NULL || account_id[0] == '\0' || txnP == NULL || benchmarkP == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  personaldbP = benchmarkP->personal_dbp;
+  if (personaldbP == NULL) {
+    fprintf(stderr, "%s: Personal database is not open\n", __func__);
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  key.data = account_id;
+  key.size = (u_int32_t) strlen(account_id) + 1;
+  ret = personaldbP->cursor(personaldbP, txnP, &cursorp, 0);
+  if (ret != 0) {
+    fprintf(stderr, "%s: Could not open cursor\n", __func__);
+    goto failXit;
+  }
+
+  /* Position the cursor */
+  ret = cursorp->get(cursorp, &key, &data, DB_SET);
+  if (ret == 0) {
+    exists = 1;
+  }
+
+  goto cleanup;
+
+failXit:
+cleanup:
+  if (cursorp != NULL) {
+      cursorp->close(cursorp);
+  }
+
+  return exists;
+}
+
+static int 
+create_portfolio(char *account_id, char *symbol, float price, int amount, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
+{
+  int rc = 0;
+  PORTFOLIOS portfolio;
+  DB_ENV  *envP = NULL;
+  DBT key, data;
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  memset(&portfolio, 0, sizeof(PORTFOLIOS));
+  sprintf(portfolio.portfolio_id, "%d", (rand()%500) + 100);
+  sprintf(portfolio.account_id, "%s", account_id);
+  sprintf(portfolio.symbol, "%s", symbol);
+  portfolio.hold_stocks = 0;
+  portfolio.to_sell = 0;
+  portfolio.number_sell = 0;
+  portfolio.price_sell = 0;
+  portfolio.to_buy = 1;
+  portfolio.number_buy = amount;
+  portfolio.price_buy = price;
+
+  /* Set up the database record's key */
+  key.data = portfolio.portfolio_id;
+  key.size = (u_int32_t)strlen(portfolio.portfolio_id) + 1;
+
+  /* Set up the database record's data */
+  data.data = &portfolio;
+  data.size = sizeof(PORTFOLIOS);
+
+#ifdef CHRONOS_DEBUG
+  /* Put the data into the database */
+  printf("Inserting: %s\n", (char *)key.data);
+#endif
+
+  rc = benchmarkP->portfolios_dbp->put(benchmarkP->portfolios_dbp, txnP, &key, &data, DB_NOOVERWRITE);
+  if (rc != 0) {
+    fprintf(stderr, "%s: Database put failed\n", __func__);
+    goto failXit; 
+  }
+
+  goto cleanup;
+
+failXit:
+  rc = 1;
+
+cleanup:
+  return rc;
+}
+

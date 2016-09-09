@@ -28,11 +28,12 @@ LIBS=		 -lpthread
 ##################################################
 # Targets 
 ##################################################
-all: benchmark_initial_load benchmark_databases_dump view_stock_txn view_portfolio_txn refresh_quotes populate_portfolios
+all: benchmark_initial_load benchmark_databases_dump view_stock_txn view_portfolio_txn refresh_quotes populate_portfolios purchase_txn
 
 ##################################################
 # Compile and link
 ##################################################
+# TODO: I think these can be improved :P
 benchmark_common.lo: $(exampledir)/benchmark_common.c
 	$(CC) -I$(exampledir) $(CFLAGS) $?
 
@@ -74,12 +75,22 @@ populate_portfolios: populate_portfolios.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) populate_portfolios.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
+purchase_txn.lo:	$(exampledir)/purchase_txn.c
+	$(CC) $(CFLAGS) $?
+
+purchase_txn: purchase_txn.lo benchmark_common.lo
+	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) purchase_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(builddir)/$@
+
 
 ##################################################
 # Useful targets for running the benchmark
 ##################################################
 reinit:
 	rm -rf $(homedir)/*
+	make load
+	make run_refresh_quotes
+	make run_populate_portfolios
 	
 load:
 	-mkdir databases
@@ -100,6 +111,9 @@ run_refresh_quotes:
 
 run_populate_portfolios:
 	$(builddir)/populate_portfolios -h $(homedir)/
+
+place_order:
+	$(builddir)/purchase_txn -h $(homedir)/
 
 clean:
 	-rm *.o

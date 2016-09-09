@@ -101,7 +101,6 @@ load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
   PORTFOLIOS portfolio;
-  char *symbolsArr[10] = {"YHOO", "AAPL", "GOOG", "MSFT", "PIH", "FLWS", "SRCE", "VNET", "TWOU", "JOBS"};
   int i;
 
   envP = my_benchmarkP.envP;
@@ -126,13 +125,15 @@ load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
     sprintf(portfolio.portfolio_id, "%d", i);
     sprintf(portfolio.account_id, "%d", (rand() % 50)+1);
     sprintf(portfolio.symbol, "%s", symbolsArr[(rand() % 10)]);
-    portfolio.hold_stocks = (rand() % 100);
+    portfolio.hold_stocks = (rand() % 100) + 1;
+
     portfolio.to_sell = portfolio.hold_stocks ? (rand()%2) : 0;
-    portfolio.number_sell = portfolio.to_sell ? (rand() % portfolio.hold_stocks) : 0;
-    portfolio.price_sell = (rand() % 100);
+    portfolio.number_sell = portfolio.to_sell ? (rand() % portfolio.hold_stocks) + 1 : 0;
+    portfolio.price_sell = portfolio.to_sell ? (rand() % 100) + 1 : 0;
+
     portfolio.to_buy = (rand()%2);
-    portfolio.number_buy = portfolio.to_buy ? (rand() % 20) : 0;
-    portfolio.price_buy = (rand() % 100);
+    portfolio.number_buy = portfolio.to_buy ? (rand() % 20) +1 : 0;
+    portfolio.price_buy = portfolio.to_buy ? (rand() % 100) + 1 : 0;
 
     /* Now that we have our structure we can load it into the database. */
 

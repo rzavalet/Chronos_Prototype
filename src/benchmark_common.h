@@ -200,6 +200,8 @@ typedef struct personal {
   char      email[LONG_NAME_SZ];
 } PERSONAL;
 
+extern char *symbolsArr[];
+
 /* Function prototypes */
 int	databases_setup(BENCHMARK_DBS *, int, const char *, FILE *);
 int	databases_open(DB **, const char *, const char *, FILE *, int);
@@ -210,3 +212,6 @@ void	set_db_filenames(BENCHMARK_DBS *my_stock);
 
 int 
 show_portfolios(BENCHMARK_DBS *benchmarkP);
+
+int 
+place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
