@@ -559,7 +559,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
 int 
 show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
 {
-  DBC *stock_cursorp;
+  DBC *stock_cursorp = NULL;
   DBT key, data;
   int exit_value, ret;
 
@@ -579,7 +579,12 @@ show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
     stock_cursorp->get(stock_cursorp, &key, &data, DB_NEXT)) == 0)
   {
     /*Uhhh, this is ugly.... */
-    if (strcmp(symbolId, (char *)key.data) == 0) {
+    if (symbolId != NULL) {
+      if (strcmp(symbolId, (char *)key.data) == 0) {
+        (void) show_stock_item(data.data);
+      }
+    }
+    else {
       (void) show_stock_item(data.data);
     }
   }
@@ -591,9 +596,10 @@ show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
 int 
 show_portfolios(BENCHMARK_DBS *benchmarkP)
 {
-  DBC *personal_cursorP;
+  DBC *personal_cursorP = NULL;
   DBT key, data;
   int rc = 0;
+  int curRc = 0;
   int numClients = 0;
 
   if (benchmarkP == NULL || benchmarkP->personal_dbp == NULL) {
@@ -608,7 +614,7 @@ show_portfolios(BENCHMARK_DBS *benchmarkP)
   benchmarkP->personal_dbp->cursor(benchmarkP->personal_dbp, NULL,
                                     &personal_cursorP, 0);
 
-  while ((rc=personal_cursorP->get(personal_cursorP, &key, &data, DB_NEXT)) == 0)
+  while ((curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_NEXT)) == 0)
   {
 #ifdef CHRONOS_DEBUG
      printf("================= SHOWING PORTFOLIO ==============\n");
@@ -621,6 +627,12 @@ show_portfolios(BENCHMARK_DBS *benchmarkP)
 #endif
   }
 
+  if (curRc != DB_NOTFOUND) {
+    fprintf(stderr, "Error retrieving portfolios: %s\n",
+            db_strerror(rc));
+    goto failXit;
+  }
+
   personal_cursorP->close(personal_cursorP);
 
 #ifdef CHRONOS_DEBUG
@@ -629,6 +641,9 @@ show_portfolios(BENCHMARK_DBS *benchmarkP)
   return (rc);
 
 failXit:
+  if (personal_cursorP) {
+    personal_cursorP->close(personal_cursorP);
+  }
   rc = 1;
   return rc;
 }
@@ -636,7 +651,7 @@ failXit:
 int
 show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP)
 {
-  DBC *portfolio_cursorP;
+  DBC *portfolio_cursorP = NULL;
   DBT key;
   DBT pkey, pdata;
   char *symbolIdP = NULL;
@@ -655,11 +670,14 @@ show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP)
   
   while ((rc=portfolio_cursorP->pget(portfolio_cursorP, &key, &pkey, &pdata, DB_NEXT)) == 0)
   {
-    (void) show_portfolio_item(pdata.data, &symbolIdP);
-    if (symbolIdP != NULL && symbolIdP[0] != '\0') {
-      (void) show_stocks_records(symbolIdP, benchmarkP);
+    /* TODO: Is it necessary this comparison? */
+    if (strcmp(account_id, (char *)key.data) == 0) {
+      (void) show_portfolio_item(pdata.data, &symbolIdP);
+      if (symbolIdP != NULL && symbolIdP[0] != '\0') {
+        (void) show_stocks_records(symbolIdP, benchmarkP);
+      }
+      numPortfolios ++;
     }
-    numPortfolios ++;
   }
 
   portfolio_cursorP->close(portfolio_cursorP);
@@ -734,7 +752,7 @@ show_personal_item(void *vBuf)
 int 
 show_currencies_records(BENCHMARK_DBS *my_benchmarkP)
 {
-  DBC *currencies_cursorp;
+  DBC *currencies_cursorp = NULL;
   DBT key, data;
   char *currencies_element;
   int exit_value, ret;
