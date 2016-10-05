@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if 1
+#if 0
 #define CHRONOS_DEBUG
 #endif
 #define CHRONOS_INMEMORY
@@ -215,3 +215,6 @@ show_portfolios(BENCHMARK_DBS *benchmarkP);
 
 int 
 place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
+
+int 
+sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);

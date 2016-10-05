@@ -28,7 +28,7 @@ LIBS=		 -lpthread
 ##################################################
 # Targets 
 ##################################################
-all: benchmark_initial_load benchmark_databases_dump view_stock_txn view_portfolio_txn refresh_quotes populate_portfolios purchase_txn
+all: benchmark_initial_load benchmark_databases_dump view_stock_txn view_portfolio_txn refresh_quotes populate_portfolios purchase_txn sell_txn
 
 ##################################################
 # Compile and link
@@ -63,23 +63,26 @@ view_portfolio_txn: view_portfolio_txn.lo benchmark_common.lo
 
 refresh_quotes.lo:	$(exampledir)/refresh_quotes.c
 	$(CC) $(CFLAGS) $?
-
 refresh_quotes: refresh_quotes.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) refresh_quotes.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
 populate_portfolios.lo:	$(exampledir)/populate_portfolios.c
 	$(CC) $(CFLAGS) $?
-
 populate_portfolios: populate_portfolios.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) populate_portfolios.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
 purchase_txn.lo:	$(exampledir)/purchase_txn.c
 	$(CC) $(CFLAGS) $?
-
 purchase_txn: purchase_txn.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) purchase_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(builddir)/$@
+
+sell_txn.lo:	$(exampledir)/sell_txn.c
+	$(CC) $(CFLAGS) $?
+sell_txn: sell_txn.lo benchmark_common.lo
+	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) sell_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
 
@@ -114,6 +117,9 @@ run_populate_portfolios:
 
 place_order:
 	$(builddir)/purchase_txn -h $(homedir)/
+
+sell_stocks:
+	$(builddir)/sell_txn -h $(homedir)/
 
 clean:
 	-rm *.o

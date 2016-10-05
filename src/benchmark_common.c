@@ -33,6 +33,8 @@ get_account_id(DB *sdbp,          /* secondary db handle */
 static int 
 create_portfolio(char *account_id, char *symbol, float price, int amount, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
 
+int
+get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP);
 /*=============== STATIC FUNCTIONS =======================*/
 static int
 get_account_id(DB *sdbp,          /* secondary db handle */
@@ -895,6 +897,106 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
 }
 
 int 
+sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP)
+{
+  int rc = 0;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
+  DBT      skey, data;
+  DBC     *cursorp = NULL; /* To iterate over the porfolios */
+  char     account_id[ID_SZ];
+  int      exists = 0;
+  PORTFOLIOS portfolio;
+  
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  memset(&skey, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  sprintf(account_id, "%d", account);
+
+  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Transaction begin failed.");
+    goto failXit; 
+  }
+
+  /* 1) search the account */
+  exists = account_exists(account_id, txnP, benchmarkP);
+  if (!exists) {
+    fprintf(stderr, "%s: This user account does not exist.\n", __func__);
+    goto failXit; 
+  }
+
+  /* 2) search the symbol */
+  exists = symbol_exists(symbol, txnP, benchmarkP);
+  if (!exists) {
+    fprintf(stderr, "%s: This symbol does not exist.\n", __func__);
+    goto failXit; 
+  }
+
+  rc = get_portfolio(account_id, symbol, txnP, &cursorp, &skey, &data, benchmarkP);
+  if (rc != 0) {
+    fprintf(stderr, "%s: Failed to obtain portfolio", __func__);
+    goto failXit; 
+  }
+
+  /* Update whatever we need to update */
+  memcpy(&portfolio, &data, sizeof(PORTFOLIOS));
+  if (portfolio.hold_stocks < amount) {
+    fprintf(stderr, "%s: Not enough stocks for this symbol", __func__);
+    goto failXit; 
+  }
+  portfolio.to_sell = 1;
+  portfolio.number_sell = amount;
+  portfolio.price_sell = price;
+
+  /* Save the record */
+  cursorp->put(cursorp, &skey, &data, DB_CURRENT);
+  if (rc != 0) {
+    fprintf(stderr, "%s: Failed to update portfolio", __func__);
+    goto failXit; 
+  }
+
+  /* Close the record */
+  if (cursorp != NULL) {
+    cursorp->close(cursorp);
+    cursorp = NULL;
+  }
+
+  rc = txnP->commit(txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Transaction commit failed.");
+    goto failXit; 
+  }
+
+  goto cleanup;
+
+failXit:
+  if (txnP != NULL) {
+    if (cursorp != NULL) {
+      cursorp->close(cursorp);
+      cursorp = NULL;
+    }
+
+    rc = txnP->abort(txnP);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction abort failed.");
+      goto failXit; 
+    }
+  }
+
+  rc = 1;
+
+cleanup:
+  return rc;
+}
+
+int 
 place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
@@ -960,6 +1062,79 @@ failXit:
   rc = 1;
 
 cleanup:
+  return rc;
+}
+
+int
+get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP) 
+{
+  DBC *cursorp = NULL;
+  DB  *portfoliosdbP= NULL;
+  DB  *portfoliossdbP= NULL;
+  DBT pkey, pdata;
+  DBT key;
+  int rc = 0;
+
+  if (account_id == NULL || account_id[0] == '\0' || 
+      symbol == NULL || symbol[0] == '\0' || 
+      txnP == NULL || benchmarkP == NULL) 
+  {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  portfoliosdbP = benchmarkP->portfolios_dbp;
+  if (portfoliosdbP == NULL) {
+    fprintf(stderr, "%s: Portfolios database is not open\n", __func__);
+    goto failXit;
+  }
+
+  portfoliossdbP = benchmarkP->portfolios_sdbp;
+  if (portfoliossdbP == NULL) {
+    fprintf(stderr, "%s: Portfolios secondary database is not open\n", __func__);
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&pkey, 0, sizeof(DBT));
+  memset(&pdata, 0, sizeof(DBT));
+
+  key.data = account_id;
+  key.size = ID_SZ;
+
+  portfoliossdbP->cursor(portfoliossdbP, txnP,
+                         &cursorp, 0);
+  
+  while ((rc=cursorp->pget(cursorp, &key, &pkey, &pdata, DB_NEXT)) == 0)
+  {
+    /* TODO: Is it necessary this comparison? */
+    if (strcmp(account_id, (char *)key.data) == 0) {
+      if ( symbol != NULL && symbol[0] != '\0') {
+        if (strcmp(symbol, ((PORTFOLIOS *)pdata.data)->symbol)) {
+          goto cleanup;
+        }
+      }
+    }
+  }
+
+  cursorp->close(cursorp);
+  cursorp = NULL;
+
+  goto cleanup;
+
+failXit:
+  rc = 1;
+
+cleanup:
+  *cursorPP = cursorp;
+  if (key_ret != NULL) {
+    *key_ret = pkey;
+  }
+
+  if (data_ret != NULL) {
+    *data_ret = pdata;
+  }
+
   return rc;
 }
 
