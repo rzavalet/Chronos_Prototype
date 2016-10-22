@@ -1,4 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <pthread.h>
+#include "chronos.h"
 
 typedef struct chronosClientContext_t {
   int thinkingTime;
@@ -13,6 +18,21 @@ typedef struct chronosClientThreadInfo_t {
   int       thread_num;
   chronosClientContext_t *contextP;
 } chronosClientThreadInfo_t;
+
+/*========================================================
+                        PROTOTYPES
+=========================================================*/
+static int
+processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_t *contextP);
+
+static int
+spawnClientThreads(int num_threads, chronosClientThreadInfo_t **info_ret, chronosClientContext_t *contextP);
+
+static void *
+userTransactionThread(void *argP);
+
+static void
+chronos_usage();
 
 /* This is the starting point of a Chronos Client.
  *
@@ -33,7 +53,9 @@ typedef struct chronosClientThreadInfo_t {
 
 int main(int argc, char *argv[]) {
   chronosClientContext_t client_context;
-
+  chronosClientThreadInfo_t *thread_infoP = NULL;
+  int num_threads = 1;
+  
   /* First process the command line arguments which are:
    *  . # of client threads
    *  . thinking time
@@ -43,16 +65,20 @@ int main(int argc, char *argv[]) {
    *  . % of View-Stock transactions (The rest are uniformly selected
    *    between the other three types of transactions.)
    */
-  if (processArguments(argc, argv, &client_context) != CHRONOS_SUCCESS) {
-    chronos_dbg("Failed to process command line arguments");
+  if (processArguments(argc, argv, &num_threads, &client_context) != CHRONOS_SUCCESS) {
+    chronos_debug("Failed to process command line arguments");
     goto failXit;
   }
 
   /* Next we need to spawn the client threads */
-  if (spawnClientThreads() != CHRONOS_SUCCESS) {
+  if (spawnClientThreads(num_threads, &thread_infoP, &client_context) != CHRONOS_SUCCESS) {
     goto failXit;
   }
 
+  if (thread_infoP == NULL) {
+    chronos_debug("Invalid thread info");
+    goto failXit;
+  }
 
   return CHRONOS_SUCCESS;
 
@@ -64,27 +90,37 @@ failXit:
  * Process the command line arguments
  */
 static int
-processArguments(int argc, char *argv[], chronosClientContext_t *contextP) {
+processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_t *contextP) {
 
   int c;
 
-  if (contextP == NULL) {
-    chronos_dbg("Invalid argument");
+  if (contextP == NULL || num_threads == NULL) {
+    chronos_error("Invalid argument");
     goto failXit;
   }
 
-  while ((c = getopt(argc, argv, "c:t:a:p:x:v:")) != -1) {
+  if (argc < 2) {
+    chronos_error("Invalid number of arguments");
+    chronos_usage();
+    exit(1);
+  }
+
+  memset(contextP, 0, sizeof(*contextP));
+  
+  while ((c = getopt(argc, argv, "n:c:t:a:p:x:v:")) != -1) {
     switch(c) {
       case 'c':
-        break;
-
+	*num_threads = atoi(optarg);
+	chronos_debug("*** Num clients: %d", *num_threads);
+	break;
+      
       case 't':
         contextP->thinkingTime = atoi(optarg);
         chronos_debug("*** Thinking time: %d", contextP->thinkingTime);
         break;
 
       case 'a':
-        contextP->serverAddress = optarg;
+        contextP->serverAddress = atoi(optarg);
         chronos_debug("*** Server address: %d", contextP->serverAddress);
         break;
 
@@ -99,16 +135,32 @@ processArguments(int argc, char *argv[], chronosClientContext_t *contextP) {
         break;
 
       case 'v':
-        contextP->percentageViewStockTransactiosn = atoi(optarg);
-        chronos_debug("*** \% of ViewStock Transactions: %d", contextP->percentageViewStockTransactions);
+        contextP->percentageViewStockTransactions = atoi(optarg);
+        chronos_debug("*** %% of ViewStock Transactions: %d", contextP->percentageViewStockTransactions);
         break;
       
       case 'h':
         chronos_usage();
-        exit 0;
+        exit(0);
+	break;
+
+    default:
+      chronos_error("Invalid argument");
+      chronos_usage();
+      exit(1);
     }
   }
 
+  if (*num_threads < 1) {
+    chronos_error("number of clients must be > 0");
+    chronos_usage();
+    exit(0);
+  }
+  if (contextP->serverPort == 0) {
+    chronos_error("port must be a valid one");
+    chronos_usage();
+    exit(0);
+  }
   return CHRONOS_SUCCESS;
 
 failXit:
@@ -119,7 +171,7 @@ failXit:
  * This function spawns a given number of client threads
  */
 static int
-spawnClientThreads(int num_threads, chronosClientThreadInfo_t *info_ret, chronosClientThreadInfo_t *contextP) {
+spawnClientThreads(int num_threads, chronosClientThreadInfo_t **info_ret, chronosClientContext_t *contextP) {
 
   pthread_attr_t attr;
   chronosClientThreadInfo_t *infoP = NULL;
@@ -128,30 +180,30 @@ spawnClientThreads(int num_threads, chronosClientThreadInfo_t *info_ret, chronos
   const int stack_size = 0x100000; // 1 MB
 
   if (num_threads < 1 || info_ret == NULL || contextP == NULL) {
-    chronos_debug("invalid arguments");
+    chronos_error("invalid arguments");
     goto failXit;
   }
 
   infoP = calloc(num_threads, sizeof(chronosClientThreadInfo_t));
   if (infoP == NULL) {
-    chronos_debug("failed to allocate space for threads info");
+    chronos_error("failed to allocate space for threads info");
     goto failXit;
   }
 
   rc = pthread_attr_init(&attr);
   if (rc != 0) {
-    chronos_debug("failed to init thread attributes");
+    chronos_error("failed to init thread attributes");
     goto failXit;
   }
   
-  rc = pthread_attr_t attr(&attr, stack_size);
+  rc = pthread_attr_setstacksize(&attr, stack_size);
   if (rc != 0) {
-    chronos_debug("failed to set stack size");
+    chronos_error("failed to set stack size");
     goto failXit;
   }
 
   /* Spawn N client threads*/
-  for (i=0; i<contextP->numThreads; i++) {
+  for (i=0; i<num_threads; i++) {
     infoP[i].thread_num = i+ 1;
     infoP[i].contextP = contextP;
 
@@ -160,12 +212,15 @@ spawnClientThreads(int num_threads, chronosClientThreadInfo_t *info_ret, chronos
                         &userTransactionThread,
                         &infoP[i]);
     if (rc != 0) {
-      chronos_debug("failed to spawn thread");
+      chronos_error("failed to spawn thread");
       goto failXit;
-    } 
+    }
+
+    chronos_debug("Spawed thread: %d", infoP[i].thread_num);
+      
   }
 
-  info_ret = infoP;
+  *info_ret = infoP;
 
   return CHRONOS_SUCCESS;
 
@@ -187,8 +242,11 @@ failXit:
  *
  */
 static void *
-userTransactionThread() {
+userTransactionThread(void *argP) {
 
+  chronosClientThreadInfo_t *infoP = (chronosClientThreadInfo_t *)argP;
+
+#ifdef CHRONOS_NOT_YET_IMPLEMENTED
   /* connect to the chronos server */
   if (connectToServer() != CHRONOS_SUCCESS) {
     goto cleanup;
@@ -217,8 +275,10 @@ cleanup:
   /* disconnect from the chronos server */
   if (disconnectFromServer() != CHRONOS_SUCCESS) {
   }
-
-  return; 
+#else
+  printf("This is thread: %d\n", infoP->thread_num);
+#endif
+  pthread_exit(NULL);
 }
 
 /*
@@ -249,4 +309,21 @@ waitThinkTime() {
 
 failXit:
   return CHRONOS_FAIL; 
+}
+
+static void
+chronos_usage() {
+  char usage[] =
+    "Usage: startup_client OPTIONS\n"
+    "Startups a number of chronos clients\n"
+    "\n"
+    "OPTIONS:\n"
+    "-c [num]              number of threads\n"
+    "-t [num]              thinking time\n"
+    "-a [address]          server ip address\n"
+    "-p [num]              server port\n"
+    "-x [num]              number of transactions\n"
+    "-v [num]              percentage of user transactions\n";
+
+  printf("%s\n", usage);
 }

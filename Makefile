@@ -85,6 +85,12 @@ sell_txn: sell_txn.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) sell_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
+startup_client.lo:	$(exampledir)/startup_client.c
+	$(CC) $(CFLAGS) $?
+startup_client: startup_client.lo benchmark_common.lo 
+	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) startup_client.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(builddir)/$@
+
 
 ##################################################
 # Useful targets for running the benchmark
@@ -94,7 +100,7 @@ reinit:
 	make load
 	make run_refresh_quotes
 	make run_populate_portfolios
-	
+
 load:
 	-mkdir databases
 	$(builddir)/benchmark_initial_load -b $(datafilesdir)/ -h $(homedir)/
@@ -109,7 +115,7 @@ view_portfolio:
 	$(builddir)/view_portfolio_txn -h $(homedir)/
 
 run_refresh_quotes:
-	#python $(utilsdir)/query_quotes.py > $(datafilesdir)/quotes.txt
+	$(utilsdir)/query_quotes.py > $(datafilesdir)/quotes.txt
 	$(builddir)/refresh_quotes -b $(datafilesdir)/ -h $(homedir)/
 
 run_populate_portfolios:

@@ -22,9 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if 0
-#define CHRONOS_DEBUG
-#endif
+#include "chronos.h"
+
 #define CHRONOS_INMEMORY
 #define CHRONOS_SHMKEY 35
 #define CHRONOS_PORTFOLIOS_NUM	100
