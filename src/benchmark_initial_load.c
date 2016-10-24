@@ -15,131 +15,83 @@
  *
  * =====================================================================================
  */
+#include "benchmark.h"
 #include "benchmark_common.h"
 
-/* Forward declarations */
-int 
-usage(void);
-
-int
+/*============================================================================
+ *                          PROTOTYPES
+ *============================================================================*/
+static int
 load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file);
 
-int
+static int
 load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file);
 
-int
+static int
 load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file);
 
-int
-usage()
-{
-  fprintf(stderr, "benchmark_initial_load \n");
-  fprintf(stderr, "\t-b <path to data files>\n");
-  fprintf(stderr, "\t-h <database_home_directory>\n");
-
-  fprintf(stderr, "\tNote: Any path specified must end with your");
-  fprintf(stderr, " system's path delimiter (/ or \\)\n");
-  return (-1);
-}
-
-int
-main(int argc, char *argv[])
+int 
+benchmark_initial_load(char *homedir, char *datafilesdir) 
 {
   BENCHMARK_DBS my_benchmark;
-  int ch, ret;
-  size_t size;
-  char *basename = NULL, *personal_file, *stocks_file, *currencies_file;
+  char *personal_file, *stocks_file, *currencies_file;
+  int size;
+  int ret;
 
   initialize_benchmarkdbs(&my_benchmark);
-
-  basename = "./";
-
-  /* Parse the command line arguments */
-  while ((ch = getopt(argc, argv, "b:h:")) != EOF) {
-    switch (ch) {
-      case 'h':
-        if (optarg[strlen(optarg)-1] != '/' &&
-            optarg[strlen(optarg)-1] != '\\')
-        return (usage());
-
-        my_benchmark.db_home_dir = optarg;
-        break;
-
-      case 'b':
-        if (basename[strlen(basename)-1] != '/' &&
-            basename[strlen(basename)-1] != '\\')
-          return (usage());
-
-        basename = optarg;
-        break;
-
-      case '?':
-
-      default:
-          return (usage());
-    }
-  }
-
-  if (my_benchmark.db_home_dir == NULL) {
-    fprintf(stderr, "You must specify -h\n");
-    return usage();
-  }
-
-  if (basename == NULL) {
-    fprintf(stderr, "You must specify -b\n");
-    return usage();
-  }
-
+  my_benchmark.db_home_dir = homedir;
   set_db_filenames(&my_benchmark);
 
   /* Find our input files */
-  size = strlen(basename) + strlen(PERSONAL_FILE) + 1;
+  size = strlen(datafilesdir) + strlen(PERSONAL_FILE) + 2;
   personal_file = malloc(size);
-  snprintf(personal_file, size, "%s%s", basename, PERSONAL_FILE);
+  snprintf(personal_file, size, "%s/%s", datafilesdir, PERSONAL_FILE);
 
-  size = strlen(basename) + strlen(STOCKS_FILE) + 1;
+  size = strlen(datafilesdir) + strlen(STOCKS_FILE) + 2;
   stocks_file = malloc(size);
-  snprintf(stocks_file, size, "%s%s", basename, STOCKS_FILE);
+  snprintf(stocks_file, size, "%s/%s", datafilesdir, STOCKS_FILE);
 
-  size = strlen(basename) + strlen(CURRENCIES_FILE) + 1;
+  size = strlen(datafilesdir) + strlen(CURRENCIES_FILE) + 2;
   currencies_file = malloc(size);
-  snprintf(currencies_file, size, "%s%s", basename, CURRENCIES_FILE);
+  snprintf(currencies_file, size, "%s/%s", datafilesdir, CURRENCIES_FILE);
 
   ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, "benchmark_initial_load", stderr);
   if (ret) {
-    fprintf(stderr, "%s:%d Error opening databases.\n", __FILE__, __LINE__);
+    benchmark_error("%s:%d Error opening databases.", __FILE__, __LINE__);
     databases_close(&my_benchmark);
     return (ret);
   }
 
   ret = load_personal_database(my_benchmark, personal_file);
   if (ret) {
-    fprintf(stderr, "%s:%d Error loading personal database.\n", __FILE__, __LINE__);
+    benchmark_error("%s:%d Error loading personal database.", __FILE__, __LINE__);
     databases_close(&my_benchmark);
     return (ret);
   }
 
   ret = load_stocks_database(my_benchmark, stocks_file);
   if (ret) {
-    fprintf(stderr, "%s:%d Error loading stocks database.\n", __FILE__, __LINE__);
+    benchmark_error("%s:%d Error loading stocks database.", __FILE__, __LINE__);
     databases_close(&my_benchmark);
     return (ret);
   }
 
   ret = load_currencies_database(my_benchmark, currencies_file);
   if (ret) {
-    fprintf(stderr, "%s:%d Error loading currencies database.\n", __FILE__, __LINE__);
+    benchmark_error("%s:%d Error loading currencies database.", __FILE__, __LINE__);
     databases_close(&my_benchmark);
     return (ret);
   }
 
   databases_close(&my_benchmark);
 
-  printf("Done loading databases.\n");
-  return (ret);
+  benchmark_debug(1, "Done with initial load ...");
+
+  return BENCHMARK_SUCCESS;
 }
 
-int
+
+static int
 load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
 {
   int rc = 0;
@@ -153,15 +105,15 @@ load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
 
   envP = my_benchmarkP.envP;
   if (envP == NULL || personal_file == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("%s: Invalid arguments", __func__);
     goto failXit;
   }
 
-  printf("================= LOADING PERSONAL DATABASE ==============\n");
+  benchmark_debug(3,"LOADING PERSONAL DATABASE ");
 
   ifp = fopen(personal_file, "r");
   if (ifp == NULL) {
-    fprintf(stderr, "Error opening file '%s'\n", personal_file);
+    benchmark_error("Error opening file '%s'", personal_file);
     goto failXit;
   }
 
@@ -208,7 +160,7 @@ load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
      */
 
     /* Put the data into the database */
-    printf("Inserting: %s\n", (char *)key.data);
+    benchmark_debug(4,"Inserting: %s", (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
@@ -231,17 +183,17 @@ load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
   }
 
   fclose(ifp);
-  return (0);
+  return BENCHMARK_SUCCESS;
 
 failXit:
   if (ifp != NULL) {
     fclose(ifp);
   }
 
-  return 1;
+  return BENCHMARK_FAIL;
 }
 
-int
+static int
 load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
 {
   int rc = 0;
@@ -255,15 +207,15 @@ load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
 
   envP = my_benchmarkP.envP;
   if (envP == NULL || stocks_file == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("%s: Invalid arguments", __func__);
     goto failXit;
   }
 
-  printf("================= LOADING STOCKS DATABASE ==============\n");
+  benchmark_debug(3,"LOADING STOCKS DATABASE ");
 
   ifp = fopen(stocks_file, "r");
   if (ifp == NULL) {
-    fprintf(stderr, "Error opening file '%s'\n", stocks_file);
+    benchmark_error("Error opening file '%s'", stocks_file);
     goto failXit;
   }
 
@@ -306,8 +258,8 @@ load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
      */ 
 
     /* Put the data into the database */
-    printf("Inserting: %s\n", (char *)key.data);
-    printf("\t(%s, %s)\n", my_stocks.stock_symbol, my_stocks.full_name);
+    benchmark_debug(4,"Inserting: %s", (char *)key.data);
+    benchmark_debug(4, "\t(%s, %s)", my_stocks.stock_symbol, my_stocks.full_name);
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
@@ -331,17 +283,17 @@ load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
   }
 
   fclose(ifp);
-  return (0);
+  return BENCHMARK_SUCCESS;
 
 failXit:
   if (ifp != NULL) {
     fclose(ifp);
   }
 
-  return 1;
+  return BENCHMARK_FAIL;
 }
 
-int
+static int
 load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
 {
   int rc = 0;
@@ -355,15 +307,15 @@ load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
  
   envP = my_benchmarkP.envP;
   if (envP == NULL || currencies_file == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("%s: Invalid arguments", __func__);
     goto failXit;
   }
 
-  printf("================= LOADING CURRENCIES DATABASE ==============\n");
+  benchmark_debug(3,"LOADING CURRENCIES DATABASE ");
 
   ifp = fopen(currencies_file, "r");
   if (ifp == NULL) {
-    fprintf(stderr, "Error opening file '%s'\n", currencies_file);
+    benchmark_error("Error opening file '%s'", currencies_file);
     goto failXit;
   }
 
@@ -406,7 +358,7 @@ load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
      */
 
     /* Put the data into the database */
-    printf("Inserting: %s\n", (char *)key.data);
+    benchmark_debug(4,"Inserting: %s", (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
@@ -430,13 +382,12 @@ load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
   }
 
   fclose(ifp);
-  return (0);
+  return BENCHMARK_SUCCESS;
 
 failXit:
   if (ifp != NULL) {
     fclose(ifp);
   }
 
-  return 1;
+  return BENCHMARK_FAIL;
 }
-

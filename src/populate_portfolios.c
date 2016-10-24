@@ -1,7 +1,7 @@
 /*
  * =====================================================================================
  *
- *       Filename:  benchmark_initial_load.c
+ *       Filename:  populate_portfolios.c
  *
  *    Description:  
  *
@@ -15,85 +15,59 @@
  *
  * =====================================================================================
  */
+#include "benchmark.h"
 #include "benchmark_common.h"
 #include <time.h>
 
-/* Forward declarations */
-int 
-usage(void);
-
-int
+/*============================================================================
+ *                          PROTOTYPES
+ *============================================================================*/
+static int
 load_portfolio_database(BENCHMARK_DBS my_benchmarkP);
 
 int
-usage()
-{
-  fprintf(stderr, "populate_portfolios\n");
-  fprintf(stderr, "\t-h <database_home_directory>\n");
-
-  fprintf(stderr, "\tNote: Any path specified must end with your");
-  fprintf(stderr, " system's path delimiter (/ or \\)\n");
-  return (-1);
-}
-
-int
-main(int argc, char *argv[])
+benchmark_load_portfolio(char *homedir)
 {
   BENCHMARK_DBS my_benchmark;
   int ch, ret;
   size_t size;
-  char *basename = NULL, *personal_file, *stocks_file, *currencies_file;
+  char *personal_file, *stocks_file, *currencies_file;
 
   initialize_benchmarkdbs(&my_benchmark);
 
-  basename = "./";
-
-  /* Parse the command line arguments */
-  while ((ch = getopt(argc, argv, "b:h:")) != EOF) {
-    switch (ch) {
-      case 'h':
-        if (optarg[strlen(optarg)-1] != '/' &&
-            optarg[strlen(optarg)-1] != '\\')
-        return (usage());
-
-        my_benchmark.db_home_dir = optarg;
-        break;
-
-      case '?':
-
-      default:
-          return (usage());
-    }
-  }
+  my_benchmark.db_home_dir = homedir;
 
   if (my_benchmark.db_home_dir == NULL) {
-    fprintf(stderr, "You must specify -h\n");
-    return usage();
+    benchmark_error("You must specify -h");
+    goto failXit;
   }
 
   set_db_filenames(&my_benchmark);
 
   ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, __FILE__, stderr);
   if (ret) {
-    fprintf(stderr, "%s:%d Error opening databases.\n", __FILE__, __LINE__);
+    benchmark_error("%s:%d Error opening databases.", __FILE__, __LINE__);
     databases_close(&my_benchmark);
-    return (ret);
+    goto failXit;
   }
 
   ret = load_portfolio_database(my_benchmark);
   if (ret) {
-    fprintf(stderr, "%s:%d Error loading personal database.\n", __FILE__, __LINE__);
+    benchmark_error("%s:%d Error loading personal database.", __FILE__, __LINE__);
     databases_close(&my_benchmark);
-    return (ret);
+    goto failXit;
   }
 
   databases_close(&my_benchmark);
 
-  printf("Done loading databases.\n");
-  return (ret);
+  benchmark_debug(1, "Done populating portfolios.");
+  return BENCHMARK_SUCCESS;
+
+failXit:
+  return BENCHMARK_FAIL;
 }
 
-int
+static int
 load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
 {
   int rc = 0;
@@ -105,13 +79,13 @@ load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
 
   envP = my_benchmarkP.envP;
   if (envP == NULL || my_benchmarkP.portfolios_dbp == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("%s: Invalid arguments", __func__);
     goto failXit;
   }
 
   srand(time(NULL));
 
-  printf("================= LOADING PORTFOLIOS DATABASE ==============\n");
+  benchmark_debug(3,"LOADING PORTFOLIOS DATABASE ");
 
   for (i=0 ; i<CHRONOS_PORTFOLIOS_NUM; i++) {
 
@@ -154,7 +128,7 @@ load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
      */
 
     /* Put the data into the database */
-    printf("Inserting: %s\n", (char *)key.data);
+    benchmark_debug(4,"Inserting: %s", (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
@@ -176,8 +150,8 @@ load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
     }
   }
 
-  return (0);
+  return BENCHMARK_SUCCESS;
 
 failXit:
-  return 1;
+  return BENCHMARK_FAIL;
 }

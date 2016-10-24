@@ -1,77 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <pthread.h>
-#include <time.h>
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include "chronos.h"
-#include "chronos_packets.h"
+#include "startup_client.h"
 
-typedef struct chronosClientStats_t {
-  int txnCount[CHRONOS_USER_TXN_MAX];
-} chronosClientStats_t;
-
-typedef struct chronosClientContext_t {
-  int thinkingTime;
-  char serverAddress[256];
-  int serverPort;
-  int numTransactions;
-  int percentageViewStockTransactions;
-} chronosClientContext_t;
-
-typedef struct chronosClientThreadInfo_t {
-  pthread_t thread_id;
-  int       thread_num;
-  int       socket_fd;
-  chronosClientStats_t stats;
-  chronosClientContext_t *contextP;
-} chronosClientThreadInfo_t;
-
-extern int chronos_debug_level;
-
-/*========================================================
-                        PROTOTYPES
-=========================================================*/
-static int
-processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_t *contextP);
-
-static int
-waitClientThreads(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP);
-
-static void
-printClientStats(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP);
-
-static int
-spawnClientThreads(int num_threads, chronosClientThreadInfo_t **info_ret, chronosClientContext_t *contextP);
-
-static int
-connectToServer(chronosClientThreadInfo_t *infoP);
-
-static int
-disconnectFromServer(chronosClientThreadInfo_t *infoP);
-
-static void *
-userTransactionThread(void *argP);
-
-static int
-pickTransactionType(chronos_user_transaction_t *txn_type_ret, chronosClientThreadInfo_t *infoP);
-
-static int
-waitThinkTime(unsigned int thinkTime);
-
-static int
-waitTransactionResponse(chronos_user_transaction_t txnType, chronosClientThreadInfo_t *infoP);
-
-static int
-sendTransactionRequest(chronos_user_transaction_t txnType, chronosClientThreadInfo_t *infoP);
-
-static void
-chronos_usage();
 
 /* This is the starting point of a Chronos Client.
  *
@@ -99,6 +27,7 @@ int main(int argc, char *argv[])
   srand(time(NULL));
 
   set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN+2);
+  memset(&client_context, 0, sizeof(client_context));
 
   /* First process the command line arguments which are:
    *  . # of client threads
@@ -388,6 +317,18 @@ userTransactionThread(void *argP)
     }
   }
 
+  /* Send close request to the server */
+  txnType = CHRONOS_USER_TXN_MAX;
+  if (sendTransactionRequest(txnType, infoP) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to send transaction request");
+    goto cleanup;
+  }
+
+  if (waitTransactionResponse(txnType, infoP) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to receive transaction response");
+    goto cleanup;
+  }
+
 cleanup:
   /* disconnect from the chronos server */
   if (disconnectFromServer(infoP) != CHRONOS_SUCCESS) {
@@ -423,9 +364,13 @@ waitTransactionResponse(chronos_user_transaction_t txnType, chronosClientThreadI
     assert("Didn't receive enough bytes" == 0);
   }
 
-  assert(resPacket.txn_type == txnType);
-  chronos_debug(1,"Txn: %s, rc: %d", CHRONOS_TXN_NAME(resPacket.txn_type), resPacket.rc);
-
+  if (resPacket.txn_type == CHRONOS_USER_TXN_MAX) {
+    chronos_info("Server closed socket for this client thread");
+  }
+  else {
+    assert(resPacket.txn_type == txnType);
+    chronos_debug(1,"Txn: %s, rc: %d", CHRONOS_TXN_NAME(resPacket.txn_type), resPacket.rc);
+  }
   return CHRONOS_SUCCESS;
 
 failXit:
@@ -490,7 +435,8 @@ pickTransactionType(chronos_user_transaction_t *txn_type_ret, chronosClientThrea
     *txn_type_ret = CHRONOS_USER_TXN_VIEW_STOCK;
   }
   else {
-    random_num = rand() % CHRONOS_USER_TXN_MAX - 1;
+    random_num = rand() % (CHRONOS_USER_TXN_MAX - 1);
+    *txn_type_ret = CHRONOS_USER_TXN_INVAL;
     switch (random_num) {
       case 0:
         *txn_type_ret = CHRONOS_USER_TXN_VIEW_PORTFOLIO;
@@ -505,6 +451,7 @@ pickTransactionType(chronos_user_transaction_t *txn_type_ret, chronosClientThrea
         break;
 
       default:
+        chronos_error("Transaction type: %d --> %d %s", random_num, *txn_type_ret, CHRONOS_TXN_NAME(*txn_type_ret));
         assert("Invalid transaction type" == 0);
         break;
     }
@@ -642,7 +589,7 @@ chronos_usage()
 {
   char usage[] =
     "Usage: startup_client OPTIONS\n"
-    "Startups a number of chronos clients\n"
+    "Starts up a number of chronos clients\n"
     "\n"
     "OPTIONS:\n"
     "-c [num]              number of threads\n"

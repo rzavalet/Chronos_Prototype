@@ -3,7 +3,8 @@
  * Include this one in any file where
  * you want to call the chronos API
  *==================================*/
-
+#ifndef _CHRONOS_H_
+#define _CHRONOS_H_
 
 
 /*---------------------------------
@@ -37,13 +38,17 @@ const char *chronos_user_transaction_str[] = {
 #define CHRONOS_TXN_NAME(_txn_type) \
   ((CHRONOS_USER_TXN_MIN<=(_txn_type) && (_txn_type) < CHRONOS_USER_TXN_MAX) ? (chronos_user_transaction_str[(_txn_type)]) : "INVALID")
 
+#define CHRONOS_TXN_IS_VALID(_txn_type) \
+  (CHRONOS_USER_TXN_MIN<=(_txn_type) && (_txn_type) < CHRONOS_USER_TXN_MAX)
+
+
 /*---------------------------------
  * Debugging routines
  *-------------------------------*/
 #define CHRONOS_DEBUG_LEVEL_MIN   (0)
 #define CHRONOS_DEBUG_LEVEL_MAX   (10)
 
-int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
+extern int chronos_debug_level;
 
 #define set_chronos_debug_level(_level)  \
   (chronos_debug_level = (_level))
@@ -79,3 +84,5 @@ int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
 
 #define chronos_warning(...) \
   chronos_msg("WARN", __VA_ARGS__)
+
+#endif

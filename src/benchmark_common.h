@@ -1,3 +1,5 @@
+#ifndef _BENCHMARK_COMMON_H_
+#define _BENCHMARK_COMMON_H_
 /*
  * =====================================================================================
  *
@@ -22,8 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "chronos.h"
-
 #define CHRONOS_INMEMORY
 #define CHRONOS_SHMKEY 35
 #define CHRONOS_PORTFOLIOS_NUM	100
@@ -40,8 +40,6 @@ extern char *optarg;
 
 #define PRIMARY_DB	0
 #define SECONDARY_DB	1
-
-#define DEFAULT_HOMEDIR	"./"
 
 /*
  * This benchmark is based on Kyoung-Don Kang et al. 
@@ -217,3 +215,5 @@ place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 
 int 
 sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
+
+#endif
