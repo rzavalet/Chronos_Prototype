@@ -43,10 +43,25 @@ benchmark_initial_load.lo: $(exampledir)/benchmark_initial_load.c
 populate_portfolios.lo:	$(exampledir)/populate_portfolios.c
 	$(CC) $(CFLAGS) $?
 
+refresh_quotes.lo:	$(exampledir)/refresh_quotes.c
+	$(CC) $(CFLAGS) $?
+
+view_stock_txn.lo:	$(exampledir)/view_stock_txn.c
+	$(CC) $(CFLAGS) $?
+
+view_portfolio_txn.lo:	$(exampledir)/view_portfolio_txn.c
+	$(CC) $(CFLAGS) $?
+
+purchase_txn.lo:	$(exampledir)/purchase_txn.c
+	$(CC) $(CFLAGS) $?
+
+sell_txn.lo:	$(exampledir)/sell_txn.c
+	$(CC) $(CFLAGS) $?
+
 startup_server.lo:	$(exampledir)/startup_server.c
 	$(CC) $(CFLAGS) $?
-startup_server: startup_server.lo benchmark_initial_load.lo populate_portfolios.lo benchmark_common.lo
-	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) startup_server.lo benchmark_initial_load.lo populate_portfolios.lo benchmark_common.lo $(DEF_LIB) $(LIBS)
+startup_server: startup_server.lo benchmark_initial_load.lo populate_portfolios.lo refresh_quotes.lo refresh_quotes.lo view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo benchmark_common.lo
+	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) startup_server.lo benchmark_initial_load.lo populate_portfolios.lo refresh_quotes.lo view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo benchmark_common.lo $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
 startup_client.lo:	$(exampledir)/startup_client.c
@@ -59,37 +74,6 @@ benchmark_databases_dump.lo: $(exampledir)/benchmark_databases_dump.c
 	$(CC) $(CFLAGS) $?
 benchmark_databases_dump: benchmark_databases_dump.lo benchmark_common.lo
 	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) benchmark_databases_dump.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
-	$(POSTLINK) $(builddir)/$@
-
-# TODO: These should be included in the server binary
-view_stock_txn.lo:	$(exampledir)/view_stock_txn.c
-	$(CC) $(CFLAGS) $?
-view_stock_txn: view_stock_txn.lo benchmark_common.lo
-	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) view_stock_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
-	$(POSTLINK) $(builddir)/$@
-
-view_portfolio_txn.lo:	$(exampledir)/view_portfolio_txn.c
-	$(CC) $(CFLAGS) $?
-view_portfolio_txn: view_portfolio_txn.lo benchmark_common.lo
-	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) view_portfolio_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
-	$(POSTLINK) $(builddir)/$@
-
-refresh_quotes.lo:	$(exampledir)/refresh_quotes.c
-	$(CC) $(CFLAGS) $?
-refresh_quotes: refresh_quotes.lo benchmark_common.lo
-	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) refresh_quotes.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
-	$(POSTLINK) $(builddir)/$@
-
-purchase_txn.lo:	$(exampledir)/purchase_txn.c
-	$(CC) $(CFLAGS) $?
-purchase_txn: purchase_txn.lo benchmark_common.lo
-	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) purchase_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
-	$(POSTLINK) $(builddir)/$@
-
-sell_txn.lo:	$(exampledir)/sell_txn.c
-	$(CC) $(CFLAGS) $?
-sell_txn: sell_txn.lo benchmark_common.lo
-	$(CCLINK) -o $(builddir)/$@ $(LDFLAGS) sell_txn.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(builddir)/$@
 
 

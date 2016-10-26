@@ -37,16 +37,19 @@
  *     The number of data accesses varies from 50 to 100.
  *     The think time in the paper is uniformly distributed in [0.3s, 0.5s]
  */ 
-
+int timeToDie = 0;
 
 int main(int argc, char *argv[]) 
 {
   int rc;
+  int i;
+  int thread_num = 0;
   pthread_attr_t attr;
   int *thread_rc = NULL;
   const int stack_size = 0x100000; // 1 MB
   chronosServerContext_t server_context;
   chronosServerThreadInfo_t listenerThreadInfo;
+  chronosServerThreadInfo_t *updateThreadInfoP = NULL;
 
   set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN+5);
   memset(&server_context, 0, sizeof(server_context));
@@ -66,19 +69,14 @@ int main(int argc, char *argv[])
 
   /* Create the system tables */
   if (benchmark_initial_load(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to perform initial load");
     goto failXit;
   }
 
   if (benchmark_load_portfolio(CHRONOS_SERVER_HOME_DIR) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to load portfolios");
     goto failXit;
   }
-
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-  /* Initial population of system tables */
-  if (populateChronosTables () != CHRONOS_SUCCESS) {
-    goto failXit;
-  }
-#endif
 
   rc = pthread_attr_init(&attr);
   if (rc != 0) {
@@ -91,26 +89,36 @@ int main(int argc, char *argv[])
     chronos_error("failed to set stack size");
     goto failXit;
   }
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
 
   /* Spawn processing thread */
   
   /* Spawn performance monitor thread */
 
   /* Spawn the update threads */
-  for (;;) {
-  }
+  updateThreadInfoP = calloc(server_context.numUpdateThreads, sizeof(*updateThreadInfoP));
+  for (i=0; i<server_context.numUpdateThreads; i++) {
+    updateThreadInfoP[i].thread_type = CHRONOS_SERVER_THREAD_UPDATE;
+    updateThreadInfoP[i].contextP = &server_context;
+    updateThreadInfoP[i].thread_num = thread_num ++;
 
-  /* Spawn the client threads */
-  for (;;) {
+    rc = pthread_create(&updateThreadInfoP[i].thread_id,
+			&attr,
+			&updateThread,
+			updateThreadInfoP);
+    if (rc != 0) {
+      chronos_error("failed to spawn thread: %s", strerror(rc));
+      goto failXit;
+    }
+
+    chronos_debug(4,"Spawed update thread: %d", updateThreadInfoP[i].thread_num);
   }
-#endif
 
   /* Spawn daListener thread */
   memset(&listenerThreadInfo, 0, sizeof(listenerThreadInfo));
   listenerThreadInfo.thread_type = CHRONOS_SERVER_THREAD_LISTENER;
   listenerThreadInfo.contextP = &server_context;
-
+  listenerThreadInfo.thread_num = thread_num ++;
+    
   rc = pthread_create(&listenerThreadInfo.thread_id,
                       &attr,
                       &daListener,
@@ -126,6 +134,14 @@ int main(int argc, char *argv[])
   if (rc != CHRONOS_SUCCESS) {
     chronos_error("Failed while joining thread %s", listenerThreadInfo.thread_type);
   }
+
+  for (i=0; i<server_context.numUpdateThreads; i++) {
+    rc = pthread_join(updateThreadInfoP[i].thread_id, (void **)&thread_rc);
+    if (rc != CHRONOS_SUCCESS) {
+      chronos_error("Failed while joining thread %s", updateThreadInfoP[i].thread_type);
+    }
+  }
+  
   return CHRONOS_SUCCESS;
 
 failXit:
@@ -221,80 +237,59 @@ failXit:
   return CHRONOS_FAIL;
 }
 
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-/*
- * create the chronos tables
- */
-static int
-createChronosTables() {
-
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL;
-}
-
-
-/*
- * populate the chronos tables
- */
-static int
-populateChronosTables() {
-
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL;
-}
-
-#endif
-
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
 {
   chronosResponsePacket_t resPacket;
   int written, to_write;
-
+  int txn_rc = CHRONOS_SUCCESS;
+    
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
-
-  if (reqPacketP->txn_type == CHRONOS_USER_TXN_MAX) {
-    infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
-  }
+  
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
   /* Do admission control */
   if (doAdmissionControl () != CHRONOS_SUCCESS) {
     goto failXit;
   }
-
-  /* dispatch a transaction */
-  switch(transactionType) {
-
-    case viewStockTxn:
-      return doViewStockTxn(); 
-      break;
-
-    case viewPortfolioTxn:
-      return doViewPortfilioTxn();
-      break;
-
-    case purchaseTxn:
-      return doPurchaseTxn();
-      break;
-
-    case saleTxn:
-      return doSaleTxn();
-      break
-
-    default:
-      assert(0);
-  }
 #endif
+
+  chronos_debug(3, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
+  /* dispatch a transaction */
+  switch(reqPacketP->txn_type) {
+
+  case CHRONOS_USER_TXN_VIEW_STOCK:
+    txn_rc = benchmark_view_stock(CHRONOS_SERVER_HOME_DIR);
+    break;
+
+  case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
+    txn_rc = benchmark_view_portfolio(CHRONOS_SERVER_HOME_DIR);
+    break;
+
+  case CHRONOS_USER_TXN_PURCHASE:
+    txn_rc = benchmark_purchase(CHRONOS_SERVER_HOME_DIR);
+    break;
+
+  case CHRONOS_USER_TXN_SALE:
+    txn_rc = benchmark_sell(CHRONOS_SERVER_HOME_DIR);
+    break;
+
+  case CHRONOS_USER_TXN_MAX:
+    infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
+    txn_rc = CHRONOS_SUCCESS;
+    break;
+
+  default:
+    assert(0);
+  }
+  chronos_debug(3, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
+  chronos_debug(3, "Replying to client");
+  
   memset(&resPacket, 0, sizeof(resPacket));
   resPacket.txn_type = reqPacketP->txn_type;
-  resPacket.rc = CHRONOS_SUCCESS;
+  resPacket.rc = txn_rc;
 
   to_write = sizeof(resPacket);
  
@@ -307,7 +302,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
 
     to_write -= written;
   }
-
+  chronos_debug(3, "Replied to client");
   return CHRONOS_SUCCESS;
 
 failXit:
@@ -330,6 +325,8 @@ daHandler(void *argP)
   }
   
   while (1) {
+    chronos_debug(5, "waiting new request");
+    
     num_bytes = read(infoP->socket_fd, &reqPacket, sizeof(reqPacket));
     if (num_bytes < 0) {
       chronos_error("Failed while reading request from client");
@@ -348,6 +345,10 @@ daHandler(void *argP)
       goto cleanup;
     }
 
+    if (timeToDie == 1) {
+      infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
+    }
+    
     if (infoP->state == CHRONOS_SERVER_THREAD_STATE_DIE) {
       chronos_info("Requested to die");
       goto cleanup;
@@ -357,6 +358,8 @@ daHandler(void *argP)
 cleanup:
   close(infoP->socket_fd);
   free(infoP);
+
+  chronos_info("daHandler exiting");
   pthread_exit(NULL);
 }
 
@@ -429,6 +432,8 @@ daListener(void *argP)
 
   /* Keep listening for incoming connections */
   while(1) {
+    chronos_debug(5, "Polling for new connection");
+    
     /* wait for a new connection */
     client_address_len = sizeof(client_address); 
     accepted_socket_fd = accept(socket_fd, (struct sockaddr *)&client_address, &client_address_len);
@@ -459,8 +464,20 @@ daListener(void *argP)
     }
 
     chronos_debug(4,"Spawed handler thread");
+
+    if (timeToDie == 1) {
+      infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
+    }
+    
+    if (infoP->state == CHRONOS_SERVER_THREAD_STATE_DIE) {
+      chronos_info("Requested to die");
+      goto cleanup;
+    }
   }
+  
 cleanup:
+  timeToDie = 1;
+  chronos_info("daListener exiting");
   pthread_exit(NULL);
 }
 
@@ -480,32 +497,56 @@ serverThread() {
 cleanup:
   return;
 }
+#endif
 
 /*
  * This is the driver function of an update thread
  */
-static void
-updateThread() {
+static void *
+updateThread(void *argP) {
+  
+  chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
+
+  if (infoP == NULL || infoP->contextP == NULL) {
+    chronos_error("Invalid argument");
+    goto cleanup;
+  }
 
   while (1) {
+    chronos_debug(5, "new update period");
+    
+#ifdef CHRONOS_NOT_YET_IMPLEMENTED
     /* Do adaptive update control */
     if (doAdaptiveUpdate () != CHRONOS_SUCCESS) {
-      goto failXit;
+      goto cleanup;
     }
+#endif
 
-    if (updatePrices() != CHRONOS_SUCCESS) {
+    if (benchmark_refresh_quotes(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
+      chronos_error("Failed to refresh quotes");
+      goto cleanup;
+    }
+    
+    if (waitPeriod(infoP->contextP->updatePeriod) != CHRONOS_SUCCESS) {
       goto cleanup;
     }
 
-    if (waitPeriod() != CHRONOS_SUCCESS) {
+    if (timeToDie == 1) {
+      infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
+    }
+    
+    if (infoP->state == CHRONOS_SERVER_THREAD_STATE_DIE) {
+      chronos_info("Requested to die");
       goto cleanup;
     }
   }
 
 cleanup:
-  return;
+  chronos_info("updateThread exiting");
+  pthread_exit(NULL);
 }
 
+#ifdef CHRONOS_NOT_YET_IMPLEMENTED
 /*
  * This is the driver function for performance monitoring
  */
@@ -525,66 +566,18 @@ perfMonitorThread() {
 cleanup:
   return;
 }
-
-/*
- * handler for view stock transaction
- */
-static int
-doViewStockTxn() {
- 
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL;
-}
-
-
-/*
- * handler for view portfolio transaction
- */
-static int
-doViewPortfolioTxn() {
- 
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL;
-}
-
-/*
- * handler for purchase transaction
- */
-static int
-doPurchaseTxn() {
- 
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL;
-}
-
-/*
- * handler for sale transaction
- */
-static int
-doSaleTxn() {
- 
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL;
-}
+#endif
 
 /*
  * Wait till the next release time
  */
 static int
-waitPeriod() {
+waitPeriod(int updatePeriod) {
 
-failXit:
-  return CHRONOS_FAIL; 
+  sleep(updatePeriod);
+  
+  return CHRONOS_SUCCESS; 
 }
-#endif
 
 static void
 chronos_usage() 

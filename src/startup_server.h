@@ -32,6 +32,7 @@ typedef enum chronosServerThreadState_t {
 typedef enum chronosServerThreadType_t {
   CHRONOS_SERVER_THREAD_MIN = 0,
   CHRONOS_SERVER_THREAD_LISTENER = CHRONOS_SERVER_THREAD_MIN,
+  CHRONOS_SERVER_THREAD_UPDATE,
   CHRONOS_SERVER_THREAD_MAX,
   CHRONOS_SERVER_THREAD_INVAL=CHRONOS_SERVER_THREAD_MAX
 } chronosServerThreadType_t;
@@ -84,7 +85,13 @@ daListener(void *argP);
 static void *
 daHandler(void *argP);
 
+static void *
+updateThread(void *argP);
+
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP);
+
+static int
+waitPeriod(int updatePeriod);
 
 #endif

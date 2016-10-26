@@ -16,26 +16,14 @@
  * =====================================================================================
  */
 
+#include "benchmark.h"
 #include "benchmark_common.h"
 
-/* Forward declarations */
-int usage(void);
-
 int
-usage()
-{
-  fprintf(stderr, "purchase_txn \n");
-  fprintf(stderr, "\t-h <database_home_directory>\n");
-  return (-1);
-}
-
-int
-main(int argc, char *argv[])
+benchmark_purchase(char *homedir)
 {
   BENCHMARK_DBS my_benchmark;
-  int ch, ret;
-  char *itemname;
-  int which_tables = 0;
+  int ret;
   int random_account;
   char *random_symbol;
   float random_price;
@@ -43,32 +31,7 @@ main(int argc, char *argv[])
 
   /* Initialize the BENCHMARK_DBS struct */
   initialize_benchmarkdbs(&my_benchmark);
-
-  /* Parse the command line arguments */
-  itemname = NULL;
-  while ((ch = getopt(argc, argv, "h:?")) != EOF)
-  {
-    switch (ch) {
-      case 'h':
-        if (optarg[strlen(optarg)-1] != '/' &&
-          optarg[strlen(optarg)-1] != '\\') 
-        {
-          return (usage());
-        }
-        my_benchmark.db_home_dir = optarg;
-        break;
-
-      case '?':
-
-      default:
-          return (usage());
-    }
-  }
-
-  if (my_benchmark.db_home_dir == NULL) {
-    fprintf(stderr, "You must specify -h\n");
-    return usage();
-  }
+  my_benchmark.db_home_dir = homedir;
 
   /* Identify the files that hold our databases */
   set_db_filenames(&my_benchmark);

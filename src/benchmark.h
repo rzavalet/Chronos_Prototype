@@ -10,6 +10,22 @@ benchmark_initial_load(char *homedir, char *datafilesdir);
 int
 benchmark_load_portfolio(char *homedir);
 
+int
+benchmark_refresh_quotes(char *homedir, char *datafilesdir);
+
+int
+benchmark_view_stock(char *homedir);
+
+int
+benchmark_view_portfolio(char *homedir);
+
+int
+benchmark_purchase(char *homedir);
+
+int
+benchmark_sell(char *homedir);
+
+
 /*---------------------------------
  * Debugging routines
  *-------------------------------*/

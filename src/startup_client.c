@@ -391,6 +391,7 @@ sendTransactionRequest(chronos_user_transaction_t txnType, chronosClientThreadIn
     goto failXit;
   }
 
+  chronos_debug(2, "Sending new transaction request: %s", CHRONOS_TXN_NAME(txnType));
   /* Populate a new transaction request */
   memset(&reqPacket, 0, sizeof(reqPacket));
   reqPacket.txn_type = txnType;
