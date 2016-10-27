@@ -32,7 +32,7 @@ How to run the prototype
 	$ ./startup_server OPTIONS
 
 3) In other terminals, spawn client processes:
-  $ ./startup_client OPTIONS
+  	$ ./startup_client OPTIONS
 
 Compiling
 ==========
