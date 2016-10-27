@@ -29,9 +29,11 @@ How to run the prototype
 	$ make init
 
 2) Startup a server process in one terminal:
+
 	$ ./startup_server OPTIONS
 
 3) In other terminals, spawn client processes:
+
   	$ ./startup_client OPTIONS
 
 Compiling
