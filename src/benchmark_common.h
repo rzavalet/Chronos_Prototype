@@ -218,4 +218,13 @@ place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 int 
 sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
 
+int 
+show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP);
+
+int 
+show_currencies_records(BENCHMARK_DBS *my_benchmarkP);
+
+int
+show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP);
+
 #endif

@@ -86,7 +86,7 @@ extern int chronos_debug_level;
   chronos_msg("WARN", __VA_ARGS__)
 
 typedef struct timeval chronos_time_t;
-#define CHRONOS_TIME_FMT "%d.%06d"
+#define CHRONOS_TIME_FMT "%ld.%06ld"
 #define CHRONOS_TIME_ARG(_t) (_t).tv_sec, (_t).tv_usec
 
 #define CHRONOS_GET_AVERAGE(_sum, _num, _res)				\

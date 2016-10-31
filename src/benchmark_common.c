@@ -21,8 +21,23 @@
 
 char *symbolsArr[] = {"YHOO", "AAPL", "GOOG", "MSFT", "PIH", "FLWS", "SRCE", "VNET", "TWOU", "JOBS"};
 
+static int
+symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
+
+static int
+account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
+
+static int
+show_portfolio_item(void *vBuf, char **symbolIdPP);
+
 static int 
 show_stock_item(void *);
+
+static int
+show_currencies_item(void *vBuf);
+
+static int
+show_personal_item(void *vBuf);
 
 static int
 get_account_id(DB *sdbp,          /* secondary db handle */
@@ -694,7 +709,7 @@ show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP)
   return (rc);
 }
 
-int
+static int
 show_personal_item(void *vBuf)
 {
   char      *account_id;
@@ -783,7 +798,7 @@ show_currencies_records(BENCHMARK_DBS *my_benchmarkP)
   return (exit_value);
 }
 
-int
+static int
 show_currencies_item(void *vBuf)
 {
   char      *currency_symbol;
@@ -814,7 +829,7 @@ show_currencies_item(void *vBuf)
   return 0;
 }
 
-int
+static int
 show_portfolio_item(void *vBuf, char **symbolIdPP)
 {
   char      *portfolio_id;
@@ -1138,7 +1153,7 @@ cleanup:
   return rc;
 }
 
-int
+static int
 symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP) 
 {
   DBC *cursorp = NULL;
@@ -1182,7 +1197,7 @@ cleanup:
   return exists;
 }
 
-int
+static int
 account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP) 
 {
   DBC *cursorp = NULL;

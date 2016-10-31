@@ -103,7 +103,7 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
 
       case 'a':
         snprintf(contextP->serverAddress, sizeof(contextP->serverAddress), "%s", optarg);
-        chronos_debug(2, "*** Server address: %d", contextP->serverAddress);
+        chronos_debug(2, "*** Server address: %s", contextP->serverAddress);
         break;
 
       case 'p':

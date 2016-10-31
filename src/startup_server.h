@@ -38,6 +38,17 @@ typedef enum chronosServerThreadType_t {
   CHRONOS_SERVER_THREAD_INVAL=CHRONOS_SERVER_THREAD_MAX
 } chronosServerThreadType_t;
 
+const char *chronosServerThreadNames[] ={
+  "CHRONOS_SERVER_THREAD_LISTENER",
+  "CHRONOS_SERVER_THREAD_UPDATE"
+};
+
+#define CHRONOS_SERVER_THREAD_NAME(_txn_type) \
+  ((CHRONOS_SERVER_THREAD_MIN<=(_txn_type) && (_txn_type) < CHRONOS_SERVER_THREAD_MAX) ? (chronosServerThreadNames[(_txn_type)]) : "INVALID")
+
+#define CHRONOS_SERVER_THREAD_IS_VALID(_txn_type) \
+  (CHRONOS_SERVER_THREAD_MIN<=(_txn_type) && (_txn_type) < CHRONOS_SERVER_THREAD_MAX)
+
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
 typedef int (*chronos_system_init_fn)(char *homedir, char *datafilesdir);
 typedef int (*chronos_txn_handler_fn)(void *);

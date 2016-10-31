@@ -31,7 +31,7 @@ LIBS=		 -lpthread
 ##################################################
 # Targets 
 ##################################################
-all: benchmark_databases_dump startup_server startup_client
+all: startup_server startup_client
 
 ##################################################
 # Compile and link

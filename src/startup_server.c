@@ -139,13 +139,13 @@ int main(int argc, char *argv[])
 
   rc = pthread_join(listenerThreadInfo.thread_id, (void **)&thread_rc);
   if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Failed while joining thread %s", listenerThreadInfo.thread_type);
+    chronos_error("Failed while joining thread %s", CHRONOS_SERVER_THREAD_NAME(listenerThreadInfo.thread_type));
   }
 
   for (i=0; i<server_context.numUpdateThreads; i++) {
     rc = pthread_join(updateThreadInfoP[i].thread_id, (void **)&thread_rc);
     if (rc != CHRONOS_SUCCESS) {
-      chronos_error("Failed while joining thread %s", updateThreadInfoP[i].thread_type);
+      chronos_error("Failed while joining thread %s", CHRONOS_SERVER_THREAD_NAME(updateThreadInfoP[i].thread_type));
     }
   }
   
