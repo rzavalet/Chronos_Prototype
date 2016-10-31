@@ -14,7 +14,9 @@
 #include <arpa/inet.h>
 #include "chronos.h"
 #include "chronos_packets.h"
+#include "benchmark.h"
 
+int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
 
 typedef struct chronosClientStats_t {
@@ -27,6 +29,7 @@ typedef struct chronosClientContext_t {
   int serverPort;
   int numTransactions;
   int percentageViewStockTransactions;
+  int debugLevel;
 } chronosClientContext_t;
 
 typedef struct chronosClientThreadInfo_t {
@@ -36,8 +39,6 @@ typedef struct chronosClientThreadInfo_t {
   chronosClientStats_t stats;
   chronosClientContext_t *contextP;
 } chronosClientThreadInfo_t;
-
-extern int chronos_debug_level;
 
 /*========================================================
                         PROTOTYPES

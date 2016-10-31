@@ -13,14 +13,17 @@ DEF_LIB=	-L/usr/local/BerkeleyDB.6.2/lib -ldb-6.2
 LIBTOOL=	./libtool
 
 POSTLINK=	$(LIBTOOL) --mode=execute true
-SOLINK=		$(LIBTOOL) --mode=link cc -avoid-version -O3 
+#SOLINK=		$(LIBTOOL) --mode=link cc -avoid-version -O3 
+SOLINK=		$(LIBTOOL) --mode=link cc -avoid-version -O0
 
 ##################################################
 # C API.
 ##################################################
-CFLAGS=		-c -I/usr/local/BerkeleyDB.6.2/include -O3 -g
+#CFLAGS=		-c -I/usr/local/BerkeleyDB.6.2/include -O3 -g
+CFLAGS=		-c -I/usr/local/BerkeleyDB.6.2/include -g
 CC=		$(LIBTOOL) --mode=compile cc
-CCLINK=		$(LIBTOOL) --mode=link cc -O3 
+#CCLINK=		$(LIBTOOL) --mode=link cc -O3 
+CCLINK=		$(LIBTOOL) --mode=link cc
 
 LDFLAGS=	
 LIBS=		 -lpthread

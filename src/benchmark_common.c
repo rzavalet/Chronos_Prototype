@@ -73,8 +73,8 @@ show_stock_item(void *vBuf)
 
   /* Display all this information */
 #ifdef CHRONOS_DEBUG
-  printf("Symbol: %s\n", symbol);
-  printf("\tName: %s\n", name);
+  benchmark_debug(5,"Symbol: %s\n", symbol);
+  benchmark_debug(5,"\tName: %s\n", name);
 #endif
 
   /* Return the vendor's name */
@@ -445,7 +445,7 @@ benchmark_end(BENCHMARK_DBS *benchmarkP,
   }
 
 #ifdef CHRONOS_DEBUG
-  printf("databases opened successfully\n");
+  benchmark_debug(2,"databases opened successfully\n");
 #endif
   return (0);
 
@@ -557,7 +557,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   }
 
 #ifdef CHRONOS_DEBUG
-  printf("databases closed.\n");
+  benchmark_debug(2,"databases closed.\n");
 #endif
   return (0);
 }
@@ -624,13 +624,13 @@ show_portfolios(BENCHMARK_DBS *benchmarkP)
   while ((curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_NEXT)) == 0)
   {
 #ifdef CHRONOS_DEBUG
-     printf("================= SHOWING PORTFOLIO ==============\n");
+     benchmark_debug(4,"================= SHOWING PORTFOLIO ==============\n");
 #endif
     (void) show_personal_item(data.data);   
     (void) show_one_portfolio(key.data, benchmarkP);
     numClients ++;
 #ifdef CHRONOS_DEBUG
-     printf("==================================================\n");
+     benchmark_debug(4,"==================================================\n");
 #endif
   }
 
@@ -643,7 +643,7 @@ show_portfolios(BENCHMARK_DBS *benchmarkP)
   personal_cursorP->close(personal_cursorP);
 
 #ifdef CHRONOS_DEBUG
-  printf("Displayed info about %d clients\n", numClients);
+  benchmark_debug(3,"Displayed info about %d clients\n", numClients);
 #endif
   return (rc);
 
@@ -689,7 +689,7 @@ show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP)
 
   portfolio_cursorP->close(portfolio_cursorP);
 #ifdef CHRONOS_DEBUG
-  printf("Displayed info about %d portfolios\n", numPortfolios);
+  benchmark_debug(3,"Displayed info about %d portfolios\n", numPortfolios);
 #endif
   return (rc);
 }
@@ -741,16 +741,16 @@ show_personal_item(void *vBuf)
   email = buf + buf_pos;
  
   /* Display all this information */
-  printf("AccountId: %s\n", account_id);
-  printf("\tLast Name: %s\n", last_name);
-  printf("\tFirst Name: %s\n", first_name);
-  printf("\tAddress: %s\n", address);
-  printf("\tAdress 2: %s\n", address_2);
-  printf("\tCity: %s\n", city);
-  printf("\tState: %s\n", state);
-  printf("\tCountry: %s\n", country);
-  printf("\tPhone: %s\n", phone);
-  printf("\tEmail: %s\n", email);
+  benchmark_debug(5,"AccountId: %s\n", account_id);
+  benchmark_debug(5,"\tLast Name: %s\n", last_name);
+  benchmark_debug(5,"\tFirst Name: %s\n", first_name);
+  benchmark_debug(5,"\tAddress: %s\n", address);
+  benchmark_debug(5,"\tAdress 2: %s\n", address_2);
+  benchmark_debug(5,"\tCity: %s\n", city);
+  benchmark_debug(5,"\tState: %s\n", state);
+  benchmark_debug(5,"\tCountry: %s\n", country);
+  benchmark_debug(5,"\tPhone: %s\n", phone);
+  benchmark_debug(5,"\tEmail: %s\n", email);
 
   return 0;
 }
@@ -767,7 +767,7 @@ show_currencies_records(BENCHMARK_DBS *my_benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  printf("================= SHOWING CURRENCIES DATABASE ==============\n");
+  benchmark_debug(4,"================= SHOWING CURRENCIES DATABASE ==============\n");
 
   my_benchmarkP->currencies_dbp->cursor(my_benchmarkP->currencies_dbp, NULL,
                                     &currencies_cursorp, 0);
@@ -806,10 +806,10 @@ show_currencies_item(void *vBuf)
   exchange_rate_usd = *((int *)(buf + buf_pos));
 
   /* Display all this information */
-  printf("Currency Symbol: %s\n", currency_symbol);
-  printf("\tExchange Rate: %d\n", exchange_rate_usd);
-  printf("\tCountry: %s\n", country);
-  printf("\tName: %s\n", currency_name);
+  benchmark_debug(5,"Currency Symbol: %s\n", currency_symbol);
+  benchmark_debug(5,"\tExchange Rate: %d\n", exchange_rate_usd);
+  benchmark_debug(5,"\tCountry: %s\n", country);
+  benchmark_debug(5,"\tName: %s\n", currency_name);
 
   return 0;
 }
@@ -878,16 +878,16 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
   
   portfolioP = (PORTFOLIOS *)vBuf;
   /* Display all this information */
-  printf("Portfolio ID: %s\n", portfolioP->portfolio_id);
-  printf("\tAccount ID: %s\n", portfolioP->account_id);
-  printf("\tSymbol ID: %s\n", portfolioP->symbol);
-  printf("\t# Stocks Hold: %d\n", portfolioP->hold_stocks);
-  printf("\tSell?: %d\n", portfolioP->to_sell);
-  printf("\t# Stocks to sell: %d\n", portfolioP->number_sell);
-  printf("\tPrice to sell: %d\n", portfolioP->price_sell);
-  printf("\tBuy?: %d\n", portfolioP->to_buy);
-  printf("\t# Stocks to buy: %d\n", portfolioP->number_buy);
-  printf("\tPrice to buy: %d\n", portfolioP->price_buy);
+  benchmark_debug(5,"Portfolio ID: %s\n", portfolioP->portfolio_id);
+  benchmark_debug(5,"\tAccount ID: %s\n", portfolioP->account_id);
+  benchmark_debug(5,"\tSymbol ID: %s\n", portfolioP->symbol);
+  benchmark_debug(5,"\t# Stocks Hold: %d\n", portfolioP->hold_stocks);
+  benchmark_debug(5,"\tSell?: %d\n", portfolioP->to_sell);
+  benchmark_debug(5,"\t# Stocks to sell: %d\n", portfolioP->number_sell);
+  benchmark_debug(5,"\tPrice to sell: %d\n", portfolioP->price_sell);
+  benchmark_debug(5,"\tBuy?: %d\n", portfolioP->to_buy);
+  benchmark_debug(5,"\t# Stocks to buy: %d\n", portfolioP->number_buy);
+  benchmark_debug(5,"\tPrice to buy: %d\n", portfolioP->price_buy);
 
   if (symbolIdPP) {
     *symbolIdPP = symbol; 
@@ -1269,7 +1269,7 @@ create_portfolio(char *account_id, char *symbol, float price, int amount, DB_TXN
 
 #ifdef CHRONOS_DEBUG
   /* Put the data into the database */
-  printf("Inserting: %s\n", (char *)key.data);
+  benchmark_debug(3,"Inserting: %s\n", (char *)key.data);
 #endif
 
   rc = benchmarkP->portfolios_dbp->put(benchmarkP->portfolios_dbp, txnP, &key, &data, DB_NOOVERWRITE);

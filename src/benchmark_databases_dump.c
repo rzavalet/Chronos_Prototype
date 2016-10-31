@@ -18,6 +18,8 @@
 
 #include "benchmark_common.h"
 
+int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
+
 /* Forward declarations */
 int usage(void);
 

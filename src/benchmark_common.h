@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "benchmark.h"
+
 #define CHRONOS_INMEMORY
 #define CHRONOS_SHMKEY 35
 #define CHRONOS_PORTFOLIOS_NUM	100

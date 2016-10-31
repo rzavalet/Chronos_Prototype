@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
   srand(time(NULL));
 
-  set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN+2);
+  set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN);
   memset(&client_context, 0, sizeof(client_context));
 
   /* First process the command line arguments which are:
@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
+  set_chronos_debug_level(client_context.debugLevel);
+  
   /* Next we need to spawn the client threads */
   if (spawnClientThreads(num_threads, &thread_infoP, &client_context) != CHRONOS_SUCCESS) {
     chronos_error("Failed spawning threads");
@@ -87,7 +89,7 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
 
   memset(contextP, 0, sizeof(*contextP));
   
-  while ((c = getopt(argc, argv, "n:c:t:a:p:x:v:h")) != -1) {
+  while ((c = getopt(argc, argv, "n:c:t:a:p:x:v:d:h")) != -1) {
     switch(c) {
       case 'c':
         *num_threads = atoi(optarg);
@@ -118,7 +120,12 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
         contextP->percentageViewStockTransactions = atoi(optarg);
         chronos_debug(2, "*** %% of ViewStock Transactions: %d", contextP->percentageViewStockTransactions);
         break;
-      
+
+      case 'd':
+        contextP->debugLevel = atoi(optarg);
+        chronos_debug(2, "*** Debug Level: %d", contextP->debugLevel);
+        break;
+	
       case 'h':
         chronos_usage();
         exit(0);

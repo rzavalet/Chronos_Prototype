@@ -51,7 +51,9 @@ int main(int argc, char *argv[])
   chronosServerThreadInfo_t listenerThreadInfo;
   chronosServerThreadInfo_t *updateThreadInfoP = NULL;
 
-  set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN+5);
+  set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN);
+  set_benchmark_debug_level(BENCHMARK_DEBUG_LEVEL_MIN);
+  
   memset(&server_context, 0, sizeof(server_context));
 
   /* Process command line arguments which include:
@@ -67,6 +69,9 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
+  set_chronos_debug_level(server_context.debugLevel);
+  set_benchmark_debug_level(server_context.debugLevel);
+  
   /* Create the system tables */
   if (benchmark_initial_load(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
     chronos_error("Failed to perform initial load");
@@ -90,6 +95,8 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
+  server_context.stats = calloc(server_context.numUpdateThreads, sizeof(chronosServerStats_t));
+				
   /* Spawn processing thread */
   
   /* Spawn performance monitor thread */
@@ -168,7 +175,7 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
 
   memset(contextP, 0, sizeof(*contextP));
   
-  while ((c = getopt(argc, argv, "c:v:u:t:p:h")) != -1) {
+  while ((c = getopt(argc, argv, "c:v:u:t:p:d:h")) != -1) {
     switch(c) {
       case 'c':
         contextP->numClientsThreads = atoi(optarg);
@@ -193,6 +200,11 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
       case 't':
         contextP->updatePeriod = atoi(optarg);
         chronos_debug(2, "*** Update period: %d", contextP->updatePeriod);
+        break;
+
+      case 'd':
+        contextP->debugLevel = atoi(optarg);
+        chronos_debug(2, "*** Debug Level: %d", contextP->debugLevel);
         break;
 
       case 'h':
@@ -243,6 +255,8 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   chronosResponsePacket_t resPacket;
   int written, to_write;
   int txn_rc = CHRONOS_SUCCESS;
+  chronos_time_t begin_time;
+  chronos_time_t end_time;
     
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -256,6 +270,14 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   }
 #endif
 
+  timerclear(&begin_time);
+  timerclear(&end_time);
+  
+  if (getCurrentTime(&begin_time) != CHRONOS_SUCCESS) {
+    chronos_error("Could not get begin time");
+    goto failXit;
+  }
+  
   chronos_debug(3, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
   /* dispatch a transaction */
   switch(reqPacketP->txn_type) {
@@ -285,6 +307,20 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
     assert(0);
   }
   chronos_debug(3, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
+
+  if (getCurrentTime(&end_time) != CHRONOS_SUCCESS) {
+    chronos_error("Could not get end time");
+    goto failXit;
+  }
+  
+  if (reqPacketP->txn_type != CHRONOS_USER_TXN_MAX) {
+
+    if (performanceMonitor(&begin_time, &end_time, reqPacketP->txn_type, infoP) != CHRONOS_SUCCESS) {
+      chronos_error("Failed to execute performance monitor");
+      goto failXit;
+    }
+  }
+  
   chronos_debug(3, "Replying to client");
   
   memset(&resPacket, 0, sizeof(resPacket));
@@ -356,6 +392,13 @@ daHandler(void *argP)
   }
 
 cleanup:
+
+  if (printStats(infoP) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to print stats");
+  }
+
+  __sync_fetch_and_sub(&infoP->contextP->currentNumClients, 1);
+  
   close(infoP->socket_fd);
   free(infoP);
 
@@ -370,6 +413,7 @@ static void *
 daListener(void *argP) 
 {
   int rc;
+  int num_clients = 0;
   struct sockaddr_in server_address;
   struct sockaddr_in client_address;
   int socket_fd;
@@ -432,6 +476,7 @@ daListener(void *argP)
 
   /* Keep listening for incoming connections */
   while(1) {
+
     chronos_debug(5, "Polling for new connection");
     
     /* wait for a new connection */
@@ -464,6 +509,8 @@ daListener(void *argP)
     }
 
     chronos_debug(4,"Spawed handler thread");
+
+    __sync_fetch_and_add(&infoP->contextP->currentNumClients, 1);
 
     if (timeToDie == 1) {
       infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
@@ -546,37 +593,155 @@ cleanup:
   pthread_exit(NULL);
 }
 
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
 /*
  * This is the driver function for performance monitoring
  */
-static void
-perfMonitorThread() {
+static int
+performanceMonitor(chronos_time_t *begin_time, chronos_time_t *end_time, chronos_user_transaction_t txn_type, chronosServerThreadInfo_t *infoP)
+{
+  chronos_time_t elapsed_time;
 
-  while (1) {
-    if (computePerformanceError() != CHRONOS_SUCCESS) {
-      goto cleanup;
-    }
-
-    if (computeWorkloadAdjustment() != CHRONOS_SUCCESS) {
-      goto cleanup;
-    }
+  if (begin_time == NULL || end_time == NULL || infoP == NULL) {
+    chronos_error("Invalid Arguments");
+    goto failXit;
   }
 
-cleanup:
-  return;
-}
+  assert(txn_type != CHRONOS_USER_TXN_MAX);
+  timerclear(&elapsed_time);
+
+  if (getElapsedTime(begin_time, end_time, &elapsed_time) != CHRONOS_SUCCESS) {
+    chronos_error("Could not get elapsed time");
+    goto failXit;
+  }
+
+  chronos_debug(3, "Start Time: "CHRONOS_TIME_FMT": End Time: "CHRONOS_TIME_FMT" Elapsed Time: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(*begin_time), CHRONOS_TIME_ARG(*end_time), CHRONOS_TIME_ARG(elapsed_time));
+  
+  if ( updateStats(txn_type, &elapsed_time, infoP) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to update stats");
+    goto failXit;
+  }
+
+#ifdef CHRONOS_NOT_YET_IMPLEMENTED
+  if (computePerformanceError() != CHRONOS_SUCCESS) {
+    goto cleanup;
+  }
+
+  if (computeWorkloadAdjustment() != CHRONOS_SUCCESS) {
+    goto cleanup;
+  }
 #endif
+  
+  return CHRONOS_SUCCESS;
+
+ failXit:
+  return CHRONOS_FAIL;
+}
 
 /*
  * Wait till the next release time
  */
 static int
-waitPeriod(int updatePeriod) {
+waitPeriod(int updatePeriod)
+{
 
   sleep(updatePeriod);
   
   return CHRONOS_SUCCESS; 
+}
+
+static int
+getElapsedTime(chronos_time_t *begin, chronos_time_t *end, chronos_time_t *result)
+{
+  if (begin == NULL || end == NULL || result == NULL) {
+    chronos_error("Invalid argument");
+    goto failXit;
+  }
+  
+  timersub(end, begin, result);
+  return CHRONOS_SUCCESS;
+
+ failXit:
+  return CHRONOS_FAIL;
+}
+
+static int
+getCurrentTime(chronos_time_t *time)
+{
+  memset(time, 0, sizeof(*time));
+
+  if (gettimeofday(time, NULL) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to retrieve current time");
+    goto failXit;
+  }
+  
+  return CHRONOS_SUCCESS;
+  
+failXit:
+  return CHRONOS_FAIL;
+}
+
+static int
+updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chronosServerThreadInfo_t *infoP)
+{
+  chronos_time_t result;
+  chronosServerStats_t *stats;
+  int thread_num;
+  
+  assert(txn_type != CHRONOS_USER_TXN_MAX);
+  
+  if (new_time == NULL || infoP == NULL) {
+    chronos_error("Invalid argument");
+    goto failXit;
+  }
+  
+  thread_num = infoP->thread_num;
+  stats = &infoP->contextP->stats[thread_num];
+  
+  timeradd(&stats->cumulative_time[txn_type], new_time, &result);
+
+  stats->cumulative_time[txn_type] = result;
+  stats->num_txns[txn_type] += 1;
+
+  return CHRONOS_SUCCESS;
+   
+ failXit:
+  return CHRONOS_FAIL;
+}
+
+static int
+printStats(chronosServerThreadInfo_t *infoP)
+{
+  int i;
+  chronosServerStats_t *stats;
+  const char filler[] = "====================================================================================================";
+  const int  width = 80;
+  int thread_num;
+  
+  if (infoP == NULL) {
+    chronos_error("Invalid argument");
+    goto failXit;
+  }
+
+  thread_num = infoP->thread_num;
+  stats = &infoP->contextP->stats[thread_num];
+
+  printf("%.*s\n", width, filler);
+  for (i=0; i<CHRONOS_USER_TXN_MAX; i++) {
+
+    CHRONOS_GET_AVERAGE(stats->cumulative_time[i], stats->num_txns[i], stats->average_time[i]);
+
+    printf("Txn Type: %s\n", CHRONOS_TXN_NAME(i));
+    printf("Num Transactions: %d\n", stats->num_txns[i]);
+    printf("Total Execution time: "CHRONOS_TIME_FMT"\n", CHRONOS_TIME_ARG(stats->cumulative_time[i]));
+    printf("Average Execution time: "CHRONOS_TIME_FMT"\n", CHRONOS_TIME_ARG(stats->average_time[i]));
+    printf("\n");
+  }
+  printf("%.*s\n", width, filler);
+  
+  return CHRONOS_SUCCESS;
+  
+ failXit:
+  return CHRONOS_FAIL;
 }
 
 static void

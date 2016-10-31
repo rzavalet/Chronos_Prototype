@@ -85,4 +85,23 @@ extern int chronos_debug_level;
 #define chronos_warning(...) \
   chronos_msg("WARN", __VA_ARGS__)
 
+typedef struct timeval chronos_time_t;
+#define CHRONOS_TIME_FMT "%d.%06d"
+#define CHRONOS_TIME_ARG(_t) (_t).tv_sec, (_t).tv_usec
+
+#define CHRONOS_GET_AVERAGE(_sum, _num, _res)				\
+  do {									\
+    if (_num != 0) {							\
+      int mod;								\
+      (_res).tv_sec  = (_sum).tv_sec / _num;				\
+      mod =  1000000 * (((float)(_sum).tv_sec / (float)_num) - (_res).tv_sec);	\
+      (_res).tv_usec = mod + (_sum).tv_usec / _num;			\
+      if ((_res).tv_usec > 999999) {					\
+	mod = (_res).tv_usec / 1000000;					\
+	(_res).tv_sec += mod;						\
+	mod = (_res).tv_usec % 1000000;					\
+	(_res).tv_usec = mod;						\
+      }									\
+    }									\
+  }while(0)
 #endif
