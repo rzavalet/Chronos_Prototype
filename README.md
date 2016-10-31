@@ -15,31 +15,26 @@ What is included in the prototype
 In this repository, I am trying to reconstruct their testbed from scratch. I am
 providing the following utilities:
 
-1) benchmark_initial_load: Performs the initial load of the 'static' tables.
+1) benchmark_databases_dump: Dumps the contents of the tables.
 
-2) benchmark_databases_dump: Dumps the contents of the tables.
+2) startup_server: Starts up a chronos server process which is able to accept incoming transaction request from multiple chronos clients.
 
-3) view_stock_txn: Implementation of the View Stock transaction described in the paper
+3) startup_client: Starts up a chronos client process which connects to a chronos server and sends transaction requests.
 
-4) view_portfolio_txn: Implementation of the View Portfolio transaction described in the paper
-
-5) refresh_quotes: Implementation of the Update transaction described in the paper
-
-6) populate_portfolios: Performs an initial population of the portfolios table using dummy data
-
-[In Progress]
 
 How to run the prototype
 ========================
-1) Initially create the system tables:
+1) Initially create the required directories:
 
-	$ make reinit
-	$ make load
-	$ make run_refresh_quotes
-	$ make run_populate_portfolios
+	$ make init
 
-2) Execute one of the transactions, e.g.
-	$ make view_stock
+2) Startup a server process in one terminal:
+
+	$ ./startup_server OPTIONS
+
+3) In other terminals, spawn client processes:
+
+  	$ ./startup_client OPTIONS
 
 Compiling
 ==========
