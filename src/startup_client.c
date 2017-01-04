@@ -606,6 +606,7 @@ chronos_usage()
     "-p [num]              server port\n"
     "-x [num]              number of transactions\n"
     "-v [num]              percentage of user transactions\n"
+    "-d [num]              debug level\n"
     "-h                    help";
 
   printf("%s\n", usage);
