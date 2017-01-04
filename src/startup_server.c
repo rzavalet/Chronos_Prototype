@@ -757,6 +757,7 @@ chronos_usage()
     "-u [num]              number of update threads\n"
     "-t [num]              update period\n"
     "-p [num]              port to accept new connections\n"
+    "-d [num]              debug level\n"
     "-h                    help";
 
   printf("%s\n", usage);
