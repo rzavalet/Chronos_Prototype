@@ -61,6 +61,18 @@ typedef struct chronosServerStats_t {
   chronos_time_t average_time[CHRONOS_USER_TXN_MAX];
 } chronosServerStats_t;
 
+#define BSIZE 1024
+typedef struct {
+  chronos_user_transaction_t buf[BSIZE];
+  int occupied;
+  int nextin;
+  int nextout;
+  pthread_mutex_t mutex;
+  pthread_cond_t more;
+  pthread_cond_t less;
+} buffer_t;
+
+
 typedef struct chronosServerContext_t {
   int numClientsThreads;
   int numUpdateThreads;
@@ -71,6 +83,7 @@ typedef struct chronosServerContext_t {
   int currentNumClients;
   int debugLevel;
   chronosServerStats_t *stats;
+  buffer_t buffer;
   
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
   chronos_system_init_fn  chronos_system_init;

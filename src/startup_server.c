@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
   const int stack_size = 0x100000; // 1 MB
   chronosServerContext_t server_context;
   chronosServerThreadInfo_t listenerThreadInfo;
+  chronosServerThreadInfo_t processingThreadInfo;
   chronosServerThreadInfo_t *updateThreadInfoP = NULL;
 
   set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN);
@@ -98,6 +99,21 @@ int main(int argc, char *argv[])
   server_context.stats = calloc(server_context.numUpdateThreads, sizeof(chronosServerStats_t));
 				
   /* Spawn processing thread */
+  memset(&processingThreadInfo, 0, sizeof(processingThreadInfo));
+  processingThreadInfo.thread_type = CHRONOS_SERVER_THREAD_PROCESSING;
+  processingThreadInfo.contextP = &server_context;
+  processingThreadInfo.thread_num = thread_num ++;
+    
+  rc = pthread_create(&processingThreadInfo.thread_id,
+                      &attr,
+                      &processTxn,
+                      &processingThreadInfo);
+  if (rc != 0) {
+    chronos_error("failed to spawn thread: %s", strerror(rc));
+    goto failXit;
+  }
+
+  chronos_debug(4,"Spawed processing thread");
   
   /* Spawn performance monitor thread */
 
@@ -136,6 +152,11 @@ int main(int argc, char *argv[])
   }
 
   chronos_debug(4,"Spawed listener thread");
+
+  rc = pthread_join(listenerThreadInfo.thread_id, (void **)&thread_rc);
+  if (rc != CHRONOS_SUCCESS) {
+    chronos_error("Failed while joining thread %s", CHRONOS_SERVER_THREAD_NAME(listenerThreadInfo.thread_type));
+  }
 
   rc = pthread_join(listenerThreadInfo.thread_id, (void **)&thread_rc);
   if (rc != CHRONOS_SUCCESS) {
@@ -249,6 +270,31 @@ failXit:
   return CHRONOS_FAIL;
 }
 
+chronos_user_transaction_t consumer(buffer_t *b)
+{
+  chronos_user_transaction_t item;
+  pthread_mutex_lock(&b->mutex);
+  while(b->occupied <= 0)
+    pthread_cond_wait(&b->more, &b->mutex);
+
+  assert(b->occupied > 0);
+
+  item = b->buf[b->nextout++];
+  b->nextout %= BSIZE;
+  b->occupied--;
+
+  /* now: either b->occupied > 0 and b->nextout is the index
+       of the next occupied slot in the buffer, or
+       b->occupied == 0 and b->nextout is the index of the next
+       (empty) slot that will be filled by a producer (such as
+       b->nextout == b->nextin) */
+
+  pthread_cond_signal(&b->less);
+  pthread_mutex_unlock(&b->mutex);
+
+  return(item);
+}
+
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
 {
@@ -257,12 +303,15 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   int txn_rc = CHRONOS_SUCCESS;
   chronos_time_t begin_time;
   chronos_time_t end_time;
-    
+  buffer_t *bufferP = NULL;
+
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
-  
+
+  bufferP = &(infoP->contextP->buffer);
+
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
   /* Do admission control */
   if (doAdmissionControl () != CHRONOS_SUCCESS) {
@@ -277,8 +326,10 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
     chronos_error("Could not get begin time");
     goto failXit;
   }
-  
+
   chronos_debug(3, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
+#if 0  
+
   /* dispatch a transaction */
   switch(reqPacketP->txn_type) {
 
@@ -306,13 +357,44 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   default:
     assert(0);
   }
+#else
+
+  if (reqPacketP->txn_type == CHRONOS_USER_TXN_MAX) {
+    infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
+  }
+  else {
+    pthread_mutex_lock(&bufferP->mutex);
+   
+    while (bufferP->occupied >= BSIZE)
+      pthread_cond_wait(&bufferP->less, &bufferP->mutex);
+
+    assert(bufferP->occupied < BSIZE);
+
+    bufferP->buf[bufferP->nextin++] = reqPacketP->txn_type;
+    
+    bufferP->nextin %= BSIZE;
+    bufferP->occupied++;
+
+    /* now: either b->occupied < BSIZE and b->nextin is the index
+       of the next empty slot in the buffer, or
+       b->occupied == BSIZE and b->nextin is the index of the
+       next (occupied) slot that will be emptied by a consumer
+       (such as b->nextin == b->nextout) */
+
+    pthread_cond_signal(&bufferP->more);
+
+    pthread_mutex_unlock(&bufferP->mutex);
+  }
+
+  txn_rc = CHRONOS_SUCCESS;
+#endif
   chronos_debug(3, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
 
   if (getCurrentTime(&end_time) != CHRONOS_SUCCESS) {
     chronos_error("Could not get end time");
     goto failXit;
   }
-  
+
   if (reqPacketP->txn_type != CHRONOS_USER_TXN_MAX) {
 
     if (performanceMonitor(&begin_time, &end_time, reqPacketP->txn_type, infoP) != CHRONOS_SUCCESS) {
