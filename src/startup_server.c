@@ -51,6 +51,8 @@ int main(int argc, char *argv[])
   chronosServerThreadInfo_t listenerThreadInfo;
   chronosServerThreadInfo_t processingThreadInfo;
   chronosServerThreadInfo_t *updateThreadInfoP = NULL;
+  buffer_t *bufferP = NULL;
+  buffer_t *buffer2P = NULL;
 
   set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN);
   set_benchmark_debug_level(BENCHMARK_DEBUG_LEVEL_MIN);
@@ -73,6 +75,19 @@ int main(int argc, char *argv[])
   set_chronos_debug_level(server_context.debugLevel);
   set_benchmark_debug_level(server_context.debugLevel);
   
+  bufferP = &(server_context.buffer_user);
+  buffer2P = &(server_context.buffer_update);
+ 
+  if (pthread_mutex_init(&bufferP->mutex, NULL) != 0) {
+    chronos_error("Failed to init mutex");
+    goto failXit;
+  }
+
+  if (pthread_mutex_init(&buffer2P->mutex, NULL) != 0) {
+    chronos_error("Failed to init mutex");
+    goto failXit;
+  }
+
   /* Create the system tables */
   if (benchmark_initial_load(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
     chronos_error("Failed to perform initial load");
@@ -106,7 +121,7 @@ int main(int argc, char *argv[])
     
   rc = pthread_create(&processingThreadInfo.thread_id,
                       &attr,
-                      &processTxn,
+                      &processThread,
                       &processingThreadInfo);
   if (rc != 0) {
     chronos_error("failed to spawn thread: %s", strerror(rc));
@@ -270,7 +285,8 @@ failXit:
   return CHRONOS_FAIL;
 }
 
-chronos_user_transaction_t consumer(buffer_t *b)
+static chronos_user_transaction_t 
+consumer(buffer_t *b)
 {
   chronos_user_transaction_t item;
   pthread_mutex_lock(&b->mutex);
@@ -310,7 +326,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
     goto failXit;
   }
 
-  bufferP = &(infoP->contextP->buffer);
+  bufferP = &(infoP->contextP->buffer_user);
 
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
   /* Do admission control */
@@ -361,30 +377,30 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
 
   if (reqPacketP->txn_type == CHRONOS_USER_TXN_MAX) {
     infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
+    infoP->contextP->end = time(NULL);
   }
-  else {
-    pthread_mutex_lock(&bufferP->mutex);
+
+  pthread_mutex_lock(&bufferP->mutex);
    
-    while (bufferP->occupied >= BSIZE)
-      pthread_cond_wait(&bufferP->less, &bufferP->mutex);
+  while (bufferP->occupied >= BSIZE)
+    pthread_cond_wait(&bufferP->less, &bufferP->mutex);
 
-    assert(bufferP->occupied < BSIZE);
+  assert(bufferP->occupied < BSIZE);
+  
+  bufferP->buf[bufferP->nextin++] = reqPacketP->txn_type;
+  
+  bufferP->nextin %= BSIZE;
+  bufferP->occupied++;
 
-    bufferP->buf[bufferP->nextin++] = reqPacketP->txn_type;
-    
-    bufferP->nextin %= BSIZE;
-    bufferP->occupied++;
-
-    /* now: either b->occupied < BSIZE and b->nextin is the index
+  /* now: either b->occupied < BSIZE and b->nextin is the index
        of the next empty slot in the buffer, or
        b->occupied == BSIZE and b->nextin is the index of the
        next (occupied) slot that will be emptied by a consumer
        (such as b->nextin == b->nextout) */
 
-    pthread_cond_signal(&bufferP->more);
+  pthread_cond_signal(&bufferP->more);
 
-    pthread_mutex_unlock(&bufferP->mutex);
-  }
+  pthread_mutex_unlock(&bufferP->mutex);
 
   txn_rc = CHRONOS_SUCCESS;
 #endif
@@ -441,7 +457,13 @@ daHandler(void *argP)
     chronos_error("Invalid argument");
     goto cleanup;
   }
-  
+
+  /* Wait here till all threads are initialized */
+  pthread_mutex_lock(&infoP->contextP->startThreads);
+  while (infoP->contextP->currentNumClients <= infoP->contextP->numClientsThreads)
+    pthread_cond_wait(&infoP->contextP->waitForThreads, &infoP->contextP->startThreads);
+  pthread_mutex_unlock(&infoP->contextP->startThreads);
+
   while (1) {
     chronos_debug(5, "waiting new request");
     
@@ -465,9 +487,6 @@ daHandler(void *argP)
 
     if (timeToDie == 1) {
       infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
-    }
-    
-    if (infoP->state == CHRONOS_SERVER_THREAD_STATE_DIE) {
       chronos_info("Requested to die");
       goto cleanup;
     }
@@ -479,8 +498,6 @@ cleanup:
     chronos_error("Failed to print stats");
   }
 
-  __sync_fetch_and_sub(&infoP->contextP->currentNumClients, 1);
-  
   close(infoP->socket_fd);
   free(infoP);
 
@@ -592,13 +609,16 @@ daListener(void *argP)
 
     chronos_debug(4,"Spawed handler thread");
 
-    __sync_fetch_and_add(&infoP->contextP->currentNumClients, 1);
+    infoP->contextP->currentNumClients += 1;
+
+    if (infoP->contextP->currentNumClients == infoP->contextP->numClientsThreads) {
+      pthread_mutex_lock(&infoP->contextP->startThreads);
+      pthread_cond_signal(&infoP->contextP->waitForThreads);
+      pthread_mutex_unlock(&infoP->contextP->startThreads);
+    }
 
     if (timeToDie == 1) {
       infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
-    }
-    
-    if (infoP->state == CHRONOS_SERVER_THREAD_STATE_DIE) {
       chronos_info("Requested to die");
       goto cleanup;
     }
@@ -629,21 +649,131 @@ cleanup:
 #endif
 
 /*
- * This is the driver function of an update thread
+ * This is the driver function of process thread
  */
 static void *
-updateThread(void *argP) {
-  
+processThread(void *argP) 
+{
+
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
+  buffer_t *bufferP = NULL;
+  buffer_t *buffer2P = NULL;
+  int txn_rc = CHRONOS_SUCCESS;
+  chronos_user_transaction_t txn_type;
+  time_t t0, t1;
+  int i;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
     goto cleanup;
   }
 
+  bufferP = &(infoP->contextP->buffer_user);
+  buffer2P = &(infoP->contextP->buffer_update);
+
+  t0 = time(NULL);
+  infoP->contextP->start = t0;
+
+  /* Give update transactions more priority */
+  /* TODO: Add scheduling technique */
+  while (1) {
+
+    chronos_info("Processing update...");
+    if (buffer2P->occupied > 0) {
+#ifdef CHRONOS_NOT_YET_IMPLEMENTED
+      /* Do adaptive update control */
+      if (doAdaptiveUpdate () != CHRONOS_SUCCESS) {
+        goto cleanup;
+      }
+#endif
+
+      txn_type = consumer(buffer2P);
+      if (benchmark_refresh_quotes(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
+        chronos_error("Failed to refresh quotes");
+        goto cleanup;
+      }
+    }
+    chronos_info("Done processing update...");
+
+    chronos_info("Processing user txn...");
+    if (bufferP->occupied > 0) {
+      txn_type = consumer(bufferP);
+      
+        /* dispatch a transaction */
+      switch(txn_type) {
+
+      case CHRONOS_USER_TXN_VIEW_STOCK:
+        txn_rc = benchmark_view_stock(CHRONOS_SERVER_HOME_DIR);
+        break;
+
+      case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
+        txn_rc = benchmark_view_portfolio(CHRONOS_SERVER_HOME_DIR);
+        break;
+
+      case CHRONOS_USER_TXN_PURCHASE:
+        txn_rc = benchmark_purchase(CHRONOS_SERVER_HOME_DIR);
+        break;
+
+      case CHRONOS_USER_TXN_SALE:
+        txn_rc = benchmark_sell(CHRONOS_SERVER_HOME_DIR);
+        break;
+
+      case CHRONOS_USER_TXN_MAX:
+        infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
+        txn_rc = CHRONOS_SUCCESS;
+        break;
+
+      default:
+        assert(0);
+      }
+
+      t1 = time(NULL);
+      infoP->contextP->txn_count[t1-t0] += 1;
+    }
+    chronos_info("Done processing user txn...");
+    
+    if (timeToDie == 1) {
+      infoP->state = CHRONOS_SERVER_THREAD_STATE_DIE;
+    }
+    
+    if (infoP->state == CHRONOS_SERVER_THREAD_STATE_DIE) {
+      chronos_info("Requested to die");
+      goto cleanup;
+    }
+
+  }
+  
+cleanup:
+  chronos_info("updateThread exiting");
+  
+  printf("Transaction count per second [start:%ld - end:%ld]\n", infoP->contextP->start, infoP->contextP->end);
+  for (i=0; i<(infoP->contextP->end - infoP->contextP->start); i++) {
+    printf("%d\t%lld\n", i, infoP->contextP->txn_count[i]);
+  }
+
+  pthread_exit(NULL);
+}
+
+/*
+ * This is the driver function of an update thread
+ */
+static void *
+updateThread(void *argP) {
+  
+  chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
+  buffer_t *bufferP = NULL;
+
+  if (infoP == NULL || infoP->contextP == NULL) {
+    chronos_error("Invalid argument");
+    goto cleanup;
+  }
+
+  bufferP = &(infoP->contextP->buffer_update);
+
   while (1) {
     chronos_debug(5, "new update period");
-    
+   
+#if 0
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
     /* Do adaptive update control */
     if (doAdaptiveUpdate () != CHRONOS_SUCCESS) {
@@ -655,7 +785,31 @@ updateThread(void *argP) {
       chronos_error("Failed to refresh quotes");
       goto cleanup;
     }
+#else
+    pthread_mutex_lock(&bufferP->mutex);
+     
+    while (bufferP->occupied >= BSIZE)
+      pthread_cond_wait(&bufferP->less, &bufferP->mutex);
+
+    assert(bufferP->occupied < BSIZE);
     
+    chronos_info("Put a new update request in queue");
+    bufferP->buf[bufferP->nextin++] = CHRONOS_USER_TXN_MAX;
+    
+    bufferP->nextin %= BSIZE;
+    bufferP->occupied++;
+
+    /* now: either b->occupied < BSIZE and b->nextin is the index
+         of the next empty slot in the buffer, or
+         b->occupied == BSIZE and b->nextin is the index of the
+         next (occupied) slot that will be emptied by a consumer
+         (such as b->nextin == b->nextout) */
+
+    pthread_cond_signal(&bufferP->more);
+
+    pthread_mutex_unlock(&bufferP->mutex);
+
+#endif
     if (waitPeriod(infoP->contextP->updatePeriod) != CHRONOS_SUCCESS) {
       goto cleanup;
     }
@@ -819,7 +973,7 @@ printStats(chronosServerThreadInfo_t *infoP)
     printf("\n");
   }
   printf("%.*s\n", width, filler);
-  
+
   return CHRONOS_SUCCESS;
   
  failXit:

@@ -34,6 +34,7 @@ typedef enum chronosServerThreadType_t {
   CHRONOS_SERVER_THREAD_MIN = 0,
   CHRONOS_SERVER_THREAD_LISTENER = CHRONOS_SERVER_THREAD_MIN,
   CHRONOS_SERVER_THREAD_UPDATE,
+  CHRONOS_SERVER_THREAD_PROCESSING,
   CHRONOS_SERVER_THREAD_MAX,
   CHRONOS_SERVER_THREAD_INVAL=CHRONOS_SERVER_THREAD_MAX
 } chronosServerThreadType_t;
@@ -83,7 +84,11 @@ typedef struct chronosServerContext_t {
   int currentNumClients;
   int debugLevel;
   chronosServerStats_t *stats;
-  buffer_t buffer;
+  buffer_t buffer_user;
+  buffer_t buffer_update;
+  unsigned long long txn_count[15*60*60];
+  time_t start;
+  time_t end;
   
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
   chronos_system_init_fn  chronos_system_init;
@@ -120,6 +125,9 @@ daHandler(void *argP);
 
 static void *
 updateThread(void *argP);
+
+static void *
+processThread(void *argP);
 
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP);
