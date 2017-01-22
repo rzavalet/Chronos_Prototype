@@ -1,4 +1,9 @@
 #include "startup_client.h"
+#include <signal.h>
+
+int time_to_die = 0;
+
+void handler_sigint(int sig);
 
 
 /* This is the starting point of a Chronos Client.
@@ -26,7 +31,7 @@ int main(int argc, char *argv[])
 
   srand(time(NULL));
 
-  set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN);
+  set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN+4);
   memset(&client_context, 0, sizeof(client_context));
 
   /* First process the command line arguments which are:
@@ -44,6 +49,12 @@ int main(int argc, char *argv[])
   }
 
   set_chronos_debug_level(client_context.debugLevel);
+
+  /* set the signal hanlder for sigint */
+  if (signal(SIGINT, handler_sigint) == SIG_ERR) {
+    chronos_error("Failed to set signal handler");
+    goto failXit;    
+  }
   
   /* Next we need to spawn the client threads */
   if (spawnClientThreads(num_threads, &thread_infoP, &client_context) != CHRONOS_SUCCESS) {
@@ -76,6 +87,7 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
 {
 
   int c;
+  int ms;
 
   if (contextP == NULL || num_threads == NULL) {
     chronos_error("Invalid argument");
@@ -89,7 +101,7 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
 
   memset(contextP, 0, sizeof(*contextP));
   
-  while ((c = getopt(argc, argv, "n:c:t:a:p:x:v:d:h")) != -1) {
+  while ((c = getopt(argc, argv, "n:c:t:r:a:p:x:v:d:h")) != -1) {
     switch(c) {
       case 'c':
         *num_threads = atoi(optarg);
@@ -97,8 +109,15 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
         break;
       
       case 't':
-        contextP->thinkingTime = atoi(optarg);
-        chronos_debug(2, "*** Thinking time: %d", contextP->thinkingTime);
+	ms = atoi(optarg);
+	contextP->thinkingTime.tv_sec = ms / 1000;
+	contextP->thinkingTime.tv_nsec = (ms % 1000) * 1000000;
+	chronos_debug(2, "*** Thinking time: %d.%ld", contextP->thinkingTime.tv_sec, contextP->thinkingTime.tv_nsec);
+        break;
+
+      case 'r':
+        contextP->duration = atoi(optarg);
+        chronos_debug(2, "*** Duration: %d", contextP->duration);
         break;
 
       case 'a':
@@ -142,8 +161,8 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
     goto failXit;
   }
 
-  if (contextP->numTransactions <=0) {
-    chronos_error("number of transactions must be > 0");
+  if (contextP->duration <=0) {
+    chronos_error("duration must be > 0");
     goto failXit;
   }
 
@@ -162,7 +181,7 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
     goto failXit;
   }
 
-  if (contextP->thinkingTime < 0) {
+  if (ms < 0) {
     chronos_error("Thinking time cannot be less than 0");
     goto failXit;
   }
@@ -262,6 +281,12 @@ failXit:
   return CHRONOS_FAIL;
 }
 
+void handler_sigint(int sig)
+{
+  printf("Received signal: %d\n", sig);
+  time_to_die = 1;
+}
+
 /* 
  * This is the callback function of a client thread. 
  * It receives the following information:
@@ -281,7 +306,7 @@ userTransactionThread(void *argP)
 
   chronosClientThreadInfo_t *infoP = (chronosClientThreadInfo_t *)argP;
   chronos_user_transaction_t txnType;
-  int i;
+  int cnt_txns = 0;
   int num_transactions;
 
   if (infoP == NULL || infoP->contextP == NULL) {
@@ -299,7 +324,8 @@ userTransactionThread(void *argP)
   }
 
   /* Determine how many View_Stock transactions we need to execute */
-  for (i=0; i<num_transactions; i++) { 
+  while(1) {
+    
     /* Pick a transaction type */
     if (pickTransactionType(&txnType, infoP) != CHRONOS_SUCCESS) {
       chronos_error("Failed to pick transaction type");
@@ -312,6 +338,9 @@ userTransactionThread(void *argP)
       goto cleanup;
     }
 
+    cnt_txns ++;
+    chronos_debug(3,"[thr: %d] txn count: %d", infoP->thread_num, cnt_txns);
+    
     if (waitTransactionResponse(txnType, infoP) != CHRONOS_SUCCESS) {
       chronos_error("Failed to receive transaction response");
       goto cleanup;
@@ -322,18 +351,16 @@ userTransactionThread(void *argP)
       chronos_error("Error while waiting");
       goto cleanup;
     }
-  }
 
-  /* Send close request to the server */
-  txnType = CHRONOS_USER_TXN_MAX;
-  if (sendTransactionRequest(txnType, infoP) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to send transaction request");
-    goto cleanup;
-  }
+    if (num_transactions != 0 && cnt_txns >= num_transactions) {
+      chronos_info("Completed the requested number of transactions");
+      break;
+    }
 
-  if (waitTransactionResponse(txnType, infoP) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to receive transaction response");
-    goto cleanup;
+    if (time_to_die == 1) {
+      chronos_info("Requested termination");
+      break;
+    }
   }
 
 cleanup:
@@ -371,13 +398,9 @@ waitTransactionResponse(chronos_user_transaction_t txnType, chronosClientThreadI
     assert("Didn't receive enough bytes" == 0);
   }
 
-  if (resPacket.txn_type == CHRONOS_USER_TXN_MAX) {
-    chronos_info("Server closed socket for this client thread");
-  }
-  else {
-    assert(resPacket.txn_type == txnType);
-    chronos_debug(1,"Txn: %s, rc: %d", CHRONOS_TXN_NAME(resPacket.txn_type), resPacket.rc);
-  }
+  assert(resPacket.txn_type == txnType);
+  chronos_debug(1,"Txn: %s, rc: %d", CHRONOS_TXN_NAME(resPacket.txn_type), resPacket.rc);
+
   return CHRONOS_SUCCESS;
 
 failXit:
@@ -582,10 +605,11 @@ failXit:
  * Wait the thinking time
  */
 static int
-waitThinkTime(unsigned int thinkTime) 
+waitThinkTime(struct timespec thinkTime) 
 {
 
-  sleep(thinkTime);
+  /* TODO: do I need to check the second argument? */
+  nanosleep(&thinkTime, NULL);
   return CHRONOS_SUCCESS;
 
 failXit:
@@ -602,6 +626,7 @@ chronos_usage()
     "OPTIONS:\n"
     "-c [num]              number of threads\n"
     "-t [num]              thinking time\n"
+    "-r [secs]             duration of experiment\n"
     "-a [address]          server ip address\n"
     "-p [num]              server port\n"
     "-x [num]              number of transactions\n"

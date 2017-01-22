@@ -24,10 +24,11 @@ typedef struct chronosClientStats_t {
 } chronosClientStats_t;
 
 typedef struct chronosClientContext_t {
-  int thinkingTime;
+  struct timespec thinkingTime;
   char serverAddress[256];
   int serverPort;
   int numTransactions;
+  int duration;
   int percentageViewStockTransactions;
   int debugLevel;
 } chronosClientContext_t;
@@ -68,7 +69,7 @@ static int
 pickTransactionType(chronos_user_transaction_t *txn_type_ret, chronosClientThreadInfo_t *infoP);
 
 static int
-waitThinkTime(unsigned int thinkTime);
+waitThinkTime(struct timespec thinkTime);
 
 static int
 waitTransactionResponse(chronos_user_transaction_t txnType, chronosClientThreadInfo_t *infoP);

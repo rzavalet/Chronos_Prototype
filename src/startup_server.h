@@ -64,7 +64,7 @@ typedef struct chronosServerStats_t {
 
 #define BSIZE 1024
 typedef struct {
-  chronos_user_transaction_t buf[BSIZE];
+  char buf[BSIZE]; /* we actually store TXN identifiers -- see chronos.h */
   int occupied;
   int nextin;
   int nextout;
@@ -75,13 +75,29 @@ typedef struct {
 
 
 typedef struct chronosServerContext_t {
+
+  /* We can only create a limited number of 
+   * client threads. */
   int numClientsThreads;
-  int numUpdateThreads;
-  int validityInterval;
-  int serverPort;
-  int updatePeriod;
-  int runningMode;
   int currentNumClients;
+
+  /* These two variables are used to wait till 
+   * all client threads are initialized, so that
+   * we can have a fair experiment*/
+  pthread_mutex_t startThreadsMutex;
+  pthread_cond_t startThreadsWait;
+
+  /* Apart from client threads, we also have
+   * update threads - threads that update the
+   * data in the system periodically */
+  int numUpdateThreads;
+
+  int duration;
+  
+  struct timespec validityInterval;
+  int serverPort;
+  struct timespec updatePeriod;
+  int runningMode;
   int debugLevel;
   chronosServerStats_t *stats;
   buffer_t buffer_user;
@@ -133,7 +149,7 @@ static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP);
 
 static int
-waitPeriod(int updatePeriod);
+waitPeriod(struct timespec updatePeriod);
 
 static int
 getElapsedTime(chronos_time_t *begin, chronos_time_t *end, chronos_time_t *result);
