@@ -29,9 +29,7 @@ int
 benchmark_load_portfolio(char *homedir)
 {
   BENCHMARK_DBS my_benchmark;
-  int ch, ret;
-  size_t size;
-  char *personal_file, *stocks_file, *currencies_file;
+  int ret;
 
   initialize_benchmarkdbs(&my_benchmark);
 

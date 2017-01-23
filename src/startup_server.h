@@ -100,17 +100,13 @@ typedef struct chronosServerContext_t {
   int runningMode;
   int debugLevel;
   chronosServerStats_t *stats;
-  buffer_t buffer_user;
-  buffer_t buffer_update;
+  buffer_t userTxnQueue;
+  buffer_t sysTxnQueue;
   unsigned long long txn_count[15*60*60];
+  int samplingPeriod;
   struct timespec txn_delay[15*60*60];
   struct timespec start;
   struct timespec end;
-  
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-  chronos_system_init_fn  chronos_system_init;
-  chronos_txn_handler_fn  chronos_txn_handler[CHRONOS_USER_TXN_MAX];
-#endif
   
 } chronosServerContext_t;
 
@@ -122,11 +118,6 @@ typedef struct chronosServerThreadInfo_t {
   chronosServerThreadType_t thread_type;
   chronosServerContext_t *contextP;
 } chronosServerThreadInfo_t;
-
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-chronos_queue_t userTransactionsQueue;
-chronos_queue_t updateTransactionsQueue;
-#endif
 
 static int
 processArguments(int argc, char *argv[], chronosServerContext_t *contextP);
@@ -153,16 +144,7 @@ static int
 waitPeriod(struct timespec updatePeriod);
 
 static int
-getElapsedTime(chronos_time_t *begin, chronos_time_t *end, chronos_time_t *result);
-
-static int
-getCurrentTime(chronos_time_t *time);
-
-static int
 updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chronosServerThreadInfo_t *infoP);
-
-static int
-printStats(chronosServerThreadInfo_t *infoP);
 
 static int
 performanceMonitor(chronos_time_t *begin_time, chronos_time_t *end_time, chronos_user_transaction_t txn_type, chronosServerThreadInfo_t *infoP);

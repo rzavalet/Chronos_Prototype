@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
     goto failXit;    
   }  
   
-  userTxnQueueP = &(server_context.buffer_user);
-  sysTxnQueueP = &(server_context.buffer_update);
+  userTxnQueueP = &(server_context.userTxnQueue);
+  sysTxnQueueP = &(server_context.sysTxnQueue);
  
   if (pthread_mutex_init(&userTxnQueueP->mutex, NULL) != 0) {
     chronos_error("Failed to init mutex");
@@ -256,7 +256,7 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
 
   memset(contextP, 0, sizeof(*contextP));
   
-  while ((c = getopt(argc, argv, "c:v:u:r:t:p:d:h")) != -1) {
+  while ((c = getopt(argc, argv, "c:v:s:u:r:t:p:d:h")) != -1) {
     switch(c) {
       case 'c':
         contextP->numClientsThreads = atoi(optarg);
@@ -267,7 +267,7 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
 	ms = atoi(optarg);
 	contextP->validityInterval.tv_sec = ms / 1000;
 	contextP->validityInterval.tv_nsec = (ms % 1000) * 1000000;
-	chronos_debug(2, "*** Validity interval: %d.%ld", contextP->validityInterval.tv_sec, contextP->validityInterval.tv_nsec);
+	chronos_debug(2, "*** Validity interval: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->validityInterval));
         break;
 
       case 'u':
@@ -280,11 +280,16 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
         chronos_debug(2, "*** Server port: %d", contextP->serverPort);
         break;
 
+      case 's':
+        contextP->samplingPeriod = atoi(optarg);
+        chronos_debug(2, "*** Sampling period: %d [secs]", contextP->samplingPeriod);
+        break;
+
       case 't':
 	ms2 = atoi(optarg);
 	contextP->updatePeriod.tv_sec = ms2 / 1000;
 	contextP->updatePeriod.tv_nsec = (ms2 % 1000) * 1000000;
-	chronos_debug(2, "*** Update period: %d.%ld", contextP->updatePeriod.tv_sec, contextP->updatePeriod.tv_nsec);
+	chronos_debug(2, "*** Update period: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->updatePeriod));
         break;
 
       case 'r':
@@ -368,7 +373,6 @@ consumer(buffer_t *b)
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
 {
-  int txn_rc = CHRONOS_SUCCESS;
   chronos_time_t begin_time;
   chronos_time_t end_time;
   buffer_t *userTxnQueueP = NULL;
@@ -378,7 +382,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
     goto failXit;
   }
 
-  userTxnQueueP = &(infoP->contextP->buffer_user);
+  userTxnQueueP = &(infoP->contextP->userTxnQueue);
 
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
   /* Do admission control */
@@ -407,7 +411,6 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   userTxnQueueP->occupied++;
   pthread_cond_signal(&userTxnQueueP->more);
   pthread_mutex_unlock(&userTxnQueueP->mutex);
-  txn_rc = CHRONOS_SUCCESS;
 
   chronos_debug(3, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
 
@@ -544,14 +547,13 @@ static void *
 daListener(void *argP) 
 {
   int rc;
-  int num_clients = 0;
   int done_creating = 0;
   struct sockaddr_in server_address;
   struct sockaddr_in client_address;
   int socket_fd;
   int accepted_socket_fd;
-  int pid;
-  int client_address_len;
+
+  socklen_t client_address_len;
   pthread_attr_t attr;
   const int stack_size = 0x100000; // 1 MB
   chronosServerThreadInfo_t *handlerInfoP = NULL;
@@ -664,24 +666,6 @@ cleanup:
   pthread_exit(NULL);
 }
 
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-/*
- * This is the driver function of the main server thread
- */
-static void
-serverThread() {
-
-  while (1) {
-    if (waitPeriod() != CHRONOS_SUCCESS) {
-      goto cleanup;
-    }
-  }
-
-cleanup:
-  return;
-}
-#endif
-
 /*
  * Wait till the next release time
  */
@@ -700,44 +684,34 @@ waitPeriod(chronos_time_t updatePeriod)
 static void *
 processThread(void *argP) 
 {
-
+  int txn_rc = CHRONOS_SUCCESS;
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
   buffer_t *userTxnQueueP = NULL;
   buffer_t *sysTxnQueueP = NULL;
-  int txn_rc = CHRONOS_SUCCESS;
   chronos_user_transaction_t txn_type;
   chronos_time_t system_start, system_end, txn_start, txn_end;
   chronos_time_t delay_txn;
   time_t elapsed_txn;
-  int i;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
     goto cleanup;
   }
 
-  userTxnQueueP = &(infoP->contextP->buffer_user);
-  sysTxnQueueP = &(infoP->contextP->buffer_update);
-
+  userTxnQueueP = &(infoP->contextP->userTxnQueue);
+  sysTxnQueueP = &(infoP->contextP->sysTxnQueue);
 
   CHRONOS_TIME_GET(system_start);
-
   infoP->contextP->start = system_start;
 
   /* Give update transactions more priority */
   /* TODO: Add scheduling technique */
   while (!time_to_die) {
 
+    /*-------- Process refresh transaction ----------*/
     if (sysTxnQueueP->occupied > 0) {
       chronos_info("Processing update...");
       
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-      /* Do adaptive update control */
-      if (doAdaptiveUpdate () != CHRONOS_SUCCESS) {
-        goto cleanup;
-      }
-#endif
-
       txn_type = consumer(sysTxnQueueP);
       if (benchmark_refresh_quotes(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
         chronos_error("Failed to refresh quotes");
@@ -746,7 +720,10 @@ processThread(void *argP)
       
       chronos_info("Done processing update...");
     }
+    /*--------------------------------------------*/
 
+    
+    /*-------- Process user transaction ----------*/
     if (userTxnQueueP->occupied > 0) {
       chronos_info("Processing user txn...");
 
@@ -775,7 +752,13 @@ processThread(void *argP)
       default:
         assert(0);
       }
+      /*--------------------------------------------*/
 
+
+      if (txn_rc != CHRONOS_SUCCESS) {
+	chronos_error("Transaction failed");
+      }
+      
       CHRONOS_TIME_GET(txn_end);
       CHRONOS_TIME_SEC_OFFSET_GET(system_start, txn_end, elapsed_txn);
       CHRONOS_TIME_NANO_OFFSET_GET(txn_start, txn_end, delay_txn);
@@ -815,12 +798,11 @@ updateThread(void *argP) {
     goto cleanup;
   }
 
-  userTxnQueueP = &(infoP->contextP->buffer_update);
+  userTxnQueueP = &(infoP->contextP->sysTxnQueue);
 
   while (1) {
     chronos_debug(5, "new update period");
    
-#if 0
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
     /* Do adaptive update control */
     if (doAdaptiveUpdate () != CHRONOS_SUCCESS) {
@@ -828,11 +810,6 @@ updateThread(void *argP) {
     }
 #endif
 
-    if (benchmark_refresh_quotes(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
-      chronos_error("Failed to refresh quotes");
-      goto cleanup;
-    }
-#else
     pthread_mutex_lock(&userTxnQueueP->mutex);
      
     while (userTxnQueueP->occupied >= BSIZE)
@@ -856,7 +833,6 @@ updateThread(void *argP) {
 
     pthread_mutex_unlock(&userTxnQueueP->mutex);
 
-#endif
     if (waitPeriod(infoP->contextP->updatePeriod) != CHRONOS_SUCCESS) {
       goto cleanup;
     }
@@ -953,7 +929,6 @@ printStats2(chronosServerThreadInfo_t *infoP)
                               "# executed txns",
   "delay average"};
 
-  int len_title;
   int pad_size;
   const int  width = 80;
   int spaces = 0;
@@ -965,10 +940,7 @@ printStats2(chronosServerThreadInfo_t *infoP)
     goto failXit;
   }
 
-
-  len_title = strlen(title);
   pad_size = width / 2;
-
   spaces = (width) / (num_columns + 1);
 
   printf("%.*s\n", width, filler);
@@ -990,7 +962,7 @@ printStats2(chronosServerThreadInfo_t *infoP)
   for (i=0; i<=num_data; i++) {
     CHRONOS_TIME_CLEAR(average);
     CHRONOS_TIME_AVERAGE(infoP->contextP->txn_delay[i], infoP->contextP->txn_count[i], average);
-    printf("%*d %*d %*s"CHRONOS_TIME_FMT"\n", 
+    printf("%*d %*llu %*s"CHRONOS_TIME_FMT"\n", 
 	   spaces,
 	   i,
 	   spaces,
@@ -1000,42 +972,6 @@ printStats2(chronosServerThreadInfo_t *infoP)
 	   CHRONOS_TIME_ARG(average));
   }
   
-  return CHRONOS_SUCCESS;
-  
- failXit:
-  return CHRONOS_FAIL;
-}
-
-static int
-printStats(chronosServerThreadInfo_t *infoP)
-{
-  int i;
-  chronosServerStats_t *stats;
-  const char filler[] = "====================================================================================================";
-  const int  width = 80;
-  int thread_num;
-  
-  if (infoP == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  thread_num = infoP->thread_num;
-  stats = &infoP->contextP->stats[thread_num];
-
-  printf("%.*s\n", width, filler);
-  for (i=0; i<CHRONOS_USER_TXN_MAX; i++) {
-
-    CHRONOS_TIME_AVERAGE(stats->cumulative_time[i], stats->num_txns[i], stats->average_time[i]);
-
-    printf("Txn Type: %s\n", CHRONOS_TXN_NAME(i));
-    printf("Num Transactions: %d\n", stats->num_txns[i]);
-    printf("Total Execution time: "CHRONOS_TIME_FMT"\n", CHRONOS_TIME_ARG(stats->cumulative_time[i]));
-    printf("Average Execution time: "CHRONOS_TIME_FMT"\n", CHRONOS_TIME_ARG(stats->average_time[i]));
-    printf("\n");
-  }
-  printf("%.*s\n", width, filler);
-
   return CHRONOS_SUCCESS;
   
  failXit:
@@ -1055,6 +991,7 @@ chronos_usage()
     "-u [num]              number of update threads\n"
     "-r [num]              duration of the experiment\n"
     "-t [num]              update period\n"
+    "-s [num]              sampling period\n"
     "-p [num]              port to accept new connections\n"
     "-d [num]              debug level\n"
     "-h                    help";

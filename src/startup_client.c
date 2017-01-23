@@ -112,7 +112,7 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
 	ms = atoi(optarg);
 	contextP->thinkingTime.tv_sec = ms / 1000;
 	contextP->thinkingTime.tv_nsec = (ms % 1000) * 1000000;
-	chronos_debug(2, "*** Thinking time: %d.%ld", contextP->thinkingTime.tv_sec, contextP->thinkingTime.tv_nsec);
+	chronos_debug(2, "*** Thinking time: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->thinkingTime));
         break;
 
       case 'r':
@@ -213,9 +213,6 @@ waitClientThreads(int num_threads, chronosClientThreadInfo_t *infoP, chronosClie
   chronos_debug(5,"Done with client threads termination");
 
   return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL;
 }
 
 /*
@@ -511,14 +508,11 @@ printClientStats(int num_threads, chronosClientThreadInfo_t *infoP, chronosClien
                               "purchases",
                               "sales"};
 
-  int len_title;
   int pad_size;
   const int  width = 80;
   int spaces = 0;
 
-  len_title = strlen(title);
   pad_size = width / 2;
-
   spaces = (width) / (num_columns + 1);
 
   printf("%.*s\n", width, filler);
@@ -607,13 +601,9 @@ failXit:
 static int
 waitThinkTime(struct timespec thinkTime) 
 {
-
   /* TODO: do I need to check the second argument? */
   nanosleep(&thinkTime, NULL);
   return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL; 
 }
 
 static void

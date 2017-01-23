@@ -87,10 +87,8 @@ show_stock_item(void *vBuf)
   name = buf + buf_pos;
 
   /* Display all this information */
-#ifdef CHRONOS_DEBUG
   benchmark_debug(5,"Symbol: %s\n", symbol);
   benchmark_debug(5,"\tName: %s\n", name);
-#endif
 
   /* Return the vendor's name */
   return 0;
@@ -465,10 +463,7 @@ benchmark_end(BENCHMARK_DBS *benchmarkP,
   return (0);
 
 failXit:
-  rc = 1;
-
-cleanup:
-  return rc; 
+  return 1; 
 }
 
 /* Initializes the STOCK_DBS struct.*/
@@ -776,7 +771,6 @@ show_currencies_records(BENCHMARK_DBS *my_benchmarkP)
 {
   DBC *currencies_cursorp = NULL;
   DBT key, data;
-  char *currencies_element;
   int exit_value, ret;
 
   memset(&key, 0, sizeof(DBT));
@@ -832,65 +826,8 @@ show_currencies_item(void *vBuf)
 static int
 show_portfolio_item(void *vBuf, char **symbolIdPP)
 {
-  char      *portfolio_id;
-  char      *account_id;
-  char      *symbol;
-  int       hold_stocks;
-  char      to_sell;
-  int       number_sell;
-  int       price_sell;
-  char      to_buy;
-  int       number_buy;
-  int       price_buy;
   PORTFOLIOS *portfolioP;
 
-  size_t buf_pos = 0;
-  char *buf = (char *)vBuf;
-
-#if 0
-  portfolio_id = buf;
-  buf_pos += ID_SZ;
-  
-  account_id = buf + buf_pos;
-  buf_pos += ID_SZ;
-
-  symbol = buf + buf_pos;
-  buf_pos += ID_SZ;
-
-  hold_stocks = *((int *)(buf + buf_pos));
-  buf_pos += sizeof(int);
-
-  to_sell = *((char *)(buf + buf_pos));
-  buf_pos += sizeof(char);
-
-  number_sell = *((int *)(buf + buf_pos));
-  buf_pos += sizeof(int);
-
-  price_sell = *((int *)(buf + buf_pos));
-  buf_pos += sizeof(int);
-
-  to_buy = *((char *)(buf + buf_pos));
-  buf_pos += sizeof(char);
-
-  number_buy = *((int *)(buf + buf_pos));
-  buf_pos += sizeof(int);
-
-  price_buy = *((int *)(buf + buf_pos));
-
-  /* Display all this information */
-  printf("Portfolio ID: %s\n", portfolio_id);
-  printf("\tAccount ID: %s\n", account_id);
-  printf("\tSymbol ID: %s\n", symbol);
-  printf("\t# Stocks Hold: %d\n", hold_stocks);
-  printf("\tSell?: %d\n", to_sell);
-  printf("\t# Stocks to sell: %d\n", number_sell);
-  printf("\tPrice to sell: %d\n", price_sell);
-  printf("\tBuy?: %d\n", to_buy);
-  printf("\t# Stocks to buy: %d\n", number_buy);
-  printf("\tPrice to buy: %d\n", price_buy);
-
-#else
-  
   portfolioP = (PORTFOLIOS *)vBuf;
   /* Display all this information */
   benchmark_debug(5,"Portfolio ID: %s\n", portfolioP->portfolio_id);
@@ -905,9 +842,9 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
   benchmark_debug(5,"\tPrice to buy: %d\n", portfolioP->price_buy);
 
   if (symbolIdPP) {
-    *symbolIdPP = symbol; 
+    *symbolIdPP = portfolioP->symbol; 
   }
-#endif
+
   return 0;
 }
 

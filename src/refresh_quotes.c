@@ -25,9 +25,9 @@ int
 benchmark_refresh_quotes(char *homedir, char *datafilesdir)
 {
   BENCHMARK_DBS my_benchmark;
-  int ch, ret;
+  int ret;
   size_t size;
-  char *basename = NULL, *quotes_file;
+  char *quotes_file;
 
   initialize_benchmarkdbs(&my_benchmark);
   my_benchmark.db_home_dir = homedir;
