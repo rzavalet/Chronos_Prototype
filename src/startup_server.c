@@ -1,6 +1,13 @@
 #include "startup_server.h"
 #include <signal.h>
 
+/*===================== TODO LIST ==============================
+ * 1) Destroy mutexes
+ * 2) Add overload detection
+ * 3) Add Admision control
+ * 4) Add Adaptive update
+ * 5) Improve usage of Berkeley DB API
+ *=============================================================*/
 int time_to_die = 0;
 
 void handler_sigint(int sig);
@@ -207,10 +214,19 @@ int main(int argc, char *argv[])
     chronos_error("Failed while joining thread %s", CHRONOS_SERVER_THREAD_NAME(processingThreadInfo.thread_type));
   }
 
-  return CHRONOS_SUCCESS;
+  rc = CHRONOS_SUCCESS;
+  goto cleanup;
 
 failXit:
-  return CHRONOS_FAIL;
+  rc = CHRONOS_FAIL;
+  
+ cleanup:
+  pthread_mutex_destroy(&userTxnQueueP->mutex);
+  pthread_mutex_destroy(&sysTxnQueueP->mutex);
+  pthread_cond_destroy(&server_context.startThreadsWait);
+  pthread_mutex_destroy(&server_context.startThreadsMutex);
+
+  return rc;
 }
 
 void handler_sigint(int sig)
@@ -371,13 +387,10 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   }
 #endif
 
-  timerclear(&begin_time);
-  timerclear(&end_time);
-  
-  if (getCurrentTime(&begin_time) != CHRONOS_SUCCESS) {
-    chronos_error("Could not get begin time");
-    goto failXit;
-  }
+  CHRONOS_TIME_CLEAR(begin_time);
+  CHRONOS_TIME_CLEAR(end_time);
+
+  CHRONOS_TIME_GET(begin_time);
 
   /*===========================================
    * Put a new transaction in the txn queue
@@ -398,11 +411,8 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
 
   chronos_debug(3, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
 
-  
-  if (getCurrentTime(&end_time) != CHRONOS_SUCCESS) {
-    chronos_error("Could not get end time");
-    goto failXit;
-  }
+
+  CHRONOS_TIME_GET(end_time);
 
   /*===========================================
    * Run the performance monitor
@@ -673,6 +683,18 @@ cleanup:
 #endif
 
 /*
+ * Wait till the next release time
+ */
+static int
+waitPeriod(chronos_time_t updatePeriod)
+{
+  /* TODO: do I need to check the second argument? */
+  nanosleep(&updatePeriod, NULL);
+  
+  return CHRONOS_SUCCESS; 
+}
+
+/*
  * This is the driver function of process thread
  */
 static void *
@@ -684,7 +706,9 @@ processThread(void *argP)
   buffer_t *sysTxnQueueP = NULL;
   int txn_rc = CHRONOS_SUCCESS;
   chronos_user_transaction_t txn_type;
-  time_t t0, t1;
+  chronos_time_t system_start, system_end, txn_start, txn_end;
+  chronos_time_t delay_txn;
+  time_t elapsed_txn;
   int i;
 
   if (infoP == NULL || infoP->contextP == NULL) {
@@ -695,8 +719,10 @@ processThread(void *argP)
   userTxnQueueP = &(infoP->contextP->buffer_user);
   sysTxnQueueP = &(infoP->contextP->buffer_update);
 
-  t0 = time(NULL);
-  infoP->contextP->start = t0;
+
+  CHRONOS_TIME_GET(system_start);
+
+  infoP->contextP->start = system_start;
 
   /* Give update transactions more priority */
   /* TODO: Add scheduling technique */
@@ -723,6 +749,8 @@ processThread(void *argP)
 
     if (userTxnQueueP->occupied > 0) {
       chronos_info("Processing user txn...");
+
+      CHRONOS_TIME_GET(txn_start);
       txn_type = consumer(userTxnQueueP);
       
         /* dispatch a transaction */
@@ -748,8 +776,14 @@ processThread(void *argP)
         assert(0);
       }
 
-      t1 = time(NULL);
-      infoP->contextP->txn_count[t1-t0] += 1;
+      CHRONOS_TIME_GET(txn_end);
+      CHRONOS_TIME_SEC_OFFSET_GET(system_start, txn_end, elapsed_txn);
+      CHRONOS_TIME_NANO_OFFSET_GET(txn_start, txn_end, delay_txn);
+      CHRONOS_TIME_NANO_OFFSET_GET(delay_txn, infoP->contextP->validityInterval, delay_txn);
+      infoP->contextP->txn_count[elapsed_txn] += 1;
+      if (CHRONOS_TIME_POSITIVE(delay_txn)) {
+	CHRONOS_TIME_ADD(infoP->contextP->txn_delay[elapsed_txn], delay_txn, infoP->contextP->txn_delay[elapsed_txn]);
+      }
       
       chronos_info("Done processing user txn...");
     }
@@ -757,8 +791,8 @@ processThread(void *argP)
   }
   
 cleanup:
-  t1 = time(NULL);
-  infoP->contextP->end = t1;
+  CHRONOS_TIME_GET(system_end);
+  infoP->contextP->end = system_end;
   
   printStats2(infoP);
 
@@ -852,12 +886,9 @@ performanceMonitor(chronos_time_t *begin_time, chronos_time_t *end_time, chronos
   }
 
   assert(txn_type != CHRONOS_USER_TXN_MAX);
-  timerclear(&elapsed_time);
+  CHRONOS_TIME_CLEAR(elapsed_time);
 
-  if (getElapsedTime(begin_time, end_time, &elapsed_time) != CHRONOS_SUCCESS) {
-    chronos_error("Could not get elapsed time");
-    goto failXit;
-  }
+  CHRONOS_TIME_NANO_OFFSET_GET(*begin_time, *end_time, elapsed_time);
 
   chronos_debug(3, "Start Time: "CHRONOS_TIME_FMT": End Time: "CHRONOS_TIME_FMT" Elapsed Time: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(*begin_time), CHRONOS_TIME_ARG(*end_time), CHRONOS_TIME_ARG(elapsed_time));
   
@@ -882,49 +913,6 @@ performanceMonitor(chronos_time_t *begin_time, chronos_time_t *end_time, chronos
   return CHRONOS_FAIL;
 }
 
-/*
- * Wait till the next release time
- */
-static int
-waitPeriod(struct timespec updatePeriod)
-{
-  /* TODO: do I need to check the second argument? */
-  nanosleep(&updatePeriod, NULL);
-  
-  return CHRONOS_SUCCESS; 
-}
-
-static int
-getElapsedTime(chronos_time_t *begin, chronos_time_t *end, chronos_time_t *result)
-{
-  if (begin == NULL || end == NULL || result == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-  
-  timersub(end, begin, result);
-  return CHRONOS_SUCCESS;
-
- failXit:
-  return CHRONOS_FAIL;
-}
-
-static int
-getCurrentTime(chronos_time_t *time)
-{
-  memset(time, 0, sizeof(*time));
-
-  if (gettimeofday(time, NULL) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to retrieve current time");
-    goto failXit;
-  }
-  
-  return CHRONOS_SUCCESS;
-  
-failXit:
-  return CHRONOS_FAIL;
-}
-
 static int
 updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chronosServerThreadInfo_t *infoP)
 {
@@ -941,8 +929,8 @@ updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chron
   
   thread_num = infoP->thread_num;
   stats = &infoP->contextP->stats[thread_num];
-  
-  timeradd(&stats->cumulative_time[txn_type], new_time, &result);
+
+  CHRONOS_TIME_ADD(stats->cumulative_time[txn_type], *new_time, result);
 
   stats->cumulative_time[txn_type] = result;
   stats->num_txns[txn_type] += 1;
@@ -956,19 +944,21 @@ updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chron
 static int
 printStats2(chronosServerThreadInfo_t *infoP)
 {
-#define num_columns  2
+#define num_columns  3
   int i;
   const char title[] = "TRANSACTIONS STATS";
   const char filler[] = "====================================================================================================";
   const char *column_names[num_columns] = {
                               "Time",
-                              "# Executed Txns"};
+                              "# executed txns",
+  "delay average"};
 
   int len_title;
   int pad_size;
   const int  width = 80;
   int spaces = 0;
-
+  int num_data = 0;
+  chronos_time_t average;
   
   if (infoP == NULL) {
     chronos_error("Invalid argument");
@@ -985,20 +975,29 @@ printStats2(chronosServerThreadInfo_t *infoP)
   printf("%*s\n", pad_size, title);
   printf("%.*s\n", width, filler);
 
-  printf("%*s %*s\n", 
+  printf("%*s %*s %*s\n", 
 	 spaces,
 	 column_names[0], 
 	 spaces,
-	 column_names[1]);
+	 column_names[1],
+	 spaces,
+	 column_names[2]);
   printf("%.*s\n", width, filler);
 
 
-  for (i=0; i<=infoP->contextP->end-infoP->contextP->start; i++) {
-    printf("%*d %*d\n", 
+  CHRONOS_TIME_SEC_OFFSET_GET(infoP->contextP->start, infoP->contextP->end, num_data);
+  
+  for (i=0; i<=num_data; i++) {
+    CHRONOS_TIME_CLEAR(average);
+    CHRONOS_TIME_AVERAGE(infoP->contextP->txn_delay[i], infoP->contextP->txn_count[i], average);
+    printf("%*d %*d %*s"CHRONOS_TIME_FMT"\n", 
 	   spaces,
 	   i,
 	   spaces,
-	   infoP->contextP->txn_count[i]);
+	   infoP->contextP->txn_count[i],
+	   spaces,
+	   "",
+	   CHRONOS_TIME_ARG(average));
   }
   
   return CHRONOS_SUCCESS;
@@ -1027,7 +1026,7 @@ printStats(chronosServerThreadInfo_t *infoP)
   printf("%.*s\n", width, filler);
   for (i=0; i<CHRONOS_USER_TXN_MAX; i++) {
 
-    CHRONOS_GET_AVERAGE(stats->cumulative_time[i], stats->num_txns[i], stats->average_time[i]);
+    CHRONOS_TIME_AVERAGE(stats->cumulative_time[i], stats->num_txns[i], stats->average_time[i]);
 
     printf("Txn Type: %s\n", CHRONOS_TXN_NAME(i));
     printf("Num Transactions: %d\n", stats->num_txns[i]);

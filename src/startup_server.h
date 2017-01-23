@@ -103,8 +103,9 @@ typedef struct chronosServerContext_t {
   buffer_t buffer_user;
   buffer_t buffer_update;
   unsigned long long txn_count[15*60*60];
-  time_t start;
-  time_t end;
+  struct timespec txn_delay[15*60*60];
+  struct timespec start;
+  struct timespec end;
   
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
   chronos_system_init_fn  chronos_system_init;

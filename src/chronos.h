@@ -96,23 +96,77 @@ extern int chronos_debug_level;
 #define chronos_warning(...) \
   chronos_msg("WARN", __VA_ARGS__)
 
-typedef struct timeval chronos_time_t;
-#define CHRONOS_TIME_FMT "%ld.%06ld"
-#define CHRONOS_TIME_ARG(_t) (_t).tv_sec, (_t).tv_usec
+typedef struct timespec chronos_time_t;
+#define CHRONOS_TIME_FMT "%ld.%09ld"
+#define CHRONOS_TIME_ARG(_t) (_t).tv_sec, (_t).tv_nsec
+#define CHRONOS_TIME_CLEAR(_t) \
+  do {\
+    (_t).tv_sec = 0; \
+    (_t).tv_nsec = 0; \
+  }while (0)
 
-#define CHRONOS_GET_AVERAGE(_sum, _num, _res)				\
+#define CHRONOS_TIME_GET(_t) clock_gettime(CLOCK_REALTIME, &(_t))
+
+#define CHRONOS_TIME_NANO_OFFSET_GET(_begin, _end, _off)	\
+  do {								\
+    chronos_time_t _tf = _end;					\
+    chronos_time_t _to = _begin;				\
+    if (_to.tv_nsec > _tf.tv_nsec) {				\
+      _tf.tv_nsec += 1000000000;				\
+      _tf.tv_sec --;						\
+    }								\
+								\
+    (_off).tv_sec = _tf.tv_sec - _to.tv_sec;		\
+    (_off).tv_nsec = _tf.tv_nsec - _to.tv_nsec;		\
+								\
+  } while(0)
+
+#define CHRONOS_TIME_SEC_OFFSET_GET(_begin, _end, _off)		\
+  do {								\
+    chronos_time_t _tf = _end;					\
+    chronos_time_t _to = _begin;				\
+    if (_to.tv_nsec > _tf.tv_nsec) {				\
+      _tf.tv_nsec += 1000000000;				\
+      _tf.tv_sec --;						\
+    }								\
+								\
+    _off = _tf.tv_sec - _to.tv_sec;				\
+  } while(0)
+
+#define CHRONOS_TIME_ADD(_t1, _t2, _res)			\
+      do {							\
+	chronos_time_t _tf = _t1;				\
+	chronos_time_t _to = _t2;				\
+	(_res).tv_nsec = (_tf).tv_nsec + (_to).tv_nsec;		\
+								\
+	if ((_res).tv_nsec > 1000000000) {			\
+	  long long int tmp = (_res).tv_nsec / 1000000000;	\
+	  (_res).tv_nsec = (_res).tv_nsec % 1000000000;		\
+	  (_res).tv_sec = tmp;					\
+	}							\
+								\
+	(_res).tv_sec += (_tf).tv_sec + (_to).tv_sec;		\
+								\
+      } while(0)
+      
+#define CHRONOS_TIME_AVERAGE(_sum, _num, _res)				\
   do {									\
     if (_num != 0) {							\
-      int mod;								\
+      long long mod;								\
       (_res).tv_sec  = (_sum).tv_sec / _num;				\
-      mod =  1000000 * (((float)(_sum).tv_sec / (float)_num) - (_res).tv_sec);	\
-      (_res).tv_usec = mod + (_sum).tv_usec / _num;			\
-      if ((_res).tv_usec > 999999) {					\
-	mod = (_res).tv_usec / 1000000;					\
+      mod =  1000000000 * (((float)(_sum).tv_sec / (float)_num) - (_res).tv_sec);	\
+      (_res).tv_nsec = mod + (_sum).tv_nsec / _num;			\
+      if ((_res).tv_nsec > 999999999) {					\
+	mod = (_res).tv_nsec / 1000000000;					\
 	(_res).tv_sec += mod;						\
-	mod = (_res).tv_usec % 1000000;					\
-	(_res).tv_usec = mod;						\
+	mod = (_res).tv_nsec % 1000000000;					\
+	(_res).tv_nsec = mod;						\
       }									\
     }									\
   }while(0)
+
+#define CHRONOS_TIME_POSITIVE(_time)		\
+  ((_time).tv_sec >= 0 && (_time).tv_nsec >= 0)
+
+
 #endif
