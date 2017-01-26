@@ -98,15 +98,20 @@ typedef struct chronosServerContext_t {
   chronosServerStats_t *stats;
   buffer_t userTxnQueue;
   buffer_t sysTxnQueue;
-  unsigned long long txn_count[15*60*60];
+
+  /* These fields control the sampling task */
+#define CHRONOS_SAMPLE_ARRAY_SIZE  (15*60*60)
+  unsigned long long txn_count[CHRONOS_SAMPLE_ARRAY_SIZE];
+  unsigned long long txn_received[CHRONOS_SAMPLE_ARRAY_SIZE];
+  unsigned long long txn_update[CHRONOS_SAMPLE_ARRAY_SIZE];
+  unsigned long long txn_enqueued[CHRONOS_SAMPLE_ARRAY_SIZE];
+  struct timespec txn_delay[CHRONOS_SAMPLE_ARRAY_SIZE];
+  struct timespec txn_avg_delay[CHRONOS_SAMPLE_ARRAY_SIZE];  
+  int numSamples;
   int samplingPeriod;
-  struct timespec txn_delay[15*60*60];
+  int currentSlot;
   struct timespec start;
   struct timespec end;
-
-  /* These fields control the
-   * sampling task
-   */
   timer_t timer_id;
   struct itimerspec timer_et;
   struct sigevent timer_ev;

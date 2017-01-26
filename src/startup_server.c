@@ -1,7 +1,7 @@
 #include "startup_server.h"
 
 /*===================== TODO LIST ==============================
- * 1) Destroy mutexes
+ * 1) Destroy mutexes --- DONE
  * 2) Add overload detection
  * 3) Add Admision control
  * 4) Add Adaptive update
@@ -12,7 +12,7 @@ int time_to_die = 0;
 void handler_sigint(int sig);
 
 static int
-printStats2(chronosServerThreadInfo_t *infoP);
+printStats(chronosServerThreadInfo_t *infoP);
 
 void handler_timer(void *arg);
 
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
   /* Init the timer for sampling */
   server_context.timer_ev.sigev_notify = SIGEV_THREAD;
-  server_context.timer_ev.sigev_value.sival_ptr = &(server_context.timer_id);
+  server_context.timer_ev.sigev_value.sival_ptr = &(server_context);
   server_context.timer_ev.sigev_notify_function = (void *)handler_timer;
   server_context.timer_ev.sigev_notify_attributes = NULL;
 
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 
     chronos_debug(4,"Spawed update thread: %d", updateThreadInfoP[i].thread_num);
   }
-#if 0
+#if 1
   /* Spawn daListener thread */
   memset(&listenerThreadInfo, 0, sizeof(listenerThreadInfo));
   listenerThreadInfo.thread_type = CHRONOS_SERVER_THREAD_LISTENER;
@@ -256,7 +256,21 @@ void handler_sigint(int sig)
 
 void handler_timer(void *arg)
 {
-  printf("****** TIMER... *****\n");
+  chronosServerContext_t *contextP = (chronosServerContext_t *) arg;
+  int sampleSize;
+  int currentSlot;
+  
+  chronos_info("****** TIMER... *****");
+
+  /*======= Obtain average of the last period ========*/
+  sampleSize = contextP->samplingPeriod;
+  currentSlot = contextP->currentSlot;
+
+  CHRONOS_TIME_AVERAGE(contextP->txn_delay[currentSlot], sampleSize, contextP->txn_avg_delay[currentSlot]);
+  contextP->txn_enqueued[currentSlot] = contextP->userTxnQueue.occupied;
+  
+  contextP->currentSlot = (contextP->currentSlot + 1) % CHRONOS_SAMPLE_ARRAY_SIZE;
+  contextP->numSamples ++;
 }
 
 /*
@@ -397,6 +411,7 @@ consumer(buffer_t *b)
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
 {
+  int current_slot = 0;
   chronos_time_t begin_time;
   chronos_time_t end_time;
   buffer_t *userTxnQueueP = NULL;
@@ -424,6 +439,9 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
    * Put a new transaction in the txn queue
    *==========================================*/
   chronos_debug(3, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
+  
+  current_slot = infoP->contextP->currentSlot;  
+  infoP->contextP->txn_received[current_slot] += 1;
 
   pthread_mutex_lock(&userTxnQueueP->mutex);
   while (userTxnQueueP->occupied >= BSIZE)
@@ -714,9 +732,9 @@ processThread(void *argP)
   buffer_t *sysTxnQueueP = NULL;
   chronos_user_transaction_t txn_type;
   chronos_time_t system_start, system_end, txn_start, txn_end;
-  chronos_time_t delay_txn;
-  time_t elapsed_txn;
-
+  chronos_time_t txn_duration, txn_delay;
+  int current_slot = 0;
+  
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
     goto cleanup;
@@ -742,12 +760,14 @@ processThread(void *argP)
     if (sysTxnQueueP->occupied > 0) {
       chronos_info("Processing update...");
       
+      current_slot = infoP->contextP->currentSlot;
       txn_type = consumer(sysTxnQueueP);
       if (benchmark_refresh_quotes(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
         chronos_error("Failed to refresh quotes");
         goto cleanup;
       }
       
+      infoP->contextP->txn_update[current_slot] += 1;      
       chronos_info("Done processing update...");
     }
     /*--------------------------------------------*/
@@ -756,6 +776,8 @@ processThread(void *argP)
     /*-------- Process user transaction ----------*/
     if (userTxnQueueP->occupied > 0) {
       chronos_info("Processing user txn...");
+
+      current_slot = infoP->contextP->currentSlot;
 
       CHRONOS_TIME_GET(txn_start);
       txn_type = consumer(userTxnQueueP);
@@ -790,13 +812,14 @@ processThread(void *argP)
       }
       
       CHRONOS_TIME_GET(txn_end);
-      CHRONOS_TIME_SEC_OFFSET_GET(system_start, txn_end, elapsed_txn);
-      CHRONOS_TIME_NANO_OFFSET_GET(txn_start, txn_end, delay_txn);
-      CHRONOS_TIME_NANO_OFFSET_GET(delay_txn, infoP->contextP->validityInterval, delay_txn);
-      infoP->contextP->txn_count[elapsed_txn] += 1;
-      if (CHRONOS_TIME_POSITIVE(delay_txn)) {
-	CHRONOS_TIME_ADD(infoP->contextP->txn_delay[elapsed_txn], delay_txn, infoP->contextP->txn_delay[elapsed_txn]);
-      }
+
+      /* One more transasction finished */
+      infoP->contextP->txn_count[current_slot] += 1;
+
+      /* Calculate the delay of this transaction */
+      CHRONOS_TIME_NANO_OFFSET_GET(txn_start, txn_end, txn_duration);
+      CHRONOS_TIME_NANO_OFFSET_GET(txn_duration, infoP->contextP->validityInterval, txn_delay);
+      CHRONOS_TIME_ADD(infoP->contextP->txn_delay[current_slot], txn_delay, infoP->contextP->txn_delay[current_slot]);
       
       chronos_info("Done processing user txn...");
     }
@@ -807,7 +830,7 @@ cleanup:
   CHRONOS_TIME_GET(system_end);
   infoP->contextP->end = system_end;
   
-  printStats2(infoP);
+  printStats(infoP);
 
   chronos_info("processThread exiting");
   
@@ -948,28 +971,30 @@ updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chron
 }
 
 static int
-printStats2(chronosServerThreadInfo_t *infoP)
+printStats(chronosServerThreadInfo_t *infoP)
 {
-#define num_columns  3
+#define num_columns  6
   int i;
   const char title[] = "TRANSACTIONS STATS";
-  const char filler[] = "====================================================================================================";
+  const char filler[] = "========================================================================================================================";
   const char *column_names[num_columns] = {
-                              "Time",
-                              "# executed txns",
-  "delay average"};
+                              "Sample",
+                              "Xacts Received",
+			      "Xacts Enqueued",
+			      "Processed Xacts",
+                              "Average Delay",
+                              "Update Xacts"};
 
   int pad_size;
-  const int  width = 80;
+  int  width;
   int spaces = 0;
-  int num_data = 0;
-  chronos_time_t average;
-  
+
   if (infoP == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
 
+  width = strlen(filler);
   pad_size = width / 2;
   spaces = (width) / (num_columns + 1);
 
@@ -977,29 +1002,36 @@ printStats2(chronosServerThreadInfo_t *infoP)
   printf("%*s\n", pad_size, title);
   printf("%.*s\n", width, filler);
 
-  printf("%*s %*s %*s\n", 
+  printf("%*s %*s %*s %*s %*s %*s\n",
 	 spaces,
 	 column_names[0], 
 	 spaces,
 	 column_names[1],
 	 spaces,
-	 column_names[2]);
+	 column_names[2], 
+	 spaces,
+	 column_names[3],
+	 spaces,
+	 column_names[4],
+	 spaces,
+	 column_names[5]);
   printf("%.*s\n", width, filler);
 
-
-  CHRONOS_TIME_SEC_OFFSET_GET(infoP->contextP->start, infoP->contextP->end, num_data);
-  
-  for (i=0; i<=num_data; i++) {
-    CHRONOS_TIME_CLEAR(average);
-    CHRONOS_TIME_AVERAGE(infoP->contextP->txn_delay[i], infoP->contextP->txn_count[i], average);
-    printf("%*d %*llu %*s"CHRONOS_TIME_FMT"\n", 
+  for (i=0; i<infoP->contextP->numSamples; i++) {
+    printf("%*d %*llu %*llu %*llu %*s"CHRONOS_TIME_FMT" %*llu\n",
 	   spaces,
 	   i,
 	   spaces,
-	   infoP->contextP->txn_count[i],
+	   infoP->contextP->txn_received[i],
 	   spaces,
+	   infoP->contextP->txn_enqueued[i],
+	   spaces,
+	   infoP->contextP->txn_count[i],
+	   spaces > 9 ? spaces - 9 : spaces,
 	   "",
-	   CHRONOS_TIME_ARG(average));
+	   CHRONOS_TIME_ARG(infoP->contextP->txn_avg_delay[i]),
+	   spaces,
+	   infoP->contextP->txn_update[i]);
   }
   
   return CHRONOS_SUCCESS;
@@ -1017,11 +1049,11 @@ chronos_usage()
     "\n"
     "OPTIONS:\n"
     "-c [num]              number of clients it can accept\n"
-    "-v [num]              validity interval\n"
+    "-v [num]              validity interval [in milliseconds]\n"
     "-u [num]              number of update threads\n"
-    "-r [num]              duration of the experiment\n"
-    "-t [num]              update period\n"
-    "-s [num]              sampling period\n"
+    "-r [num]              duration of the experiment [in minutes]\n"
+    "-t [num]              update period [in milliseconds]\n"
+    "-s [num]              sampling period [in seconds]\n"
     "-p [num]              port to accept new connections\n"
     "-d [num]              debug level\n"
     "-h                    help";
