@@ -142,7 +142,13 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  if (benchmark_load_portfolio(CHRONOS_SERVER_HOME_DIR) != CHRONOS_SUCCESS) {
+  /* Obtain a benchmark handle */
+  if (benchmark_handle_alloc(&server_context.benchmarkCtxtP, CHRONOS_SERVER_HOME_DIR) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to allocate handle");
+    goto failXit;
+  }
+  
+  if (benchmark_load_portfolio(server_context.benchmarkCtxtP) != CHRONOS_SUCCESS) {
     chronos_error("Failed to load portfolios");
     goto failXit;
   }
@@ -240,6 +246,14 @@ failXit:
   rc = CHRONOS_FAIL;
   
  cleanup:
+
+  /* Obtain a benchmark handle */
+  if (benchmark_handle_free(server_context.benchmarkCtxtP) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to free handle");
+    goto failXit;
+  }
+  
+  
   pthread_mutex_destroy(&userTxnQueueP->mutex);
   pthread_mutex_destroy(&sysTxnQueueP->mutex);
   pthread_cond_destroy(&server_context.startThreadsWait);
@@ -786,15 +800,15 @@ processThread(void *argP)
       switch(txn_type) {
 
       case CHRONOS_USER_TXN_VIEW_STOCK:
-        txn_rc = benchmark_view_stock(CHRONOS_SERVER_HOME_DIR);
+        txn_rc = benchmark_view_stock(infoP->contextP->benchmarkCtxtP);
         break;
 
       case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
-        txn_rc = benchmark_view_portfolio(CHRONOS_SERVER_HOME_DIR);
+        txn_rc = benchmark_view_portfolio(infoP->contextP->benchmarkCtxtP);
         break;
 
       case CHRONOS_USER_TXN_PURCHASE:
-        txn_rc = benchmark_purchase(CHRONOS_SERVER_HOME_DIR);
+        txn_rc = benchmark_purchase(infoP->contextP->benchmarkCtxtP);
         break;
 
       case CHRONOS_USER_TXN_SALE:
@@ -812,7 +826,6 @@ processThread(void *argP)
       }
       
       CHRONOS_TIME_GET(txn_end);
-
       /* One more transasction finished */
       infoP->contextP->txn_count[current_slot] += 1;
 

@@ -20,29 +20,20 @@
 #include "benchmark_common.h"
 
 int
-benchmark_view_portfolio(char *homedir)
+benchmark_view_portfolio(void *benchmark_handle)
 {
-  BENCHMARK_DBS my_benchmark;
+  BENCHMARK_DBS *benchmarkP = NULL;
   int ret;
 
-  /* Initialize the BENCHMARK_DBS struct */
-  initialize_benchmarkdbs(&my_benchmark);
-  my_benchmark.db_home_dir = homedir;
-  
-    /* Identify the files that hold our databases */
-  set_db_filenames(&my_benchmark);
-
-  /* Open stocks database */
-  ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, __FILE__, stderr);
-  if (ret != 0) {
-    benchmark_error("Error opening databases");
-    databases_close(&my_benchmark);
-    return (ret);
+  benchmarkP = benchmark_handle;
+  if (benchmarkP == NULL) {
+    goto failXit;
   }
 
-  ret = show_portfolios(&my_benchmark);
+  ret = show_portfolios(benchmarkP);
 
-  /* close our databases */
-  databases_close(&my_benchmark);
   return (ret);
+
+ failXit:
+  return BENCHMARK_FAIL;
 }

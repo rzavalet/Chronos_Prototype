@@ -5,25 +5,31 @@
 #define BENCHMARK_FAIL      (1)
 
 int 
+benchmark_handle_alloc(void **benchmark_handle, char *homedir);
+
+int 
+benchmark_handle_free(void *benchmark_handle);
+
+int 
 benchmark_initial_load(char *homedir, char *datafilesdir);
 
 int
-benchmark_load_portfolio(char *homedir);
+benchmark_load_portfolio(void *benchmark_handle);
 
 int
 benchmark_refresh_quotes(char *homedir, char *datafilesdir);
 
 int
-benchmark_view_stock(char *homedir);
+benchmark_view_stock(void *benchmark_handle);
 
 int
-benchmark_view_portfolio(char *homedir);
+benchmark_view_portfolio(void *benchmark_handle);
 
 int
-benchmark_purchase(char *homedir);
+benchmark_purchase(void *benchmark_handle);
 
 int
-benchmark_sell(char *homedir);
+benchmark_sell(void *benchmark_handle);
 
 
 /*---------------------------------

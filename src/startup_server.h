@@ -115,6 +115,9 @@ typedef struct chronosServerContext_t {
   timer_t timer_id;
   struct itimerspec timer_et;
   struct sigevent timer_ev;
+
+  /* These fields are for the benchmark framework */
+  void *benchmarkCtxtP;
   
 } chronosServerContext_t;
 

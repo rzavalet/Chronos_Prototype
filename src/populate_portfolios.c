@@ -23,42 +23,28 @@
  *                          PROTOTYPES
  *============================================================================*/
 static int
-load_portfolio_database(BENCHMARK_DBS my_benchmarkP);
+load_portfolio_database(BENCHMARK_DBS *benchmarkP);
 
 int
-benchmark_load_portfolio(char *homedir)
+benchmark_load_portfolio(void *benchmark_handle)
 {
-  BENCHMARK_DBS my_benchmark;
+  BENCHMARK_DBS *benchmarkP = NULL;
   int ret;
 
-  initialize_benchmarkdbs(&my_benchmark);
 
-  my_benchmark.db_home_dir = homedir;
-
-  if (my_benchmark.db_home_dir == NULL) {
-    benchmark_error("You must specify -h");
+  benchmarkP = benchmark_handle;
+  if (benchmarkP == NULL) {
     goto failXit;
   }
-
-  set_db_filenames(&my_benchmark);
-
-  ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, __FILE__, stderr);
-  if (ret) {
-    benchmark_error("%s:%d Error opening databases.", __FILE__, __LINE__);
-    databases_close(&my_benchmark);
-    goto failXit;
-  }
-
-  ret = load_portfolio_database(my_benchmark);
+  
+  ret = load_portfolio_database(benchmarkP);
   if (ret) {
     benchmark_error("%s:%d Error loading personal database.", __FILE__, __LINE__);
-    databases_close(&my_benchmark);
     goto failXit;
   }
 
-  databases_close(&my_benchmark);
-
   benchmark_debug(1, "Done populating portfolios.");
+  
   return BENCHMARK_SUCCESS;
 
 failXit:
@@ -66,7 +52,7 @@ failXit:
 }
 
 static int
-load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
+load_portfolio_database(BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
   DBT key, data;
@@ -75,8 +61,8 @@ load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
   PORTFOLIOS portfolio;
   int i;
 
-  envP = my_benchmarkP.envP;
-  if (envP == NULL || my_benchmarkP.portfolios_dbp == NULL) {
+  envP = benchmarkP->envP;
+  if (envP == NULL || benchmarkP->portfolios_dbp == NULL) {
     benchmark_error("%s: Invalid arguments", __func__);
     goto failXit;
   }
@@ -134,7 +120,7 @@ load_portfolio_database(BENCHMARK_DBS my_benchmarkP)
       goto failXit; 
     }
 
-    rc = my_benchmarkP.portfolios_dbp->put(my_benchmarkP.portfolios_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->portfolios_dbp->put(benchmarkP->portfolios_dbp, txnP, &key, &data, 0);
     if (rc != 0) {
       envP->err(envP, rc, "Database put failed.");
       txnP->abort(txnP);
