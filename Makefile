@@ -9,7 +9,7 @@ datafilesdir= ./datafiles
 ##################################################
 # General library information.
 ##################################################
-DEF_LIB=	-L/usr/local/BerkeleyDB.6.2/lib -ldb-6.2
+DEF_LIB=	-L/usr/local/BerkeleyDB.6.2/lib -ldb-6.2 -lrt
 LIBTOOL=	./libtool
 
 POSTLINK=	$(LIBTOOL) --mode=execute true

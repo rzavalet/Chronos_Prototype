@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 #include <time.h>
 #include <assert.h>
 #include <sys/types.h>
@@ -49,11 +50,6 @@ const char *chronosServerThreadNames[] ={
 
 #define CHRONOS_SERVER_THREAD_IS_VALID(_txn_type) \
   (CHRONOS_SERVER_THREAD_MIN<=(_txn_type) && (_txn_type) < CHRONOS_SERVER_THREAD_MAX)
-
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-typedef int (*chronos_system_init_fn)(char *homedir, char *datafilesdir);
-typedef int (*chronos_txn_handler_fn)(void *);
-#endif
 
 typedef struct chronosServerStats_t {
   chronos_time_t cumulative_time[CHRONOS_USER_TXN_MAX];
@@ -107,6 +103,13 @@ typedef struct chronosServerContext_t {
   struct timespec txn_delay[15*60*60];
   struct timespec start;
   struct timespec end;
+
+  /* These fields control the
+   * sampling task
+   */
+  timer_t timer_id;
+  struct itimerspec timer_et;
+  struct sigevent timer_ev;
   
 } chronosServerContext_t;
 

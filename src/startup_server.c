@@ -1,5 +1,4 @@
 #include "startup_server.h"
-#include <signal.h>
 
 /*===================== TODO LIST ==============================
  * 1) Destroy mutexes
@@ -14,6 +13,8 @@ void handler_sigint(int sig);
 
 static int
 printStats2(chronosServerThreadInfo_t *infoP);
+
+void handler_timer(void *arg);
 
 /* This is the starting point for the Chronos Prototype. 
  * It has to perform the following tasks:
@@ -93,7 +94,25 @@ int main(int argc, char *argv[])
     chronos_error("Failed to set signal handler");
     goto failXit;    
   }  
-  
+
+  /* Init the timer for sampling */
+  server_context.timer_ev.sigev_notify = SIGEV_THREAD;
+  server_context.timer_ev.sigev_value.sival_ptr = &(server_context.timer_id);
+  server_context.timer_ev.sigev_notify_function = (void *)handler_timer;
+  server_context.timer_ev.sigev_notify_attributes = NULL;
+
+  server_context.timer_et.it_interval.tv_sec = server_context.samplingPeriod;
+  server_context.timer_et.it_interval.tv_nsec = 0;  
+  server_context.timer_et.it_value.tv_sec = server_context.samplingPeriod;
+  server_context.timer_et.it_value.tv_nsec = 0;
+
+  chronos_info("Creating timer. Period: %ld", server_context.timer_et.it_interval.tv_sec);
+  if (timer_create(CLOCK_REALTIME, &server_context.timer_ev, &server_context.timer_id) != 0) {
+    chronos_error("Failed to create timer");
+    goto failXit;
+  }
+  chronos_info("Done creating timer: %p", server_context.timer_id);
+
   userTxnQueueP = &(server_context.userTxnQueue);
   sysTxnQueueP = &(server_context.sysTxnQueue);
  
@@ -179,7 +198,7 @@ int main(int argc, char *argv[])
 
     chronos_debug(4,"Spawed update thread: %d", updateThreadInfoP[i].thread_num);
   }
-
+#if 0
   /* Spawn daListener thread */
   memset(&listenerThreadInfo, 0, sizeof(listenerThreadInfo));
   listenerThreadInfo.thread_type = CHRONOS_SERVER_THREAD_LISTENER;
@@ -201,7 +220,7 @@ int main(int argc, char *argv[])
   if (rc != CHRONOS_SUCCESS) {
     chronos_error("Failed while joining thread %s", CHRONOS_SERVER_THREAD_NAME(listenerThreadInfo.thread_type));
   }
-
+#endif
   for (i=0; i<server_context.numUpdateThreads; i++) {
     rc = pthread_join(updateThreadInfoP[i].thread_id, (void **)&thread_rc);
     if (rc != CHRONOS_SUCCESS) {
@@ -233,6 +252,11 @@ void handler_sigint(int sig)
 {
   printf("Received signal: %d\n", sig);
   time_to_die = 1;
+}
+
+void handler_timer(void *arg)
+{
+  printf("****** TIMER... *****\n");
 }
 
 /*
@@ -703,6 +727,12 @@ processThread(void *argP)
 
   CHRONOS_TIME_GET(system_start);
   infoP->contextP->start = system_start;
+
+  chronos_info("Starting timer %p...", infoP->contextP->timer_id);
+  if (timer_settime(infoP->contextP->timer_id, 0, &infoP->contextP->timer_et, NULL) != 0) {
+    chronos_error("Failed to start timer");
+    goto cleanup;
+  }
 
   /* Give update transactions more priority */
   /* TODO: Add scheduling technique */
