@@ -470,7 +470,7 @@ failXit:
 void
 initialize_benchmarkdbs(BENCHMARK_DBS *benchmarkP)
 {
-  memset(benchmarkP, 0, sizeof(*benchmarkP));
+  memset(benchmarkP, 0, sizeof(BENCHMARK_DBS));
 }
 
 /* Identify all the files that will hold our databases. */
@@ -859,7 +859,11 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
   char     account_id[ID_SZ];
   int      exists = 0;
   PORTFOLIOS portfolio;
-  
+
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
   envP = benchmarkP->envP;
   if (envP == NULL) {
     fprintf(stderr, "%s: Invalid arguments\n", __func__);

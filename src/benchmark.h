@@ -5,7 +5,7 @@
 #define BENCHMARK_FAIL      (1)
 
 int 
-benchmark_handle_alloc(void **benchmark_handle, char *homedir);
+benchmark_handle_alloc(void **benchmark_handle, char *homedir, char *datafilesdir);
 
 int 
 benchmark_handle_free(void *benchmark_handle);
@@ -17,7 +17,7 @@ int
 benchmark_load_portfolio(void *benchmark_handle);
 
 int
-benchmark_refresh_quotes(char *homedir, char *datafilesdir);
+benchmark_refresh_quotes(void *benchmark_handle);
 
 int
 benchmark_view_stock(void *benchmark_handle);

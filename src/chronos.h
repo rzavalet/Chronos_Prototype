@@ -107,6 +107,7 @@ typedef struct timespec chronos_time_t;
 
 #define CHRONOS_TIME_GET(_t) clock_gettime(CLOCK_REALTIME, &(_t))
 
+#if 1
 #define CHRONOS_TIME_NANO_OFFSET_GET(_begin, _end, _off)	\
   do {								\
     chronos_time_t _tf = _end;					\
@@ -120,6 +121,16 @@ typedef struct timespec chronos_time_t;
     (_off).tv_nsec = _tf.tv_nsec - _to.tv_nsec;		\
 								\
   } while(0)
+#else
+#define CHRONOS_TIME_NANO_OFFSET_GET(_begin, _end, _off)		\
+  do {									\
+    long long _tf = (_end).tv_sec * 1000000000 + (_end).tv_nsec;	\
+    long long _to = (_begin).tv_sec * 1000000000 + (_begin).tv_nsec;	\
+    long long _res = _tf - _to;						\
+    (_off).tv_sec = _res / 1000000000;					\
+    (_off).tv_nsec = _res % 1000000000;					\
+  } while(0)
+#endif
 
 #define CHRONOS_TIME_SEC_OFFSET_GET(_begin, _end, _off)		\
   do {								\

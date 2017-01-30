@@ -19,46 +19,46 @@
 #include "benchmark_common.h"
 
 static int
-load_quotes_database(BENCHMARK_DBS my_benchmarkP, char *quotes_file);
+load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file);
 
 int
-benchmark_refresh_quotes(char *homedir, char *datafilesdir)
+benchmark_refresh_quotes(void *benchmark_handle)
 {
-  BENCHMARK_DBS my_benchmark;
-  int ret;
+  BENCHMARK_DBS *benchmarkP = NULL;
+  char *datafilesdir = NULL;
+  int ret = BENCHMARK_SUCCESS;
   size_t size;
   char *quotes_file;
 
-  initialize_benchmarkdbs(&my_benchmark);
-  my_benchmark.db_home_dir = homedir;
-  set_db_filenames(&my_benchmark);
+  benchmarkP = benchmark_handle;
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
 
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  datafilesdir = benchmarkP->datafilesdir;
+  
   /* Find our input files */
   size = strlen(datafilesdir) + strlen(QUOTES_FILE) + 2;
   quotes_file = malloc(size);
   snprintf(quotes_file, size, "%s/%s", datafilesdir, QUOTES_FILE);
 
-  ret = databases_setup(&my_benchmark, QUOTES_FLAG, "__FILE__", stderr);
-  if (ret) {
-    benchmark_error("%s:%d Error opening databases.", __FILE__, __LINE__);
-    databases_close(&my_benchmark);
-    return (ret);
-  }
-
-  ret = load_quotes_database(my_benchmark, quotes_file);
+  ret = load_quotes_database(benchmarkP, quotes_file);
   if (ret) {
     benchmark_error( "%s:%d Error loading personal database.", __FILE__, __LINE__);
-    databases_close(&my_benchmark);
-    return (ret);
+    goto failXit;
   }
-  databases_close(&my_benchmark);
 
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   benchmark_debug(2, "Done loading databases.");
-  return (ret);
+  return ret;
+  
+ failXit:
+  return BENCHMARK_FAIL;
 }
 
 static int
-load_quotes_database(BENCHMARK_DBS my_benchmarkP, char *quotes_file)
+load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
 {
   int rc = 0;
   DBT key, data;
@@ -69,8 +69,8 @@ load_quotes_database(BENCHMARK_DBS my_benchmarkP, char *quotes_file)
   FILE *ifp;
   QUOTE quote;
 
-  envP = my_benchmarkP.envP;
-  if (envP == NULL || my_benchmarkP.quotes_dbp == NULL || quotes_file == NULL) {
+  envP = benchmarkP->envP;
+  if (envP == NULL || benchmarkP->quotes_dbp == NULL || quotes_file == NULL) {
     benchmark_error( "%s: Invalid arguments", __func__);
     goto failXit;
   }
@@ -133,7 +133,7 @@ load_quotes_database(BENCHMARK_DBS my_benchmarkP, char *quotes_file)
       goto failXit; 
     }
 
-    rc = my_benchmarkP.quotes_dbp->put(my_benchmarkP.quotes_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->quotes_dbp->put(benchmarkP->quotes_dbp, txnP, &key, &data, 0);
     if (rc != 0) {
       envP->err(envP, rc, "Database put failed.");
       txnP->abort(txnP);

@@ -20,7 +20,7 @@
 #include "benchmark_common.h"
 
 int 
-benchmark_handle_alloc(void **benchmark_handle, char *homedir)
+benchmark_handle_alloc(void **benchmark_handle, char *homedir, char *datafilesdir)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   int ret = BENCHMARK_FAIL;
@@ -34,6 +34,7 @@ benchmark_handle_alloc(void **benchmark_handle, char *homedir)
   
   initialize_benchmarkdbs(benchmarkP);
   benchmarkP->db_home_dir = homedir;
+  benchmarkP->datafilesdir = datafilesdir;
   
   /* Identify the files that hold our databases */
   set_db_filenames(benchmarkP);
@@ -45,6 +46,9 @@ benchmark_handle_alloc(void **benchmark_handle, char *homedir)
     goto failXit;
   }
 
+  benchmarkP->magic = BENCHMARK_MAGIC_WORD;
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  
   *benchmark_handle = benchmarkP;
   
   return BENCHMARK_SUCCESS;
@@ -59,6 +63,7 @@ benchmark_handle_free(void *benchmark_handle)
 {
   BENCHMARK_DBS *benchmarkP = benchmark_handle;
 
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   databases_close(benchmarkP);
   free(benchmarkP);
   
@@ -76,7 +81,9 @@ benchmark_view_stock(void *benchmark_handle)
     goto failXit;
   }
   
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   ret = show_stocks_records(NULL, benchmarkP);
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   return ret;
 

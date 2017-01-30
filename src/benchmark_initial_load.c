@@ -22,18 +22,19 @@
  *                          PROTOTYPES
  *============================================================================*/
 static int
-load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file);
+load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file);
 
 static int
-load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file);
+load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file);
 
 static int
-load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file);
+load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file);
 
 int 
 benchmark_initial_load(char *homedir, char *datafilesdir) 
 {
   BENCHMARK_DBS my_benchmark;
+  int databaseOpen = 0;
   char *personal_file, *stocks_file, *currencies_file;
   int size;
   int ret;
@@ -42,45 +43,57 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   my_benchmark.db_home_dir = homedir;
   set_db_filenames(&my_benchmark);
 
+  assert(homedir != NULL && homedir[0] != '\0');
+  assert(datafilesdir != NULL && datafilesdir[0] != '\0');
+  
   /* Find our input files */
   size = strlen(datafilesdir) + strlen(PERSONAL_FILE) + 2;
   personal_file = malloc(size);
+  if (personal_file == NULL) {
+    benchmark_error("%s:%d Failed to allocate memory.", __FILE__, __LINE__);
+    goto failXit;
+  }
   snprintf(personal_file, size, "%s/%s", datafilesdir, PERSONAL_FILE);
 
   size = strlen(datafilesdir) + strlen(STOCKS_FILE) + 2;
   stocks_file = malloc(size);
+  if (stocks_file == NULL) {
+    benchmark_error("%s:%d Failed to allocate memory.", __FILE__, __LINE__);
+    goto failXit;
+  }
   snprintf(stocks_file, size, "%s/%s", datafilesdir, STOCKS_FILE);
 
   size = strlen(datafilesdir) + strlen(CURRENCIES_FILE) + 2;
   currencies_file = malloc(size);
+  if (currencies_file == NULL) {
+    benchmark_error("%s:%d Failed to allocate memory.", __FILE__, __LINE__);
+    goto failXit;
+  }
   snprintf(currencies_file, size, "%s/%s", datafilesdir, CURRENCIES_FILE);
 
   ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, "benchmark_initial_load", stderr);
   if (ret) {
     benchmark_error("%s:%d Error opening databases.", __FILE__, __LINE__);
-    databases_close(&my_benchmark);
-    return (ret);
+    goto failXit;
   }
-
-  ret = load_personal_database(my_benchmark, personal_file);
+  databaseOpen = 1;
+  
+  ret = load_personal_database(&my_benchmark, personal_file);
   if (ret) {
     benchmark_error("%s:%d Error loading personal database.", __FILE__, __LINE__);
-    databases_close(&my_benchmark);
-    return (ret);
+    goto failXit;
   }
 
-  ret = load_stocks_database(my_benchmark, stocks_file);
+  ret = load_stocks_database(&my_benchmark, stocks_file);
   if (ret) {
     benchmark_error("%s:%d Error loading stocks database.", __FILE__, __LINE__);
-    databases_close(&my_benchmark);
-    return (ret);
+    goto failXit;
   }
 
-  ret = load_currencies_database(my_benchmark, currencies_file);
+  ret = load_currencies_database(&my_benchmark, currencies_file);
   if (ret) {
     benchmark_error("%s:%d Error loading currencies database.", __FILE__, __LINE__);
-    databases_close(&my_benchmark);
-    return (ret);
+    goto failXit;
   }
 
   databases_close(&my_benchmark);
@@ -88,11 +101,18 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   benchmark_debug(1, "Done with initial load ...");
 
   return BENCHMARK_SUCCESS;
+  
+ failXit:
+  if (databaseOpen) {
+    databases_close(&my_benchmark);
+  }
+   
+  return BENCHMARK_FAIL;
 }
 
 
 static int
-load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
+load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
 {
   int rc = 0;
   DBT key, data;
@@ -103,7 +123,11 @@ load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
   FILE *ifp;
   PERSONAL my_personal;
 
-  envP = my_benchmarkP.envP;
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  envP = benchmarkP->envP;
   if (envP == NULL || personal_file == NULL) {
     benchmark_error("%s: Invalid arguments", __func__);
     goto failXit;
@@ -168,7 +192,10 @@ load_personal_database(BENCHMARK_DBS my_benchmarkP, char *personal_file)
       goto failXit; 
     }
 
-    rc = my_benchmarkP.personal_dbp->put(my_benchmarkP.personal_dbp, txnP, &key, &data, 0);
+    assert(txnP != NULL);
+    assert(benchmarkP->personal_dbp != NULL);
+
+    rc = benchmarkP->personal_dbp->put(benchmarkP->personal_dbp, txnP, &key, &data, 0);
     if (rc != 0) {
       envP->err(envP, rc, "Database put failed.");
       txnP->abort(txnP);
@@ -194,7 +221,7 @@ failXit:
 }
 
 static int
-load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
+load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
 {
   int rc = 0;
   DBT key, data;
@@ -205,7 +232,11 @@ load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
   FILE *ifp;
   STOCK my_stocks;
 
-  envP = my_benchmarkP.envP;
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  envP = benchmarkP->envP;
   if (envP == NULL || stocks_file == NULL) {
     benchmark_error("%s: Invalid arguments", __func__);
     goto failXit;
@@ -267,7 +298,7 @@ load_stocks_database(BENCHMARK_DBS my_benchmarkP, char *stocks_file)
       goto failXit; 
     }
 
-    rc = my_benchmarkP.stocks_dbp->put(my_benchmarkP.stocks_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->stocks_dbp->put(benchmarkP->stocks_dbp, txnP, &key, &data, 0);
 
     if (rc != 0) {
       envP->err(envP, rc, "Database put failed.");
@@ -294,7 +325,7 @@ failXit:
 }
 
 static int
-load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
+load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
 {
   int rc = 0;
   DBT key, data;
@@ -304,8 +335,12 @@ load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
   char ignore_buf[500];
   FILE *ifp;
   CURRENCY my_currencies;
- 
-  envP = my_benchmarkP.envP;
+
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  envP = benchmarkP->envP;
   if (envP == NULL || currencies_file == NULL) {
     benchmark_error("%s: Invalid arguments", __func__);
     goto failXit;
@@ -366,7 +401,7 @@ load_currencies_database(BENCHMARK_DBS my_benchmarkP, char *currencies_file)
       goto failXit; 
     }
 
-    rc = my_benchmarkP.currencies_dbp->put(my_benchmarkP.currencies_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->currencies_dbp->put(benchmarkP->currencies_dbp, txnP, &key, &data, 0);
 
     if (rc != 0) {
       envP->err(envP, rc, "Database put failed.");

@@ -34,6 +34,7 @@ benchmark_purchase(void *benchmark_handle)
     goto failXit;
   }
   
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   srand(time(NULL));
   random_account = (rand() % 50) + 1;
   random_symbol = symbolsArr[rand() % 10];
@@ -46,6 +47,7 @@ benchmark_purchase(void *benchmark_handle)
     goto failXit;
   }
  
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   return ret;
   
  failXit:

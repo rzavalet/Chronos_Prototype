@@ -20,6 +20,12 @@
 #include "chronos_config.h"
 #include "benchmark.h"
 
+#define CHRONOS_SERVER_CTX_MAGIC      (0xBACA)
+#define CHRONOS_SERVER_THREAD_MAGIC   (0xCACA)
+
+#define CHRONOS_SERVER_CTX_CHECK(_ctxt)    assert((_ctxt)->magic == CHRONOS_SERVER_CTX_MAGIC)
+#define CHRONOS_SERVER_THREAD_CHECK(_thr)    assert((_thr)->magic == CHRONOS_SERVER_THREAD_MAGIC)
+
 int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
 
@@ -64,14 +70,18 @@ typedef struct {
   int occupied;
   int nextin;
   int nextout;
+  unsigned long long ticketReq;
+  unsigned long long ticketDone;
   pthread_mutex_t mutex;
   pthread_cond_t more;
   pthread_cond_t less;
+  pthread_cond_t ticketReady;
 } buffer_t;
 
 
 typedef struct chronosServerContext_t {
 
+  int magic;
   /* We can only create a limited number of 
    * client threads. */
   int numClientsThreads;
@@ -122,6 +132,7 @@ typedef struct chronosServerContext_t {
 } chronosServerContext_t;
 
 typedef struct chronosServerThreadInfo_t {
+  int       magic;
   pthread_t thread_id;
   int       thread_num;
   int       socket_fd;

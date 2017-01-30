@@ -37,11 +37,13 @@ benchmark_load_portfolio(void *benchmark_handle)
     goto failXit;
   }
   
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   ret = load_portfolio_database(benchmarkP);
   if (ret) {
     benchmark_error("%s:%d Error loading personal database.", __FILE__, __LINE__);
     goto failXit;
   }
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   benchmark_debug(1, "Done populating portfolios.");
   

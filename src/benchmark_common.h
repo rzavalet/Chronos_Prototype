@@ -23,12 +23,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "benchmark.h"
 
+#define BENCHMARK_MAGIC_WORD   (0xCAFE)
 #define CHRONOS_INMEMORY
 #define CHRONOS_SHMKEY 35
 #define CHRONOS_PORTFOLIOS_NUM	100
+
+#define BENCHMARK_CHECK_MAGIC(_benchmarkP)   assert((_benchmarkP)->magic == BENCHMARK_MAGIC_WORD)
 
 #ifdef _WIN32
 extern int getopt(int, char * const *, const char *);
@@ -86,6 +90,8 @@ extern char *optarg;
  * multiple berkeley DBs*/
 typedef struct benchmark_dbs {
 
+  int magic;
+  
   /* This is the environment */
   DB_ENV  *envP;
 
@@ -103,7 +109,8 @@ typedef struct benchmark_dbs {
 
   /* Some other useful information */
   char *db_home_dir;
-
+  char *datafilesdir;
+  
   /* Primary databases */
   char *stocks_db_name;
   char *quotes_db_name;
