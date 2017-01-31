@@ -12,8 +12,8 @@ chronosServerContext_t *serverContextP = NULL;
 chronosServerThreadInfo_t *listenerThreadInfoP = NULL;
 chronosServerThreadInfo_t *processingThreadInfoP = NULL;
 chronosServerThreadInfo_t *updateThreadInfoArrP = NULL;
-buffer_t *userTxnQueueP = NULL;
-buffer_t *sysTxnQueueP = NULL;
+chronos_queue_t *userTxnQueueP = NULL;
+chronos_queue_t *sysTxnQueueP = NULL;
 
 void handler_sigint(int sig);
 
@@ -339,6 +339,8 @@ void handler_timer(void *arg)
   currentSlot = contextP->currentSlot;
 
   CHRONOS_TIME_AVERAGE(contextP->txn_delay[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_delay[currentSlot]);
+  chronos_info("Acc: "CHRONOS_TIME_FMT", Num: %llu, AVG: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->txn_delay[currentSlot]), contextP->txn_count[currentSlot], CHRONOS_TIME_ARG(contextP->txn_avg_delay[currentSlot]));
+
   contextP->txn_enqueued[currentSlot] = contextP->userTxnQueue.occupied;
   
   contextP->currentSlot = (contextP->currentSlot + 1) % CHRONOS_SAMPLE_ARRAY_SIZE;
@@ -454,8 +456,42 @@ failXit:
   return CHRONOS_FAIL;
 }
 
+static in
+waitForTransaction(chronos_queue_t *b, unsigned long long ticket)
+{
+  int rc = CHRONOS_SUCCESS;
+  
+  pthread_mutex_lock(&b->mutex);
+  while(ticket <= b->ticketDone)
+    pthread_cond_wait(&b->ticketReady, &b->mutex);
+  pthread_mutex_unlock(&b->mutex);
+
+  return rc;
+}
+
+static unsigned long long
+enqueueTransaction(chronos_queue_t *b)
+{
+  unsigned long long ticket;
+  
+  pthread_mutex_lock(&b->mutex);
+  while (b->occupied >= BSIZE)
+    pthread_cond_wait(&b->less, &b->mutex);
+
+  assert(b->occupied < BSIZE);
+  b->buf[b->nextin++] = reqPacketP->txn_type;
+  b->nextin %= BSIZE;
+  b->occupied++;
+  b->ticketReq++;
+  ticket = b->ticketReq;
+  pthread_cond_signal(&b->more);
+  pthread_mutex_unlock(&b->mutex);
+
+  return ticket;
+}
+
 static chronos_user_transaction_t 
-consumer(buffer_t *b)
+dequeueTransaction(chronos_queue_t *b)
 {
   chronos_user_transaction_t item;
   pthread_mutex_lock(&b->mutex);
@@ -486,7 +522,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   unsigned long long ticket;
   chronos_time_t begin_time;
   chronos_time_t end_time;
-  buffer_t *userTxnQueueP = NULL;
+  chronos_queue_t *userTxnQueueP = NULL;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -518,30 +554,17 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   current_slot = infoP->contextP->currentSlot;  
   infoP->contextP->txn_received[current_slot] += 1;
 
-  pthread_mutex_lock(&userTxnQueueP->mutex);
-  while (userTxnQueueP->occupied >= BSIZE)
-    pthread_cond_wait(&userTxnQueueP->less, &userTxnQueueP->mutex);
-
-  assert(userTxnQueueP->occupied < BSIZE);
-  userTxnQueueP->buf[userTxnQueueP->nextin++] = reqPacketP->txn_type;
-  userTxnQueueP->nextin %= BSIZE;
-  userTxnQueueP->occupied++;
-  userTxnQueueP->ticketReq++;
-  ticket = userTxnQueueP->ticketReq;
-  pthread_cond_signal(&userTxnQueueP->more);
-  pthread_mutex_unlock(&userTxnQueueP->mutex);
+  ticket = enqueueTransaction(userTxnQueueP, reqPacketP->txn_type);
 
   /* Wait till the transaction is done */
-  pthread_mutex_lock(&userTxnQueueP->mutex);
-  while(ticket <= userTxnQueueP->ticketDone)
-    pthread_cond_wait(&userTxnQueueP->ticketReady, &userTxnQueueP->mutex);
-  pthread_mutex_unlock(&userTxnQueueP->mutex);
+  waitForTransaction(userTxnQueueP, ticket);
   
   chronos_debug(3, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
 
 
   CHRONOS_TIME_GET(end_time);
 
+#if 0
   /*===========================================
    * Run the performance monitor
    * NOTE: This should happen from time to time
@@ -550,6 +573,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
     chronos_error("Failed to execute performance monitor");
     goto failXit;
   }
+#endif
   
   return CHRONOS_SUCCESS;
 
@@ -818,8 +842,8 @@ processThread(void *argP)
 {
   int txn_rc = CHRONOS_SUCCESS;
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
-  buffer_t *userTxnQueueP = NULL;
-  buffer_t *sysTxnQueueP = NULL;
+  chronos_queue_t *userTxnQueueP = NULL;
+  chronos_queue_t *sysTxnQueueP = NULL;
   chronos_user_transaction_t txn_type;
   chronos_time_t system_start, system_end, txn_start, txn_end;
   chronos_time_t txn_duration, txn_delay;
@@ -857,7 +881,7 @@ processThread(void *argP)
       chronos_info("Processing update...");
       
       current_slot = infoP->contextP->currentSlot;
-      txn_type = consumer(sysTxnQueueP);
+      txn_type = dequeueTransaction(sysTxnQueueP);
       if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
         chronos_error("Failed to refresh quotes");
         goto cleanup;
@@ -878,7 +902,7 @@ processThread(void *argP)
       current_slot = infoP->contextP->currentSlot;
 
       CHRONOS_TIME_GET(txn_start);
-      txn_type = consumer(userTxnQueueP);
+      txn_type = dequeueTransaction(userTxnQueueP);
       
         /* dispatch a transaction */
       switch(txn_type) {
@@ -924,7 +948,7 @@ processThread(void *argP)
       chronos_info("txn start: "CHRONOS_TIME_FMT", txn end: "CHRONOS_TIME_FMT", duration: "CHRONOS_TIME_FMT,
 		   CHRONOS_TIME_ARG(txn_start), CHRONOS_TIME_ARG(txn_end), CHRONOS_TIME_ARG(txn_duration));
       
-      CHRONOS_TIME_NANO_OFFSET_GET(infoP->contextP->validityInterval, infoP->contextP->validityInterval, txn_delay);
+      CHRONOS_TIME_NANO_OFFSET_GET(infoP->contextP->validityInterval, txn_duration, txn_delay);
       chronos_info("txn duration: "CHRONOS_TIME_FMT", validity interval: "CHRONOS_TIME_FMT", delay: "CHRONOS_TIME_FMT,
 		   CHRONOS_TIME_ARG(txn_duration), CHRONOS_TIME_ARG(infoP->contextP->validityInterval), CHRONOS_TIME_ARG(txn_delay));
       
@@ -955,7 +979,7 @@ static void *
 updateThread(void *argP) {
   
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
-  buffer_t *userTxnQueueP = NULL;
+  chronos_queue_t *userTxnQueueP = NULL;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -996,7 +1020,7 @@ updateThread(void *argP) {
     /* now: either b->occupied < BSIZE and b->nextin is the index
          of the next empty slot in the buffer, or
          b->occupied == BSIZE and b->nextin is the index of the
-         next (occupied) slot that will be emptied by a consumer
+         next (occupied) slot that will be emptied by a dequeueTransaction
          (such as b->nextin == b->nextout) */
 
     pthread_cond_signal(&userTxnQueueP->more);

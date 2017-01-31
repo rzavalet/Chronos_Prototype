@@ -97,6 +97,7 @@ extern int chronos_debug_level;
   chronos_msg("WARN", __VA_ARGS__)
 
 typedef struct timespec chronos_time_t;
+#define NSEC_TO_SEC (1000000000)
 #define CHRONOS_TIME_FMT "%ld.%09ld"
 #define CHRONOS_TIME_ARG(_t) (_t).tv_sec, (_t).tv_nsec
 #define CHRONOS_TIME_CLEAR(_t) \
@@ -107,53 +108,50 @@ typedef struct timespec chronos_time_t;
 
 #define CHRONOS_TIME_GET(_t) clock_gettime(CLOCK_REALTIME, &(_t))
 
-#if 1
-#define CHRONOS_TIME_NANO_OFFSET_GET(_begin, _end, _off)	\
-  do {								\
-    chronos_time_t _tf = _end;					\
-    chronos_time_t _to = _begin;				\
-    if (_to.tv_nsec > _tf.tv_nsec) {				\
-      _tf.tv_nsec += 1000000000;				\
-      _tf.tv_sec --;						\
-    }								\
-								\
-    (_off).tv_sec = _tf.tv_sec - _to.tv_sec;		\
-    (_off).tv_nsec = _tf.tv_nsec - _to.tv_nsec;		\
-								\
-  } while(0)
-#else
 #define CHRONOS_TIME_NANO_OFFSET_GET(_begin, _end, _off)		\
   do {									\
-    long long _tf = (_end).tv_sec * 1000000000 + (_end).tv_nsec;	\
-    long long _to = (_begin).tv_sec * 1000000000 + (_begin).tv_nsec;	\
-    long long _res = _tf - _to;						\
-    (_off).tv_sec = _res / 1000000000;					\
-    (_off).tv_nsec = _res % 1000000000;					\
+    chronos_time_t _tf = _end;						\
+    chronos_time_t _to = _begin;					\
+									\
+    if (_tf.tv_sec > _to.tv_sec && _tf.tv_nsec < _to.tv_nsec) {		\
+      _tf.tv_sec --;							\
+      _tf.tv_nsec += NSEC_TO_SEC;					\
+    }									\
+    else if (_tf.tv_sec < _to.tv_sec && _tf.tv_nsec > _to.tv_nsec) {	\
+      _to.tv_sec --;							\
+      _to.tv_nsec += NSEC_TO_SEC;					\
+    }									\
+    (_off).tv_sec = _tf.tv_sec - _to.tv_sec;				\
+    (_off).tv_nsec = _tf.tv_nsec - _to.tv_nsec;				\
   } while(0)
-#endif
 
-#define CHRONOS_TIME_SEC_OFFSET_GET(_begin, _end, _off)		\
-  do {								\
-    chronos_time_t _tf = _end;					\
-    chronos_time_t _to = _begin;				\
-    if (_to.tv_nsec > _tf.tv_nsec) {				\
-      _tf.tv_nsec += 1000000000;				\
-      _tf.tv_sec --;						\
-    }								\
-								\
-    _off = _tf.tv_sec - _to.tv_sec;				\
+#define CHRONOS_TIME_SEC_OFFSET_GET(_begin, _end, _off)			\
+  do {									\
+    chronos_time_t _tf = _end;						\
+    chronos_time_t _to = _begin;					\
+									\
+    if (_tf.tv_sec > _to.tv_sec && _tf.tv_nsec < _to.tv_nsec) {		\
+      _tf.tv_sec --;							\
+      _tf.tv_nsec += NSEC_TO_SEC;					\
+    }									\
+    else if (_tf.tv_sec < _to.tv_sec && _tf.tv_nsec > _to.tv_nsec) {	\
+      _to.tv_sec --;							\
+      _to.tv_nsec += NSEC_TO_SEC;					\
+    }									\
+    (_off).tv_sec = _tf.tv_sec - _to.tv_sec;				\
+    (_off).tv_nsec = 0;							\
   } while(0)
 
 #define CHRONOS_TIME_ADD(_t1, _t2, _res)			\
       do {							\
 	chronos_time_t _tf = _t1;				\
 	chronos_time_t _to = _t2;				\
+	(_res).tv_sec = 0;					\
 	(_res).tv_nsec = (_tf).tv_nsec + (_to).tv_nsec;		\
 								\
-	if ((_res).tv_nsec > 1000000000) {			\
-	  long long int tmp = (_res).tv_nsec / 1000000000;	\
-	  (_res).tv_nsec = (_res).tv_nsec % 1000000000;		\
-	  (_res).tv_sec = tmp;					\
+	if ((_res).tv_nsec > NSEC_TO_SEC) {			\
+	  (_res).tv_sec = (_res).tv_nsec / NSEC_TO_SEC;	\
+	  (_res).tv_nsec = (_res).tv_nsec % NSEC_TO_SEC;	\
 	}							\
 								\
 	(_res).tv_sec += (_tf).tv_sec + (_to).tv_sec;		\
@@ -163,14 +161,14 @@ typedef struct timespec chronos_time_t;
 #define CHRONOS_TIME_AVERAGE(_sum, _num, _res)				\
   do {									\
     if (_num != 0) {							\
-      long long mod;								\
-      (_res).tv_sec  = (_sum).tv_sec / _num;				\
-      mod =  1000000000 * (((float)(_sum).tv_sec / (float)_num) - (_res).tv_sec);	\
-      (_res).tv_nsec = mod + (_sum).tv_nsec / _num;			\
-      if ((_res).tv_nsec > 999999999) {					\
-	mod = (_res).tv_nsec / 1000000000;					\
+      long long mod;							\
+      (_res).tv_sec  = (_sum).tv_sec / (signed long)_num;		\
+      mod =  NSEC_TO_SEC * ((_sum).tv_sec % (signed long)_num);		\
+      (_res).tv_nsec = mod + ((_sum).tv_nsec / (signed long)_num);	\
+      if ((_res).tv_nsec >= NSEC_TO_SEC) {				\
+	mod = (_res).tv_nsec / NSEC_TO_SEC;				\
 	(_res).tv_sec += mod;						\
-	mod = (_res).tv_nsec % 1000000000;					\
+	mod = (_res).tv_nsec % NSEC_TO_SEC;				\
 	(_res).tv_nsec = mod;						\
       }									\
     }									\

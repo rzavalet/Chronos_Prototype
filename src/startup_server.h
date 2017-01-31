@@ -76,7 +76,7 @@ typedef struct {
   pthread_cond_t more;
   pthread_cond_t less;
   pthread_cond_t ticketReady;
-} buffer_t;
+} chronos_queue_t;
 
 
 typedef struct chronosServerContext_t {
