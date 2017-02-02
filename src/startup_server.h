@@ -64,9 +64,17 @@ typedef struct chronosServerStats_t {
   chronos_time_t average_time[CHRONOS_USER_TXN_MAX];
 } chronosServerStats_t;
 
+typedef struct {
+  char txn_type;
+  chronos_time_t txn_start;
+} txn_info_t;
+  
 #define BSIZE 1024
 typedef struct {
+#if 0
   char buf[BSIZE]; /* we actually store TXN identifiers -- see chronos.h */
+#endif
+  txn_info_t txnInfoArr[BSIZE];
   int occupied;
   int nextin;
   int nextout;
@@ -106,15 +114,18 @@ typedef struct chronosServerContext_t {
   int runningMode;
   int debugLevel;
   chronosServerStats_t *stats;
-  buffer_t userTxnQueue;
-  buffer_t sysTxnQueue;
+  chronos_queue_t userTxnQueue;
+  chronos_queue_t sysTxnQueue;
 
   /* These fields control the sampling task */
 #define CHRONOS_SAMPLE_ARRAY_SIZE  (15*60*60)
   unsigned long long txn_count[CHRONOS_SAMPLE_ARRAY_SIZE];
+  unsigned long long txn_timely[CHRONOS_SAMPLE_ARRAY_SIZE];
   unsigned long long txn_received[CHRONOS_SAMPLE_ARRAY_SIZE];
   unsigned long long txn_update[CHRONOS_SAMPLE_ARRAY_SIZE];
   unsigned long long txn_enqueued[CHRONOS_SAMPLE_ARRAY_SIZE];
+  struct timespec txn_duration[CHRONOS_SAMPLE_ARRAY_SIZE];
+  struct timespec txn_avg_duration[CHRONOS_SAMPLE_ARRAY_SIZE];
   struct timespec txn_delay[CHRONOS_SAMPLE_ARRAY_SIZE];
   struct timespec txn_avg_delay[CHRONOS_SAMPLE_ARRAY_SIZE];  
   int numSamples;

@@ -339,7 +339,10 @@ void handler_timer(void *arg)
   currentSlot = contextP->currentSlot;
 
   CHRONOS_TIME_AVERAGE(contextP->txn_delay[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_delay[currentSlot]);
-  chronos_info("Acc: "CHRONOS_TIME_FMT", Num: %llu, AVG: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->txn_delay[currentSlot]), contextP->txn_count[currentSlot], CHRONOS_TIME_ARG(contextP->txn_avg_delay[currentSlot]));
+  chronos_info("DELAY: Acc: "CHRONOS_TIME_FMT", Num: %llu, AVG: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->txn_delay[currentSlot]), contextP->txn_count[currentSlot], CHRONOS_TIME_ARG(contextP->txn_avg_delay[currentSlot]));
+
+  CHRONOS_TIME_AVERAGE(contextP->txn_duration[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_duration[currentSlot]);
+  chronos_info("DURATION: Acc: "CHRONOS_TIME_FMT", Num: %llu, AVG: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->txn_duration[currentSlot]), contextP->txn_count[currentSlot], CHRONOS_TIME_ARG(contextP->txn_avg_duration[currentSlot]));
 
   contextP->txn_enqueued[currentSlot] = contextP->userTxnQueue.occupied;
   
@@ -456,61 +459,67 @@ failXit:
   return CHRONOS_FAIL;
 }
 
-static in
-waitForTransaction(chronos_queue_t *b, unsigned long long ticket)
+static int
+waitForTransaction(chronos_queue_t *queueP, unsigned long long ticket)
 {
   int rc = CHRONOS_SUCCESS;
   
-  pthread_mutex_lock(&b->mutex);
-  while(ticket <= b->ticketDone)
-    pthread_cond_wait(&b->ticketReady, &b->mutex);
-  pthread_mutex_unlock(&b->mutex);
+  pthread_mutex_lock(&queueP->mutex);
+  while(ticket <= queueP->ticketDone)
+    pthread_cond_wait(&queueP->ticketReady, &queueP->mutex);
+  pthread_mutex_unlock(&queueP->mutex);
 
   return rc;
 }
 
 static unsigned long long
-enqueueTransaction(chronos_queue_t *b)
+enqueueTransaction(chronos_queue_t *queueP, char txn_type)
 {
   unsigned long long ticket;
-  
-  pthread_mutex_lock(&b->mutex);
-  while (b->occupied >= BSIZE)
-    pthread_cond_wait(&b->less, &b->mutex);
+  chronos_time_t txn_start;
 
-  assert(b->occupied < BSIZE);
-  b->buf[b->nextin++] = reqPacketP->txn_type;
-  b->nextin %= BSIZE;
-  b->occupied++;
-  b->ticketReq++;
-  ticket = b->ticketReq;
-  pthread_cond_signal(&b->more);
-  pthread_mutex_unlock(&b->mutex);
+  CHRONOS_TIME_GET(txn_start);
+  
+  pthread_mutex_lock(&queueP->mutex);
+  while (queueP->occupied >= BSIZE)
+    pthread_cond_wait(&queueP->less, &queueP->mutex);
+
+  assert(queueP->occupied < BSIZE);
+  queueP->txnInfoArr[queueP->nextin].txn_type = txn_type;
+  queueP->txnInfoArr[queueP->nextin].txn_start = txn_start;
+  queueP->nextin++;
+  queueP->nextin %= BSIZE;
+  queueP->occupied++;
+  queueP->ticketReq++;
+  ticket = queueP->ticketReq;
+  pthread_cond_signal(&queueP->more);
+  pthread_mutex_unlock(&queueP->mutex);
 
   return ticket;
 }
 
-static chronos_user_transaction_t 
-dequeueTransaction(chronos_queue_t *b)
+static txn_info_t *
+dequeueTransaction(chronos_queue_t *queueP)
 {
-  chronos_user_transaction_t item;
-  pthread_mutex_lock(&b->mutex);
-  while(b->occupied <= 0)
-    pthread_cond_wait(&b->more, &b->mutex);
+  txn_info_t *item = NULL;
+  pthread_mutex_lock(&queueP->mutex);
+  while(queueP->occupied <= 0)
+    pthread_cond_wait(&queueP->more, &queueP->mutex);
 
-  assert(b->occupied > 0);
+  assert(queueP->occupied > 0);
 
-  item = b->buf[b->nextout++];
-  b->nextout %= BSIZE;
-  b->occupied--;
-  /* now: either b->occupied > 0 and b->nextout is the index
+  item = &(queueP->txnInfoArr[queueP->nextout]);
+  queueP->nextout++;
+  queueP->nextout %= BSIZE;
+  queueP->occupied--;
+  /* now: either queueP->occupied > 0 and queueP->nextout is the index
        of the next occupied slot in the buffer, or
-       b->occupied == 0 and b->nextout is the index of the next
+       queueP->occupied == 0 and queueP->nextout is the index of the next
        (empty) slot that will be filled by a producer (such as
-       b->nextout == b->nextin) */
+       queueP->nextout == queueP->nextin) */
 
-  pthread_cond_signal(&b->less);
-  pthread_mutex_unlock(&b->mutex);
+  pthread_cond_signal(&queueP->less);
+  pthread_mutex_unlock(&queueP->mutex);
 
   return(item);
 }
@@ -520,8 +529,6 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
 {
   int current_slot = 0;
   unsigned long long ticket;
-  chronos_time_t begin_time;
-  chronos_time_t end_time;
   chronos_queue_t *userTxnQueueP = NULL;
 
   if (infoP == NULL || infoP->contextP == NULL) {
@@ -541,11 +548,6 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   }
 #endif
 
-  CHRONOS_TIME_CLEAR(begin_time);
-  CHRONOS_TIME_CLEAR(end_time);
-
-  CHRONOS_TIME_GET(begin_time);
-
   /*===========================================
    * Put a new transaction in the txn queue
    *==========================================*/
@@ -562,19 +564,6 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   chronos_debug(3, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
 
 
-  CHRONOS_TIME_GET(end_time);
-
-#if 0
-  /*===========================================
-   * Run the performance monitor
-   * NOTE: This should happen from time to time
-   *==========================================*/
-  if (performanceMonitor(&begin_time, &end_time, reqPacketP->txn_type, infoP) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to execute performance monitor");
-    goto failXit;
-  }
-#endif
-  
   return CHRONOS_SUCCESS;
 
 failXit:
@@ -845,7 +834,9 @@ processThread(void *argP)
   chronos_queue_t *userTxnQueueP = NULL;
   chronos_queue_t *sysTxnQueueP = NULL;
   chronos_user_transaction_t txn_type;
-  chronos_time_t system_start, system_end, txn_start, txn_end;
+  txn_info_t *txnInfoP = NULL;
+  chronos_time_t system_start, system_end;
+  chronos_time_t txn_start, txn_end;
   chronos_time_t txn_duration, txn_delay;
   int current_slot = 0;
   
@@ -881,7 +872,9 @@ processThread(void *argP)
       chronos_info("Processing update...");
       
       current_slot = infoP->contextP->currentSlot;
-      txn_type = dequeueTransaction(sysTxnQueueP);
+      txnInfoP = dequeueTransaction(sysTxnQueueP);
+      txn_type = txnInfoP->txn_type;
+      
       if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
         chronos_error("Failed to refresh quotes");
         goto cleanup;
@@ -901,8 +894,9 @@ processThread(void *argP)
 
       current_slot = infoP->contextP->currentSlot;
 
-      CHRONOS_TIME_GET(txn_start);
-      txn_type = dequeueTransaction(userTxnQueueP);
+      txnInfoP = dequeueTransaction(userTxnQueueP);
+      txn_type = txnInfoP->txn_type;
+      txn_start = txnInfoP->txn_start;
       
         /* dispatch a transaction */
       switch(txn_type) {
@@ -951,11 +945,17 @@ processThread(void *argP)
       CHRONOS_TIME_NANO_OFFSET_GET(infoP->contextP->validityInterval, txn_duration, txn_delay);
       chronos_info("txn duration: "CHRONOS_TIME_FMT", validity interval: "CHRONOS_TIME_FMT", delay: "CHRONOS_TIME_FMT,
 		   CHRONOS_TIME_ARG(txn_duration), CHRONOS_TIME_ARG(infoP->contextP->validityInterval), CHRONOS_TIME_ARG(txn_delay));
-      
+
+      CHRONOS_TIME_ADD(infoP->contextP->txn_duration[current_slot], txn_duration, infoP->contextP->txn_duration[current_slot]);
       CHRONOS_TIME_ADD(infoP->contextP->txn_delay[current_slot], txn_delay, infoP->contextP->txn_delay[current_slot]);
-      chronos_info("txn delay acc: "CHRONOS_TIME_FMT,
-		   CHRONOS_TIME_ARG(infoP->contextP->txn_delay[current_slot]));
-      
+      chronos_info("txn delay acc: "CHRONOS_TIME_FMT", txn duration acc: "CHRONOS_TIME_FMT,
+		   CHRONOS_TIME_ARG(infoP->contextP->txn_delay[current_slot]), CHRONOS_TIME_ARG(infoP->contextP->txn_duration[current_slot]));
+
+      /* ttps */
+      if (!CHRONOS_TIME_POSITIVE(txn_delay)) {
+	infoP->contextP->txn_timely[current_slot] += 1;
+      }
+
       chronos_info("Done processing user txn...");
     }
 
@@ -1012,7 +1012,7 @@ updateThread(void *argP) {
     assert(userTxnQueueP->occupied < BSIZE);
     
     chronos_info("Put a new update request in queue");
-    userTxnQueueP->buf[userTxnQueueP->nextin++] = CHRONOS_SYS_TXN_UPDATE_STOCK;
+    userTxnQueueP->txnInfoArr[userTxnQueueP->nextin++].txn_type = CHRONOS_SYS_TXN_UPDATE_STOCK;
     
     userTxnQueueP->nextin %= BSIZE;
     userTxnQueueP->occupied++;
@@ -1120,7 +1120,7 @@ updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chron
 static int
 printStats(chronosServerThreadInfo_t *infoP)
 {
-#define num_columns  6
+#define num_columns  8
   int i;
   const char title[] = "TRANSACTIONS STATS";
   const char filler[] = "========================================================================================================================";
@@ -1129,6 +1129,8 @@ printStats(chronosServerThreadInfo_t *infoP)
                               "Xacts Received",
 			      "Xacts Enqueued",
 			      "Processed Xacts",
+			      "Timely Xacts",
+			      "Average Duration",
                               "Average Delay",
                               "Update Xacts"};
 
@@ -1149,7 +1151,7 @@ printStats(chronosServerThreadInfo_t *infoP)
   printf("%*s\n", pad_size, title);
   printf("%.*s\n", width, filler);
 
-  printf("%*s %*s %*s %*s %*s %*s\n",
+  printf("%*s %*s %*s %*s %*s %*s %*s %*s\n",
 	 spaces,
 	 column_names[0], 
 	 spaces,
@@ -1161,11 +1163,15 @@ printStats(chronosServerThreadInfo_t *infoP)
 	 spaces,
 	 column_names[4],
 	 spaces,
-	 column_names[5]);
+	 column_names[5],
+	 spaces,
+	 column_names[6],
+	 spaces,
+	 column_names[7]);
   printf("%.*s\n", width, filler);
 
   for (i=0; i<infoP->contextP->numSamples; i++) {
-    printf("%*d %*llu %*llu %*llu %*s"CHRONOS_TIME_FMT" %*llu\n",
+    printf("%*d %*llu %*llu %*llu %*llu %*s"CHRONOS_TIME_FMT" %*s"CHRONOS_TIME_FMT" %*llu\n",
 	   spaces,
 	   i,
 	   spaces,
@@ -1174,6 +1180,11 @@ printStats(chronosServerThreadInfo_t *infoP)
 	   infoP->contextP->txn_enqueued[i],
 	   spaces,
 	   infoP->contextP->txn_count[i],
+	   spaces,
+	   infoP->contextP->txn_timely[i],
+	   spaces > 9 ? spaces - 9 : spaces,
+	   "",
+	   CHRONOS_TIME_ARG(infoP->contextP->txn_avg_duration[i]),
 	   spaces > 9 ? spaces - 9 : spaces,
 	   "",
 	   CHRONOS_TIME_ARG(infoP->contextP->txn_avg_delay[i]),

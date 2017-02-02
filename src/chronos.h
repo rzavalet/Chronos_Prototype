@@ -164,7 +164,7 @@ typedef struct timespec chronos_time_t;
       long long mod;							\
       (_res).tv_sec  = (_sum).tv_sec / (signed long)_num;		\
       mod =  NSEC_TO_SEC * ((_sum).tv_sec % (signed long)_num);		\
-      (_res).tv_nsec = mod + ((_sum).tv_nsec / (signed long)_num);	\
+      (_res).tv_nsec = (mod + (_sum).tv_nsec) / (signed long)_num;	\
       if ((_res).tv_nsec >= NSEC_TO_SEC) {				\
 	mod = (_res).tv_nsec / NSEC_TO_SEC;				\
 	(_res).tv_sec += mod;						\
@@ -175,7 +175,13 @@ typedef struct timespec chronos_time_t;
   }while(0)
 
 #define CHRONOS_TIME_POSITIVE(_time)		\
-  ((_time).tv_sec >= 0 && (_time).tv_nsec >= 0)
+  ((_time).tv_sec > 0 && (_time).tv_nsec > 0)
+
+#define CHRONOS_TIME_ZERO(_time)		\
+  ((_time).tv_sec == 0 && (_time).tv_nsec == 0)
+
+#define CHRONOS_TIME_NEGATIVE(_time)		\
+  ((_time).tv_sec < 0 && (_time).tv_nsec < 0)
 
 
 #endif
