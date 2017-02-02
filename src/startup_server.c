@@ -140,6 +140,11 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
+  if (pthread_mutex_init(&serverContextP->admissionControlMutex, NULL) != 0) {
+    chronos_error("Failed to init mutex");
+    goto failXit;
+  }
+
   if (pthread_cond_init(&sysTxnQueueP->more, NULL) != 0) {
     chronos_error("Failed to init condition variable");
     goto failXit;
@@ -171,6 +176,11 @@ int main(int argc, char *argv[])
   }
 
   if (pthread_cond_init(&serverContextP->startThreadsWait, NULL) != 0) {
+    chronos_error("Failed to init condition variable");
+    goto failXit;
+  }
+
+  if (pthread_cond_init(&serverContextP->admissionControlWait, NULL) != 0) {
     chronos_error("Failed to init condition variable");
     goto failXit;
   }
@@ -228,7 +238,7 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  chronos_debug(4,"Spawed processing thread");
+  chronos_debug(2,"Spawed processing thread");
   
   /* Spawn performance monitor thread */
 
@@ -254,7 +264,7 @@ int main(int argc, char *argv[])
       goto failXit;
     }
 
-    chronos_debug(4,"Spawed update thread: %d", updateThreadInfoArrP[i].thread_num);
+    chronos_debug(2,"Spawed update thread: %d", updateThreadInfoArrP[i].thread_num);
   }
 #if 1
   /* Spawn daListener thread */
@@ -279,7 +289,7 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  chronos_debug(4,"Spawed listener thread");
+  chronos_debug(2,"Spawed listener thread");
 
   rc = pthread_join(listenerThreadInfoP->thread_id, (void **)&thread_rc);
   if (rc != CHRONOS_SUCCESS) {
@@ -313,10 +323,22 @@ failXit:
   }
   
   
+  pthread_cond_destroy(&userTxnQueueP->more);
+  pthread_cond_destroy(&userTxnQueueP->less);
+  pthread_cond_destroy(&userTxnQueueP->ticketReady);
   pthread_mutex_destroy(&userTxnQueueP->mutex);
+  
+  pthread_cond_destroy(&sysTxnQueueP->more);
+  pthread_cond_destroy(&sysTxnQueueP->less);
+  pthread_cond_destroy(&sysTxnQueueP->ticketReady);
   pthread_mutex_destroy(&sysTxnQueueP->mutex);
+  
+  
   pthread_cond_destroy(&serverContextP->startThreadsWait);
   pthread_mutex_destroy(&serverContextP->startThreadsMutex);
+  pthread_cond_destroy(&serverContextP->admissionControlWait);
+  pthread_mutex_destroy(&serverContextP->admissionControlMutex);
+
 
   return rc;
 }
@@ -331,6 +353,7 @@ void handler_timer(void *arg)
 {
   chronosServerContext_t *contextP = (chronosServerContext_t *) arg;
   int currentSlot;
+  int txnToWait = 0;
   float tm = 0;
   float ts = 0;
   float d = 0;
@@ -344,10 +367,10 @@ void handler_timer(void *arg)
   /*======= Obtain average of the last period ========*/
   currentSlot = contextP->currentSlot;
 
-  contextP->txn_avg_delay[currentSlot] = (float)contextP->txn_delay[currentSlot] / (float)contextP->txn_count[currentSlot];
+  contextP->txn_avg_delay[currentSlot] = contextP->txn_count[currentSlot] > 0 ? (float)contextP->txn_delay[currentSlot] / (float)contextP->txn_count[currentSlot] : 0;
   chronos_info("DELAY: Acc: %lld, Num: %lld, AVG: %.3f", contextP->txn_delay[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_delay[currentSlot]);
 
-  contextP->txn_avg_duration[currentSlot] = (float)contextP->txn_duration[currentSlot] / (float)contextP->txn_count[currentSlot];
+  contextP->txn_avg_duration[currentSlot] = contextP->txn_count[currentSlot] > 0 ? (float)contextP->txn_duration[currentSlot] / (float)contextP->txn_count[currentSlot] : 0;
 
   chronos_info("DURATION: Acc: %lld, Num: %lld, AVG: %.3f", contextP->txn_duration[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_duration[currentSlot]);
 
@@ -382,6 +405,19 @@ void handler_timer(void *arg)
   contextP->smothed_overload_degree[currentSlot] = ds;
   contextP->overload_degree[currentSlot] = d;
 
+  if (contextP->smothed_overload_degree[currentSlot] <= 0) {
+    txnToWait = 0;
+  }
+  else {
+    txnToWait = (contextP->userTxnQueue.occupied + contextP->sysTxnQueue.occupied) * contextP->smothed_overload_degree[currentSlot];
+  }
+
+  chronos_info("Need to apply admission control for %d transactions", txnToWait);
+  pthread_mutex_lock(&contextP->admissionControlMutex);
+  contextP->txnToWait = txnToWait;
+  pthread_cond_signal(&contextP->admissionControlWait);
+  pthread_mutex_unlock(&contextP->admissionControlMutex);
+  
   contextP->currentSlot = (contextP->currentSlot + 1) % CHRONOS_SAMPLE_ARRAY_SIZE;
   contextP->numSamples ++;
 }
@@ -586,7 +622,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   /*===========================================
    * Put a new transaction in the txn queue
    *==========================================*/
-  chronos_debug(3, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
+  chronos_debug(2, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
   
   current_slot = infoP->contextP->currentSlot;  
   infoP->contextP->txn_received[current_slot] += 1;
@@ -596,7 +632,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   /* Wait till the transaction is done */
   waitForTransaction(userTxnQueueP, ticket);
   
-  chronos_debug(3, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
+  chronos_debug(2, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
 
 
   return CHRONOS_SUCCESS;
@@ -628,14 +664,13 @@ daHandler(void *argP)
   /*=======================================================
    * Wait here till all threads are initialized 
    *======================================================*/
+  chronos_debug(4,"Waiting for client threads to startup");
   pthread_mutex_lock(&infoP->contextP->startThreadsMutex);
-  
   while (infoP->contextP->currentNumClients < infoP->contextP->numClientsThreads && time_to_die == 0) {
-    chronos_debug(4,"Waiting for client threads to startup");
     pthread_cond_wait(&infoP->contextP->startThreadsWait, &infoP->contextP->startThreadsMutex);
-  }
-  
+  }  
   pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
+  chronos_debug(4,"Done waiting for client threads to startup");
 
 
   /*=====================================================
@@ -647,8 +682,18 @@ daHandler(void *argP)
     CHRONOS_SERVER_THREAD_CHECK(infoP);
     CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
 
+    /*----------- Admission Control ----------------*/
+    chronos_debug(3, "Applying admission control");
+    pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+    while(infoP->contextP->txnToWait > 0)
+      pthread_cond_wait(&infoP->contextP->admissionControlWait, &infoP->contextP->admissionControlMutex);
+    pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
+    chronos_debug(3, "Done applying admission control");
+
+
+    
     /*------------ Read the request -----------------*/
-    chronos_debug(5, "waiting new request");
+    chronos_debug(3, "waiting new request");
     
     num_bytes = read(infoP->socket_fd, &reqPacket, sizeof(reqPacket));
     if (num_bytes < 0) {
@@ -662,7 +707,7 @@ daHandler(void *argP)
     }
 
     assert(CHRONOS_TXN_IS_VALID(reqPacket.txn_type));
-    chronos_debug(1, "Received transaction request: %s", CHRONOS_TXN_NAME(reqPacket.txn_type));
+    chronos_debug(3, "Received transaction request: %s", CHRONOS_TXN_NAME(reqPacket.txn_type));
     /*-----------------------------------------------*/
 
     
@@ -785,14 +830,14 @@ daListener(void *argP)
     goto cleanup;
   }
 
-  chronos_debug(2, "Waiting for incoming connections...");
+  chronos_debug(4, "Waiting for incoming connections...");
 
   /* Keep listening for incoming connections till we
    * complete all threads for the experiment
    */
   while(!done_creating && !time_to_die) {
 
-    chronos_debug(5, "Polling for new connection");
+    chronos_debug(4, "Polling for new connection");
     
     /* wait for a new connection */
     /* TODO: make the call abort-able */
@@ -825,7 +870,7 @@ daListener(void *argP)
       goto cleanup;
     }
 
-    chronos_debug(4,"Spawed handler thread");
+    chronos_debug(2,"Spawed handler thread");
 
     /*===========================================================
      * Signal the threads for the fact that all of them have
@@ -916,7 +961,14 @@ processThread(void *argP)
         goto cleanup;
       }
       
-      infoP->contextP->txn_update[current_slot] += 1;      
+      infoP->contextP->txn_update[current_slot] += 1;
+
+      /* Notify that one more txn finished */
+      pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+      infoP->contextP->txnToWait--;
+      pthread_cond_signal(&infoP->contextP->admissionControlWait);
+      pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
+            
       chronos_info("Done processing update...");
     }
     /*--------------------------------------------*/
@@ -973,6 +1025,12 @@ processThread(void *argP)
       
       /* One more transasction finished */
       infoP->contextP->txn_count[current_slot] += 1;
+
+      /* Notify that one more txn finished */
+      pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+      infoP->contextP->txnToWait--;
+      pthread_cond_signal(&infoP->contextP->admissionControlWait);
+      pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
 
       /* Calculate the delay of this transaction */
       CHRONOS_TIME_NANO_OFFSET_GET(txn_start, txn_end, txn_duration);
@@ -1033,8 +1091,16 @@ updateThread(void *argP) {
     CHRONOS_SERVER_THREAD_CHECK(infoP);
     CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
 
-    chronos_debug(5, "new update period");
-   
+    chronos_debug(3, "new update period");
+
+    /*----------- Admission Control ----------------*/
+    chronos_debug(3, "Applying admission control");
+    pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+    while(infoP->contextP->txnToWait > 0)
+      pthread_cond_wait(&infoP->contextP->admissionControlWait, &infoP->contextP->admissionControlMutex);
+    pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
+    chronos_debug(3, "Done applying admission control");
+    
 #ifdef CHRONOS_NOT_YET_IMPLEMENTED
     /* Do adaptive update control */
     if (doAdaptiveUpdate () != CHRONOS_SUCCESS) {
@@ -1101,7 +1167,7 @@ performanceMonitor(chronos_time_t *begin_time, chronos_time_t *end_time, chronos
 
   CHRONOS_TIME_NANO_OFFSET_GET(*begin_time, *end_time, elapsed_time);
 
-  chronos_debug(3, "Start Time: "CHRONOS_TIME_FMT": End Time: "CHRONOS_TIME_FMT" Elapsed Time: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(*begin_time), CHRONOS_TIME_ARG(*end_time), CHRONOS_TIME_ARG(elapsed_time));
+  chronos_debug(2, "Start Time: "CHRONOS_TIME_FMT": End Time: "CHRONOS_TIME_FMT" Elapsed Time: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(*begin_time), CHRONOS_TIME_ARG(*end_time), CHRONOS_TIME_ARG(elapsed_time));
   
   if ( updateStats(txn_type, &elapsed_time, infoP) != CHRONOS_SUCCESS) {
     chronos_error("Failed to update stats");

@@ -101,6 +101,10 @@ typedef struct chronosServerContext_t {
   pthread_mutex_t startThreadsMutex;
   pthread_cond_t startThreadsWait;
 
+  pthread_mutex_t admissionControlMutex;
+  pthread_cond_t admissionControlWait;
+  int txnToWait;
+  
   /* Apart from client threads, we also have
    * update threads - threads that update the
    * data in the system periodically */
