@@ -2,8 +2,8 @@
 
 /*===================== TODO LIST ==============================
  * 1) Destroy mutexes --- DONE
- * 2) Add overload detection
- * 3) Add Admision control
+ * 2) Add overload detection -- DONE
+ * 3) Add Admision control -- DONE
  * 4) Add Adaptive update
  * 5) Improve usage of Berkeley DB API -- DONE
  *=============================================================*/
@@ -412,6 +412,11 @@ void handler_timer(void *arg)
     txnToWait = (contextP->userTxnQueue.occupied + contextP->sysTxnQueue.occupied) * contextP->smothed_overload_degree[currentSlot];
   }
 
+  // Access update ratio
+  for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++) {
+    contextP->AccessUpdateRatio[currentSlot][i] = contextP->AccessFrequency[currentSlot][i] /  contextP->UpdateFrequency[currentSlot][i];
+  }
+  
   chronos_info("Need to apply admission control for %d transactions", txnToWait);
   pthread_mutex_lock(&contextP->admissionControlMutex);
   contextP->txnToWait = txnToWait;
@@ -920,6 +925,7 @@ processThread(void *argP)
   chronos_time_t txn_duration;
   long long txn_duration_ms, txn_delay;
   int current_slot = 0;
+  int data_item = 0;
   
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -955,10 +961,17 @@ processThread(void *argP)
       current_slot = infoP->contextP->currentSlot;
       txnInfoP = dequeueTransaction(sysTxnQueueP);
       txn_type = txnInfoP->txn_type;
-      
-      if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
-        chronos_error("Failed to refresh quotes");
-        goto cleanup;
+      num_updates = BENCHMARK_NUM_SYMBOLS / 2;
+      for (i=0; i<num_updates; i++){
+	data_item = -1;
+	if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item) != CHRONOS_SUCCESS) {
+	  chronos_error("Failed to refresh quotes");
+	  goto cleanup;
+	}
+	
+	if (data_item >= 0) {
+	  infoP->contextP->UpdateFrequency[current_slot][data_item] ++;
+	}
       }
       
       infoP->contextP->txn_update[current_slot] += 1;
@@ -985,12 +998,13 @@ processThread(void *argP)
       txnInfoP = dequeueTransaction(userTxnQueueP);
       txn_type = txnInfoP->txn_type;
       txn_start = txnInfoP->txn_start;
+      data_item = -1;
       
         /* dispatch a transaction */
       switch(txn_type) {
 
       case CHRONOS_USER_TXN_VIEW_STOCK:
-        txn_rc = benchmark_view_stock(infoP->contextP->benchmarkCtxtP);
+        txn_rc = benchmark_view_stock(infoP->contextP->benchmarkCtxtP, &data_item);
         break;
 
       case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
@@ -998,11 +1012,11 @@ processThread(void *argP)
         break;
 
       case CHRONOS_USER_TXN_PURCHASE:
-        txn_rc = benchmark_purchase(infoP->contextP->benchmarkCtxtP);
+        txn_rc = benchmark_purchase(infoP->contextP->benchmarkCtxtP, &data_item);
         break;
 
       case CHRONOS_USER_TXN_SALE:
-        txn_rc = benchmark_sell(infoP->contextP->benchmarkCtxtP);
+        txn_rc = benchmark_sell(infoP->contextP->benchmarkCtxtP, &data_item);
         break;
 
       default:
@@ -1025,7 +1039,10 @@ processThread(void *argP)
       
       /* One more transasction finished */
       infoP->contextP->txn_count[current_slot] += 1;
-
+      if (data_item >= 0) {
+	infoP->contextP->AccessFrequency[current_slot][data_item] ++;
+      }
+      
       /* Notify that one more txn finished */
       pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
       infoP->contextP->txnToWait--;

@@ -22,7 +22,7 @@ static int
 load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file);
 
 int
-benchmark_refresh_quotes(void *benchmark_handle)
+benchmark_refresh_quotes(void *benchmark_handle, int *symbol)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   char *datafilesdir = NULL;
@@ -36,6 +36,7 @@ benchmark_refresh_quotes(void *benchmark_handle)
   }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
+#if 0
   datafilesdir = benchmarkP->datafilesdir;
   
   /* Find our input files */
@@ -48,7 +49,26 @@ benchmark_refresh_quotes(void *benchmark_handle)
     benchmark_error( "%s:%d Error loading personal database.", __FILE__, __LINE__);
     goto failXit;
   }
+#endif
+  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Transaction begin failed.");
+    goto failXit; 
+  }
 
+  rc = benchmarkP->quotes_dbp->put(benchmarkP->quotes_dbp, txnP, &key, &data, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Database put failed.");
+    txnP->abort(txnP);
+    goto failXit; 
+  }
+
+  rc = txnP->commit(txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Transaction commit failed.");
+    goto failXit; 
+  }
+  
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   benchmark_debug(2, "Done loading databases.");
   return ret;

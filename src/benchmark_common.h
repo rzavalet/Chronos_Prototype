@@ -47,6 +47,21 @@ extern char *optarg;
 #define PRIMARY_DB	0
 #define SECONDARY_DB	1
 
+extern char *symbolsArr[];
+
+typedef enum {
+  BENCHMARK_SYMBOL_YHOO,
+  BENCHMARK_SYMBOL_AAPL,
+  BENCHMARK_SYMBOL_GOOG,
+  BENCHMARK_SYMBOL_MSFT,
+  BENCHMARK_SYMBOL_PIH,
+  BENCHMARK_SYMBOL_FLWS,
+  BENCHMARK_SYMBOL_SRCE,
+  BENCHMARK_SYMBOL_VNET,
+  BENCHMARK_SYMBOL_TWOU,
+  BENCHMARK_SYMBOL_JOBS
+} symbols_enum_t;
+
 /*
  * This benchmark is based on Kyoung-Don Kang et al. 
  * See the paper for reference.
@@ -206,7 +221,6 @@ typedef struct personal {
   char      email[LONG_NAME_SZ];
 } PERSONAL;
 
-extern char *symbolsArr[];
 
 /* Function prototypes */
 int	databases_setup(BENCHMARK_DBS *, int, const char *, FILE *);

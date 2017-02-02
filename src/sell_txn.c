@@ -20,11 +20,12 @@
 #include "benchmark_common.h"
 
 int
-benchmark_sell(void *benchmark_handle)
+benchmark_sell(void *benchmark_handle, int *symbolP)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   int ret;
   int random_account;
+  int symbol;
   char *random_symbol;
   float random_price;
   int random_amount;
@@ -35,9 +36,9 @@ benchmark_sell(void *benchmark_handle)
   }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-  srand(time(NULL));
   random_account = (rand() % 50) + 1;
-  random_symbol = symbolsArr[rand() % 10];
+  symbol = rand() % BENCHMARK_NUM_SYMBOLS;
+  random_symbol = symbolsArr[symbol];
   random_price = rand() % 100 + 1;
   random_amount = rand() % 20 + 1;
  
@@ -46,10 +47,18 @@ benchmark_sell(void *benchmark_handle)
     fprintf(stderr, "Could not place order\n");
     goto failXit;
   }
- 
+
+  if (symbolP != NULL) {
+    *symbolP = symbol;
+  }
+      
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   return ret;
   
  failXit:
+  if (symbolP != NULL) {
+    *symbolP = -1;
+  }
+      
   return BENCHMARK_FAIL;
 }

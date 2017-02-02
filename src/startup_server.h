@@ -134,7 +134,12 @@ typedef struct chronosServerContext_t {
   float txn_avg_delay[CHRONOS_SAMPLE_ARRAY_SIZE];
   float overload_degree[CHRONOS_SAMPLE_ARRAY_SIZE];
   float smothed_overload_degree[CHRONOS_SAMPLE_ARRAY_SIZE];
+
+  long long AccessFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
+  long long UpdateFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
+  float AccessUpdateRatio[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
   
+
   int numSamples;
   int samplingPeriod;
   int currentSlot;

@@ -71,10 +71,12 @@ benchmark_handle_free(void *benchmark_handle)
 }
 
 int
-benchmark_view_stock(void *benchmark_handle)
+benchmark_view_stock(void *benchmark_handle, int *symbolP)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   int ret;
+  int symbol;
+  char *random_symbol;
 
   benchmarkP = benchmark_handle;
   if (benchmarkP == NULL) {
@@ -82,11 +84,24 @@ benchmark_view_stock(void *benchmark_handle)
   }
   
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-  ret = show_stocks_records(NULL, benchmarkP);
+
+  symbol = rand() % BENCHMARK_NUM_SYMBOLS;
+  random_symbol = symbolsArr[symbol];
+  
+  ret = show_stocks_records(random_symbol, benchmarkP);
+
+  if (symbolP != NULL) {
+    *symbolP = symbol;
+  }
+    
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   return ret;
 
  failXit:
+  if (symbolP != NULL) {
+    *symbolP = -1;
+  }  
+  
   return BENCHMARK_FAIL;
 }

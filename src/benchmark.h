@@ -1,6 +1,8 @@
 #ifndef _BENCHMARK_H_
 #define _BENCHMARK_H_
 
+#define BENCHMARK_NUM_SYMBOLS  (10)
+
 #define BENCHMARK_SUCCESS   (0)
 #define BENCHMARK_FAIL      (1)
 
@@ -17,19 +19,19 @@ int
 benchmark_load_portfolio(void *benchmark_handle);
 
 int
-benchmark_refresh_quotes(void *benchmark_handle);
+benchmark_refresh_quotes(void *benchmark_handle, int *symbolP);
 
 int
-benchmark_view_stock(void *benchmark_handle);
+benchmark_view_stock(void *benchmark_handle, int *symbolP);
 
 int
 benchmark_view_portfolio(void *benchmark_handle);
 
 int
-benchmark_purchase(void *benchmark_handle);
+benchmark_purchase(void *benchmark_handle, int *symbolP);
 
 int
-benchmark_sell(void *benchmark_handle);
+benchmark_sell(void *benchmark_handle, int *symbolP);
 
 
 /*---------------------------------
