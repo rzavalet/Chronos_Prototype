@@ -108,7 +108,7 @@ typedef struct chronosServerContext_t {
 
   int duration;
   
-  struct timespec validityInterval;
+  long long validityInterval;
   int serverPort;
   struct timespec updatePeriod;
   int runningMode;
@@ -119,15 +119,18 @@ typedef struct chronosServerContext_t {
 
   /* These fields control the sampling task */
 #define CHRONOS_SAMPLE_ARRAY_SIZE  (15*60*60)
-  unsigned long long txn_count[CHRONOS_SAMPLE_ARRAY_SIZE];
-  unsigned long long txn_timely[CHRONOS_SAMPLE_ARRAY_SIZE];
-  unsigned long long txn_received[CHRONOS_SAMPLE_ARRAY_SIZE];
-  unsigned long long txn_update[CHRONOS_SAMPLE_ARRAY_SIZE];
-  unsigned long long txn_enqueued[CHRONOS_SAMPLE_ARRAY_SIZE];
-  struct timespec txn_duration[CHRONOS_SAMPLE_ARRAY_SIZE];
-  struct timespec txn_avg_duration[CHRONOS_SAMPLE_ARRAY_SIZE];
-  struct timespec txn_delay[CHRONOS_SAMPLE_ARRAY_SIZE];
-  struct timespec txn_avg_delay[CHRONOS_SAMPLE_ARRAY_SIZE];  
+  long long txn_count[CHRONOS_SAMPLE_ARRAY_SIZE];
+  long long txn_timely[CHRONOS_SAMPLE_ARRAY_SIZE];
+  long long txn_received[CHRONOS_SAMPLE_ARRAY_SIZE];
+  long long txn_update[CHRONOS_SAMPLE_ARRAY_SIZE];
+  long long txn_enqueued[CHRONOS_SAMPLE_ARRAY_SIZE];
+  long long txn_duration[CHRONOS_SAMPLE_ARRAY_SIZE];
+  float txn_avg_duration[CHRONOS_SAMPLE_ARRAY_SIZE];
+  long long txn_delay[CHRONOS_SAMPLE_ARRAY_SIZE];
+  float txn_avg_delay[CHRONOS_SAMPLE_ARRAY_SIZE];
+  float overload_degree[CHRONOS_SAMPLE_ARRAY_SIZE];
+  float smothed_overload_degree[CHRONOS_SAMPLE_ARRAY_SIZE];
+  
   int numSamples;
   int samplingPeriod;
   int currentSlot;

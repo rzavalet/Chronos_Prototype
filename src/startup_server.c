@@ -5,7 +5,7 @@
  * 2) Add overload detection
  * 3) Add Admision control
  * 4) Add Adaptive update
- * 5) Improve usage of Berkeley DB API
+ * 5) Improve usage of Berkeley DB API -- DONE
  *=============================================================*/
 int time_to_die = 0;
 chronosServerContext_t *serverContextP = NULL;
@@ -331,21 +331,57 @@ void handler_timer(void *arg)
 {
   chronosServerContext_t *contextP = (chronosServerContext_t *) arg;
   int currentSlot;
-  
+  float tm = 0;
+  float ts = 0;
+  float d = 0;
+  float ds = 0;
+  float ds_prev = 0;
+  float alpha = 0.6;
+    
   chronos_info("****** TIMER... *****");
   CHRONOS_SERVER_CTX_CHECK(serverContextP);
 
   /*======= Obtain average of the last period ========*/
   currentSlot = contextP->currentSlot;
 
-  CHRONOS_TIME_AVERAGE(contextP->txn_delay[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_delay[currentSlot]);
-  chronos_info("DELAY: Acc: "CHRONOS_TIME_FMT", Num: %llu, AVG: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->txn_delay[currentSlot]), contextP->txn_count[currentSlot], CHRONOS_TIME_ARG(contextP->txn_avg_delay[currentSlot]));
+  contextP->txn_avg_delay[currentSlot] = (float)contextP->txn_delay[currentSlot] / (float)contextP->txn_count[currentSlot];
+  chronos_info("DELAY: Acc: %lld, Num: %lld, AVG: %.3f", contextP->txn_delay[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_delay[currentSlot]);
 
-  CHRONOS_TIME_AVERAGE(contextP->txn_duration[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_duration[currentSlot]);
-  chronos_info("DURATION: Acc: "CHRONOS_TIME_FMT", Num: %llu, AVG: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->txn_duration[currentSlot]), contextP->txn_count[currentSlot], CHRONOS_TIME_ARG(contextP->txn_avg_duration[currentSlot]));
+  contextP->txn_avg_duration[currentSlot] = (float)contextP->txn_duration[currentSlot] / (float)contextP->txn_count[currentSlot];
+
+  chronos_info("DURATION: Acc: %lld, Num: %lld, AVG: %.3f", contextP->txn_duration[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_duration[currentSlot]);
 
   contextP->txn_enqueued[currentSlot] = contextP->userTxnQueue.occupied;
+
+  // average service delay
+  tm = contextP->txn_avg_delay[currentSlot];
+
+  // desired service delay
+  ts = contextP->validityInterval;
+
+  // degree of overload
+  assert(ts != 0);
+  if (ts > 0) {
+    d = (tm - ts) / ts;
+  }
+  else {
+    d = 0;
+  }
+
+  // smoothed degree of overload
+  if (currentSlot > 0) {
+    ds_prev = contextP->smothed_overload_degree[currentSlot-1];
+    ds = alpha * d + (1 - alpha) * ds_prev;
+  }
+  else {
+    ds = d;
+  }
   
+  chronos_info("DEGREE OF DELAY: tm: %.3f, ts: %.3f, d: %.3f, ds_prev: %.3f, ds: %.3f", tm, ts, d, ds_prev, ds);
+
+  contextP->smothed_overload_degree[currentSlot] = ds;
+  contextP->overload_degree[currentSlot] = d;
+
   contextP->currentSlot = (contextP->currentSlot + 1) % CHRONOS_SAMPLE_ARRAY_SIZE;
   contextP->numSamples ++;
 }
@@ -380,9 +416,8 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
       
       case 'v':
 	ms = atoi(optarg);
-	contextP->validityInterval.tv_sec = ms / 1000;
-	contextP->validityInterval.tv_nsec = (ms % 1000) * 1000000;
-	chronos_debug(2, "*** Validity interval: "CHRONOS_TIME_FMT, CHRONOS_TIME_ARG(contextP->validityInterval));
+	contextP->validityInterval = ms;
+	chronos_debug(2, "*** Validity interval: %lld", contextP->validityInterval);
         break;
 
       case 'u':
@@ -837,7 +872,8 @@ processThread(void *argP)
   txn_info_t *txnInfoP = NULL;
   chronos_time_t system_start, system_end;
   chronos_time_t txn_start, txn_end;
-  chronos_time_t txn_duration, txn_delay;
+  chronos_time_t txn_duration;
+  long long txn_duration_ms, txn_delay;
   int current_slot = 0;
   
   if (infoP == NULL || infoP->contextP == NULL) {
@@ -934,25 +970,27 @@ processThread(void *argP)
       }
       
       CHRONOS_TIME_GET(txn_end);
+      
       /* One more transasction finished */
       infoP->contextP->txn_count[current_slot] += 1;
 
       /* Calculate the delay of this transaction */
       CHRONOS_TIME_NANO_OFFSET_GET(txn_start, txn_end, txn_duration);
-      chronos_info("txn start: "CHRONOS_TIME_FMT", txn end: "CHRONOS_TIME_FMT", duration: "CHRONOS_TIME_FMT,
-		   CHRONOS_TIME_ARG(txn_start), CHRONOS_TIME_ARG(txn_end), CHRONOS_TIME_ARG(txn_duration));
-      
-      CHRONOS_TIME_NANO_OFFSET_GET(infoP->contextP->validityInterval, txn_duration, txn_delay);
-      chronos_info("txn duration: "CHRONOS_TIME_FMT", validity interval: "CHRONOS_TIME_FMT", delay: "CHRONOS_TIME_FMT,
-		   CHRONOS_TIME_ARG(txn_duration), CHRONOS_TIME_ARG(infoP->contextP->validityInterval), CHRONOS_TIME_ARG(txn_delay));
+      txn_duration_ms = CHRONOS_TIME_TO_MS(txn_duration);
+      chronos_info("txn start: "CHRONOS_TIME_FMT", txn end: "CHRONOS_TIME_FMT", duration: "CHRONOS_TIME_FMT" = %lld",
+		   CHRONOS_TIME_ARG(txn_start), CHRONOS_TIME_ARG(txn_end), CHRONOS_TIME_ARG(txn_duration), txn_duration_ms);
 
-      CHRONOS_TIME_ADD(infoP->contextP->txn_duration[current_slot], txn_duration, infoP->contextP->txn_duration[current_slot]);
-      CHRONOS_TIME_ADD(infoP->contextP->txn_delay[current_slot], txn_delay, infoP->contextP->txn_delay[current_slot]);
-      chronos_info("txn delay acc: "CHRONOS_TIME_FMT", txn duration acc: "CHRONOS_TIME_FMT,
-		   CHRONOS_TIME_ARG(infoP->contextP->txn_delay[current_slot]), CHRONOS_TIME_ARG(infoP->contextP->txn_duration[current_slot]));
+      txn_delay = txn_duration_ms - infoP->contextP->validityInterval;
+      chronos_info("txn duration: %lld, validity interval: %lld, delay: %lld",
+		   txn_duration_ms, infoP->contextP->validityInterval, txn_delay);
+
+      infoP->contextP->txn_duration[current_slot] += txn_duration_ms;
+      infoP->contextP->txn_delay[current_slot] += txn_delay;
+      chronos_info("txn delay acc: %lld, txn duration acc: %lld",
+		   infoP->contextP->txn_delay[current_slot], infoP->contextP->txn_duration[current_slot]);
 
       /* ttps */
-      if (!CHRONOS_TIME_POSITIVE(txn_delay)) {
+      if (txn_delay < 0) {
 	infoP->contextP->txn_timely[current_slot] += 1;
       }
 
@@ -1120,10 +1158,10 @@ updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chron
 static int
 printStats(chronosServerThreadInfo_t *infoP)
 {
-#define num_columns  8
+#define num_columns  10
   int i;
   const char title[] = "TRANSACTIONS STATS";
-  const char filler[] = "========================================================================================================================";
+  const char filler[] = "========================================================================================================================================================================";
   const char *column_names[num_columns] = {
                               "Sample",
                               "Xacts Received",
@@ -1132,6 +1170,8 @@ printStats(chronosServerThreadInfo_t *infoP)
 			      "Timely Xacts",
 			      "Average Duration",
                               "Average Delay",
+			      "Degree of Overload",
+			      "S Degree of Overload",
                               "Update Xacts"};
 
   int pad_size;
@@ -1151,7 +1191,7 @@ printStats(chronosServerThreadInfo_t *infoP)
   printf("%*s\n", pad_size, title);
   printf("%.*s\n", width, filler);
 
-  printf("%*s %*s %*s %*s %*s %*s %*s %*s\n",
+  printf("%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s\n",
 	 spaces,
 	 column_names[0], 
 	 spaces,
@@ -1167,11 +1207,15 @@ printStats(chronosServerThreadInfo_t *infoP)
 	 spaces,
 	 column_names[6],
 	 spaces,
-	 column_names[7]);
+	 column_names[7],
+	 spaces,
+	 column_names[8],
+	 spaces,
+	 column_names[9]);
   printf("%.*s\n", width, filler);
 
   for (i=0; i<infoP->contextP->numSamples; i++) {
-    printf("%*d %*llu %*llu %*llu %*llu %*s"CHRONOS_TIME_FMT" %*s"CHRONOS_TIME_FMT" %*llu\n",
+    printf("%*d %*lld %*lld %*lld %*lld %*.3f %*.3f %*.3f %*.3f %*lld\n",
 	   spaces,
 	   i,
 	   spaces,
@@ -1182,12 +1226,14 @@ printStats(chronosServerThreadInfo_t *infoP)
 	   infoP->contextP->txn_count[i],
 	   spaces,
 	   infoP->contextP->txn_timely[i],
-	   spaces > 9 ? spaces - 9 : spaces,
-	   "",
-	   CHRONOS_TIME_ARG(infoP->contextP->txn_avg_duration[i]),
-	   spaces > 9 ? spaces - 9 : spaces,
-	   "",
-	   CHRONOS_TIME_ARG(infoP->contextP->txn_avg_delay[i]),
+	   spaces,
+	   infoP->contextP->txn_avg_duration[i],
+	   spaces,
+	   infoP->contextP->txn_avg_delay[i],
+	   spaces,
+	   infoP->contextP->overload_degree[i],
+	   spaces,
+	   infoP->contextP->smothed_overload_degree[i],
 	   spaces,
 	   infoP->contextP->txn_update[i]);
   }

@@ -183,5 +183,15 @@ typedef struct timespec chronos_time_t;
 #define CHRONOS_TIME_NEGATIVE(_time)		\
   ((_time).tv_sec < 0 && (_time).tv_nsec < 0)
 
+#define SEC_TO_MSEC   (1000)
+#define NSEC_TO_MSEC  (1000000)
 
+#define CHRONOS_TIME_TO_MS(_time) \
+  ((_time).tv_sec * SEC_TO_MSEC + (_time).tv_nsec / NSEC_TO_MSEC)
+
+#define CHRONOS_MS_TO_TIME(_ms, _time) \
+  do { \
+    (_time).tv_sec = (_ms) / SEC_TO_MSEC;	\
+    (_time).tv_nsec = ((_ms) % SEC_TO_MSEC) * NSEC_TO_MSEC; \
+  } while (0) 
 #endif
