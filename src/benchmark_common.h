@@ -237,6 +237,9 @@ int
 place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
 
 int 
+update_stock(char *symbol, BENCHMARK_DBS *benchmarkP);
+
+int 
 sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
 
 int 

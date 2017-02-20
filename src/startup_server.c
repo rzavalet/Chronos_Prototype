@@ -354,6 +354,7 @@ void handler_timer(void *arg)
   chronosServerContext_t *contextP = (chronosServerContext_t *) arg;
   int currentSlot;
   int txnToWait = 0;
+  int i;
   float tm = 0;
   float ts = 0;
   float d = 0;
@@ -405,23 +406,27 @@ void handler_timer(void *arg)
   contextP->smothed_overload_degree[currentSlot] = ds;
   contextP->overload_degree[currentSlot] = d;
 
-  if (contextP->smothed_overload_degree[currentSlot] <= 0) {
-    txnToWait = 0;
-  }
-  else {
-    txnToWait = (contextP->userTxnQueue.occupied + contextP->sysTxnQueue.occupied) * contextP->smothed_overload_degree[currentSlot];
-  }
-
   // Access update ratio
   for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++) {
-    contextP->AccessUpdateRatio[currentSlot][i] = contextP->AccessFrequency[currentSlot][i] /  contextP->UpdateFrequency[currentSlot][i];
+    contextP->AccessUpdateRatio[currentSlot][i] = (contextP->UpdateFrequency[currentSlot][i] == 0) ? 1 : (float)contextP->AccessFrequency[currentSlot][i] /  (float)contextP->UpdateFrequency[currentSlot][i];
+    chronos_info("AUR: i: %d, AUR: %f, AF: %lld, UF: %lld",
+		 i, contextP->AccessUpdateRatio[currentSlot][i], contextP->AccessFrequency[currentSlot][i], contextP->UpdateFrequency[currentSlot][i]);
   }
-  
-  chronos_info("Need to apply admission control for %d transactions", txnToWait);
-  pthread_mutex_lock(&contextP->admissionControlMutex);
-  contextP->txnToWait = txnToWait;
-  pthread_cond_signal(&contextP->admissionControlWait);
-  pthread_mutex_unlock(&contextP->admissionControlMutex);
+
+  if (IS_CHRONOS_MODE_AUP(contextP) || IS_CHRONOS_MODE_FULL(contextP)) {
+    if (contextP->smothed_overload_degree[currentSlot] <= 0) {
+      txnToWait = 0;
+    }
+    else {
+      txnToWait = (contextP->userTxnQueue.occupied + contextP->sysTxnQueue.occupied) * contextP->smothed_overload_degree[currentSlot];
+    }
+
+    chronos_info("Need to apply admission control for %d transactions", txnToWait);
+    pthread_mutex_lock(&contextP->admissionControlMutex);
+    contextP->txnToWait = txnToWait;
+    pthread_cond_signal(&contextP->admissionControlWait);
+    pthread_mutex_unlock(&contextP->admissionControlMutex);
+  }
   
   contextP->currentSlot = (contextP->currentSlot + 1) % CHRONOS_SAMPLE_ARRAY_SIZE;
   contextP->numSamples ++;
@@ -448,11 +453,16 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
 
   memset(contextP, 0, sizeof(*contextP));
   
-  while ((c = getopt(argc, argv, "c:v:s:u:r:t:p:d:h")) != -1) {
+  while ((c = getopt(argc, argv, "m:c:v:s:u:r:t:p:d:h")) != -1) {
     switch(c) {
       case 'c':
         contextP->numClientsThreads = atoi(optarg);
         chronos_debug(2,"*** Num clients: %d", contextP->numClientsThreads);
+        break;
+      
+      case 'm':
+        contextP->runningMode = atoi(optarg);
+        chronos_debug(2,"*** Running mode: %d", contextP->runningMode);
         break;
       
       case 'v':
@@ -617,13 +627,6 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
 
   userTxnQueueP = &(infoP->contextP->userTxnQueue);
 
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-  /* Do admission control */
-  if (doAdmissionControl () != CHRONOS_SUCCESS) {
-    goto failXit;
-  }
-#endif
-
   /*===========================================
    * Put a new transaction in the txn queue
    *==========================================*/
@@ -674,6 +677,7 @@ daHandler(void *argP)
   while (infoP->contextP->currentNumClients < infoP->contextP->numClientsThreads && time_to_die == 0) {
     pthread_cond_wait(&infoP->contextP->startThreadsWait, &infoP->contextP->startThreadsMutex);
   }  
+  pthread_cond_broadcast(&infoP->contextP->startThreadsWait);
   pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
   chronos_debug(4,"Done waiting for client threads to startup");
 
@@ -687,14 +691,15 @@ daHandler(void *argP)
     CHRONOS_SERVER_THREAD_CHECK(infoP);
     CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
 
-    /*----------- Admission Control ----------------*/
-    chronos_debug(3, "Applying admission control");
-    pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
-    while(infoP->contextP->txnToWait > 0)
-      pthread_cond_wait(&infoP->contextP->admissionControlWait, &infoP->contextP->admissionControlMutex);
-    pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
-    chronos_debug(3, "Done applying admission control");
-
+    if (IS_CHRONOS_MODE_AUP(infoP->contextP) || IS_CHRONOS_MODE_FULL(infoP->contextP)) {
+      /*----------- Admission Control ----------------*/
+      chronos_debug(3, "Applying admission control");
+      pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+      while(infoP->contextP->txnToWait > 0)
+	pthread_cond_wait(&infoP->contextP->admissionControlWait, &infoP->contextP->admissionControlMutex);
+      pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
+      chronos_debug(3, "Done applying admission control");
+    }
 
     
     /*------------ Read the request -----------------*/
@@ -887,7 +892,7 @@ daListener(void *argP)
       done_creating = 1;
       chronos_info("daListener created all requested threads");
     }
-    pthread_cond_signal(&infoP->contextP->startThreadsWait);
+    pthread_cond_broadcast(&infoP->contextP->startThreadsWait);
     pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
   }
   
@@ -926,6 +931,7 @@ processThread(void *argP)
   long long txn_duration_ms, txn_delay;
   int current_slot = 0;
   int data_item = 0;
+  int i;
   
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -961,27 +967,44 @@ processThread(void *argP)
       current_slot = infoP->contextP->currentSlot;
       txnInfoP = dequeueTransaction(sysTxnQueueP);
       txn_type = txnInfoP->txn_type;
-      num_updates = BENCHMARK_NUM_SYMBOLS / 2;
-      for (i=0; i<num_updates; i++){
-	data_item = -1;
-	if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item) != CHRONOS_SUCCESS) {
-	  chronos_error("Failed to refresh quotes");
-	  goto cleanup;
-	}
+      if (IS_CHRONOS_MODE_BASE(infoP->contextP) || IS_CHRONOS_MODE_AC(infoP->contextP)) {
+	for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++){
+	  data_item = i;
+	  if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item) != CHRONOS_SUCCESS) {
+	    chronos_error("Failed to refresh quotes");
+	    goto cleanup;
+	  }
 	
-	if (data_item >= 0) {
-	  infoP->contextP->UpdateFrequency[current_slot][data_item] ++;
+	  if (data_item >= 0) {
+	    infoP->contextP->UpdateFrequency[current_slot][data_item] ++;
+	  }
+	}
+      }
+      else {
+	for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++){
+	  if (infoP->contextP->AccessUpdateRatio[current_slot][i] >= 1) {
+	    data_item = i;
+	    if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item) != CHRONOS_SUCCESS) {
+	      chronos_error("Failed to refresh quotes");
+	      goto cleanup;
+	    }
+	
+	    if (data_item >= 0) {
+	      infoP->contextP->UpdateFrequency[current_slot][data_item] ++;
+	    }
+	  }
 	}
       }
       
       infoP->contextP->txn_update[current_slot] += 1;
 
-      /* Notify that one more txn finished */
-      pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
-      infoP->contextP->txnToWait--;
-      pthread_cond_signal(&infoP->contextP->admissionControlWait);
-      pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
-            
+      if (IS_CHRONOS_MODE_AUP(infoP->contextP) || IS_CHRONOS_MODE_FULL(infoP->contextP)) {
+	/* Notify that one more txn finished */
+	pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+	infoP->contextP->txnToWait--;
+	pthread_cond_signal(&infoP->contextP->admissionControlWait);
+	pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
+      }
       chronos_info("Done processing update...");
     }
     /*--------------------------------------------*/
@@ -1043,12 +1066,14 @@ processThread(void *argP)
 	infoP->contextP->AccessFrequency[current_slot][data_item] ++;
       }
       
-      /* Notify that one more txn finished */
-      pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
-      infoP->contextP->txnToWait--;
-      pthread_cond_signal(&infoP->contextP->admissionControlWait);
-      pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
-
+      if (IS_CHRONOS_MODE_AUP(infoP->contextP) || IS_CHRONOS_MODE_FULL(infoP->contextP)) {
+	/* Notify that one more txn finished */
+	pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+	infoP->contextP->txnToWait--;
+	pthread_cond_signal(&infoP->contextP->admissionControlWait);
+	pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
+      }
+      
       /* Calculate the delay of this transaction */
       CHRONOS_TIME_NANO_OFFSET_GET(txn_start, txn_end, txn_duration);
       txn_duration_ms = CHRONOS_TIME_TO_MS(txn_duration);
@@ -1109,21 +1134,6 @@ updateThread(void *argP) {
     CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
 
     chronos_debug(3, "new update period");
-
-    /*----------- Admission Control ----------------*/
-    chronos_debug(3, "Applying admission control");
-    pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
-    while(infoP->contextP->txnToWait > 0)
-      pthread_cond_wait(&infoP->contextP->admissionControlWait, &infoP->contextP->admissionControlMutex);
-    pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
-    chronos_debug(3, "Done applying admission control");
-    
-#ifdef CHRONOS_NOT_YET_IMPLEMENTED
-    /* Do adaptive update control */
-    if (doAdaptiveUpdate () != CHRONOS_SUCCESS) {
-      goto cleanup;
-    }
-#endif
 
     pthread_mutex_lock(&userTxnQueueP->mutex);
      
@@ -1342,6 +1352,7 @@ chronos_usage()
     "-t [num]              update period [in milliseconds]\n"
     "-s [num]              sampling period [in seconds]\n"
     "-p [num]              port to accept new connections\n"
+    "-m [mode]             running mode: 0: BASE, 1: Admission Control, 2: Adaptive Update, 3: Admission Control + Adaptive Update\n"
     "-d [num]              debug level\n"
     "-h                    help";
 

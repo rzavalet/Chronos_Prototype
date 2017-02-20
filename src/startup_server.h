@@ -26,6 +26,16 @@
 #define CHRONOS_SERVER_CTX_CHECK(_ctxt)    assert((_ctxt)->magic == CHRONOS_SERVER_CTX_MAGIC)
 #define CHRONOS_SERVER_THREAD_CHECK(_thr)    assert((_thr)->magic == CHRONOS_SERVER_THREAD_MAGIC)
 
+#define CHRONOS_MODE_BASE   (0)
+#define CHRONOS_MODE_AC     (1)
+#define CHRONOS_MODE_AUP    (2)
+#define CHRONOS_MODE_FULL   (3)
+
+#define IS_CHRONOS_MODE_BASE(_ctxt)   ((_ctxt)->runningMode == CHRONOS_MODE_BASE)
+#define IS_CHRONOS_MODE_AC(_ctxt)     ((_ctxt)->runningMode == CHRONOS_MODE_AC)
+#define IS_CHRONOS_MODE_AUP(_ctxt)    ((_ctxt)->runningMode == CHRONOS_MODE_AUP)
+#define IS_CHRONOS_MODE_FULL(_ctxt)   ((_ctxt)->runningMode == CHRONOS_MODE_FULL)
+
 int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
 
@@ -138,7 +148,7 @@ typedef struct chronosServerContext_t {
   long long AccessFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
   long long UpdateFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
   float AccessUpdateRatio[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
-  
+  long long FlexibleValidityInterval[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
 
   int numSamples;
   int samplingPeriod;

@@ -50,6 +50,10 @@ create_portfolio(char *account_id, char *symbol, float price, int amount, DB_TXN
 
 int
 get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP);
+
+int
+get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP);
+
 /*=============== STATIC FUNCTIONS =======================*/
 static int
 get_account_id(DB *sdbp,          /* secondary db handle */
@@ -848,6 +852,88 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
   return 0;
 }
 
+
+int 
+update_stock(char *symbolP, BENCHMARK_DBS *benchmarkP)
+{
+  int rc = 0;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
+  DBT      key, data;
+  DBC     *cursorp = NULL; /* To iterate over the porfolios */
+  QUOTE    quote;
+
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Transaction begin failed.");
+    goto failXit; 
+  }
+
+  rc = get_stock(symbolP, txnP, &cursorp, &key, &data, benchmarkP);
+  if (rc != 0) {
+    envP->err(envP, rc, "Could not find record.");
+    goto failXit; 
+  }
+  
+  /* Update whatever we need to update */
+  memcpy(&quote, &data, sizeof(QUOTE));
+  quote.current_price += 0.5;
+
+  /* Save the record */
+  cursorp->put(cursorp, &key, &data, DB_CURRENT);
+  if (rc != 0) {
+    fprintf(stderr, "%s: Failed to update quote", __func__);
+    goto failXit; 
+  }
+
+  /* Close the record */
+  if (cursorp != NULL) {
+    cursorp->close(cursorp);
+    cursorp = NULL;
+  }
+
+  rc = txnP->commit(txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "Transaction commit failed.");
+    goto failXit; 
+  }
+
+  goto cleanup;
+
+failXit:
+  if (txnP != NULL) {
+    if (cursorp != NULL) {
+      cursorp->close(cursorp);
+      cursorp = NULL;
+    }
+
+    rc = txnP->abort(txnP);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction abort failed.");
+      goto failXit; 
+    }
+  }
+
+  rc = 1;
+
+cleanup:
+  return rc;
+}
+
+
 int 
 sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP)
 {
@@ -1089,6 +1175,60 @@ cleanup:
 
   if (data_ret != NULL) {
     *data_ret = pdata;
+  }
+
+  return rc;
+}
+
+int
+get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP) 
+{
+  DBC *cursorp = NULL;
+  DB  *quotesdbP= NULL;
+  DBT key, data;
+  int rc = 0;
+
+  if (symbol == NULL || symbol[0] == '\0')
+  {
+    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  quotesdbP = benchmarkP->quotes_dbp;
+  if (quotesdbP == NULL) {
+    fprintf(stderr, "%s: Quotes database is not open\n", __func__);
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  key.data = symbol;
+  key.size = (u_int32_t) strlen(symbol) + 1;
+  quotesdbP->cursor(quotesdbP, txnP, &cursorp, 0);
+
+  /* Position the cursor */
+  rc = cursorp->get(cursorp, &key, &data, DB_SET);
+  if (rc == 0) {
+    goto cleanup;
+  }
+
+  cursorp->close(cursorp);
+  cursorp = NULL;
+
+  goto cleanup;
+
+failXit:
+  rc = 1;
+
+cleanup:
+  *cursorPP = cursorp;
+  if (key_ret != NULL) {
+    *key_ret = key;
+  }
+
+  if (data_ret != NULL) {
+    *data_ret = data;
   }
 
   return rc;
