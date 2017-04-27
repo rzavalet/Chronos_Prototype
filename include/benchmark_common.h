@@ -251,4 +251,7 @@ show_currencies_records(BENCHMARK_DBS *my_benchmarkP);
 int
 show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP);
 
+int
+show_personal_item(void *vBuf);
+
 #endif

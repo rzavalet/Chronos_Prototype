@@ -37,9 +37,6 @@ static int
 show_currencies_item(void *vBuf);
 
 static int
-show_personal_item(void *vBuf);
-
-static int
 get_account_id(DB *sdbp,          /* secondary db handle */
               const DBT *pkey,   /* primary db record's key */
               const DBT *pdata,  /* primary db record's data */
@@ -708,7 +705,7 @@ show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP)
   return (rc);
 }
 
-static int
+int
 show_personal_item(void *vBuf)
 {
   char      *account_id;

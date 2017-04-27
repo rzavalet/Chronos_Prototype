@@ -6,6 +6,7 @@ UTILSDIR= ./util
 INCLUDEDIR= ./include
 HOMEDIR= ./databases
 DATAFILESDIR= ./datafiles
+TESTDIR= ./test
 
 ##################################################
 # General library information.
@@ -64,27 +65,55 @@ purchase_txn.lo:	$(EXAMPLEDIR)/purchase_txn.c
 sell_txn.lo:	$(EXAMPLEDIR)/sell_txn.c
 	$(CC) $(CFLAGS) $?
 
-startup_server.lo:	$(EXAMPLEDIR)/startup_server.c
+
+##################################################
+# Build the server
+##################################################
+startup_server.lo :	$(EXAMPLEDIR)/startup_server.c
 	$(CC) $(CFLAGS) $?
 
-startup_server: startup_server.lo $(OBJECTS) 
+startup_server : startup_server.lo $(OBJECTS) 
 	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) startup_server.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(BINDIR)/$@
 
-startup_client.lo:	$(EXAMPLEDIR)/startup_client.c
+##################################################
+# Build the client
+##################################################
+startup_client.lo :	$(EXAMPLEDIR)/startup_client.c
 	$(CC) $(CFLAGS) $?
 
-startup_client: startup_client.lo $(OBJECTS)
+startup_client : startup_client.lo $(OBJECTS)
 	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) startup_client.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(BINDIR)/$@
 
-benchmark_databases_dump.lo: $(EXAMPLEDIR)/benchmark_databases_dump.c
+##################################################
+# Dump utility
+##################################################
+benchmark_databases_dump.lo : $(UTILSDIR)/benchmark_databases_dump.c
 	$(CC) $(CFLAGS) $?
 
-benchmark_databases_dump: benchmark_databases_dump.lo benchmark_common.lo
-	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) benchmark_databases_dump.lo benchmark_common.lo  $(DEF_LIB) $(LIBS)
+benchmark_databases_dump : benchmark_databases_dump.lo $(OBJECTS)
+	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) benchmark_databases_dump.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(BINDIR)/$@
 
+DBDump : benchmark_databases_dump
+	$(BINDIR)/benchmark_databases_dump -d STOCKSDB -d PERSONALDB -d CURRENCIESDB -h $(HOMEDIR)/
+
+##################################################
+# Query Stocks utility
+##################################################
+query_stocks.lo : $(UTILSDIR)/query_stocks.c
+	$(CC) $(CFLAGS) $?
+
+query_stocks : query_stocks.lo $(OBJECTS)
+	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) query_stocks.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(BINDIR)/$@
+
+RunQueryStock : query_stocks $(UTILSDIR)/query_stocks_loop.sh
+	sh $(UTILSDIR)/query_stocks_loop.sh	
+
+TestQueryStock : query_stocks $(TESTDIR)/test_query_stocks.sh
+	sh $(TESTDIR)/test_query_stocks.sh
 
 ##################################################
 # Useful targets for running the benchmark
@@ -95,13 +124,11 @@ init :
 	-@echo "#---------------------------------------------------#"
 	rm -rf /tmp/chronos/databases
 	rm -rf /tmp/chronos/datafiles
-	mkdir /tmp/chronos/databases
-	mkdir /tmp/chronos/datafiles
+	mkdir -p /tmp/chronos/databases
+	mkdir -p /tmp/chronos/datafiles
 	cp datafiles/* /tmp/chronos/datafiles
 	-@echo "#-------------------- DONE -------------------------#"
 
-dump :
-	$(BINDIR)/benchmark_databases_dump -d STOCKSDB -d PERSONALDB -d CURRENCIESDB -h $(HOMEDIR)/
 
 .PHONY : clean
 

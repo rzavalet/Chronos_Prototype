@@ -69,8 +69,6 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
     goto failXit;
   }
 
-  srand(time(NULL));
-
   benchmark_debug(3,"LOADING PORTFOLIOS DATABASE ");
 
   for (i=0 ; i<CHRONOS_PORTFOLIOS_NUM; i++) {

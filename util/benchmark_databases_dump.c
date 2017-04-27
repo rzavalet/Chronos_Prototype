@@ -23,7 +23,6 @@ int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 /* Forward declarations */
 int usage(void);
 
-int show_personal_item(void *);
 int show_currencies_item(void *);
 
 int show_personal_records(BENCHMARK_DBS *);
