@@ -88,8 +88,8 @@ show_stock_item(void *vBuf)
   name = buf + buf_pos;
 
   /* Display all this information */
-  benchmark_debug(5,"Symbol: %s\n", symbol);
-  benchmark_debug(5,"\tName: %s\n", name);
+  benchmark_debug(5,"Symbol: %s", symbol);
+  benchmark_debug(5,"\tName: %s", name);
 
   /* Return the vendor's name */
   return 0;
@@ -851,14 +851,14 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
 
 
 int 
-update_stock(char *symbolP, BENCHMARK_DBS *benchmarkP)
+update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
   DB_TXN  *txnP = NULL;
   DB_ENV  *envP = NULL;
   DBT      key, data;
   DBC     *cursorp = NULL; /* To iterate over the porfolios */
-  QUOTE    quote;
+  QUOTE   *quoteP = NULL;
 
   if (benchmarkP == NULL) {
     goto failXit;
@@ -879,6 +879,7 @@ update_stock(char *symbolP, BENCHMARK_DBS *benchmarkP)
     goto failXit; 
   }
 
+  benchmark_info("PID: %d, Starting transaction: %p", getpid(), txnP);
   rc = get_stock(symbolP, txnP, &cursorp, &key, &data, benchmarkP);
   if (rc != 0) {
     envP->err(envP, rc, "Could not find record.");
@@ -886,8 +887,15 @@ update_stock(char *symbolP, BENCHMARK_DBS *benchmarkP)
   }
   
   /* Update whatever we need to update */
-  memcpy(&quote, &data, sizeof(QUOTE));
-  quote.current_price += 0.5;
+  quoteP = data.data;
+  if (newValue >= 0) {
+    quoteP->current_price = newValue;
+  }
+  else {
+    quoteP->current_price += 0.5;
+  }
+
+  benchmark_info("PID: %d, txnP: %p Updating %s to %f", getpid(), txnP, quoteP->symbol, quoteP->current_price);
 
   /* Save the record */
   cursorp->put(cursorp, &key, &data, DB_CURRENT);
@@ -902,9 +910,18 @@ update_stock(char *symbolP, BENCHMARK_DBS *benchmarkP)
     cursorp = NULL;
   }
 
+  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
   rc = txnP->commit(txnP, 0);
   if (rc != 0) {
-    envP->err(envP, rc, "Transaction commit failed.");
+    envP->err(envP, rc, "%s:%d PID: %d Transaction commit failed. txnP: %p", __func__, __LINE__, getpid(), txnP);
+    {
+      FILE *fp;
+      fp = fopen("/tmp/myfile", "a+");
+      envP->set_msgfile(envP, fp);  
+      envP->txn_stat_print(envP, DB_STAT_ALL);
+      envP->set_msgfile(envP, NULL);  
+      fclose(fp);
+    }
     goto failXit; 
   }
 
@@ -917,6 +934,7 @@ failXit:
       cursorp = NULL;
     }
 
+    benchmark_info("%s:%d PID: %d About to abort transaction. txnP: %p", __func__, __LINE__, getpid(), txnP);
     rc = txnP->abort(txnP);
     if (rc != 0) {
       envP->err(envP, rc, "Transaction abort failed.");
@@ -1009,7 +1027,7 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 
   rc = txnP->commit(txnP, 0);
   if (rc != 0) {
-    envP->err(envP, rc, "Transaction commit failed.");
+    envP->err(envP, rc, "%s:%d Transaction commit failed.", __func__, __LINE__);
     goto failXit; 
   }
 
@@ -1083,7 +1101,7 @@ place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 
   rc = txnP->commit(txnP, 0);
   if (rc != 0) {
-    envP->err(envP, rc, "Transaction commit failed.");
+    envP->err(envP, rc, "%s:%d Transaction commit failed.", __func__, __LINE__);
     goto failXit; 
   }
 
@@ -1182,6 +1200,7 @@ get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_re
 {
   DBC *cursorp = NULL;
   DB  *quotesdbP= NULL;
+  QUOTE   *quoteP = NULL;
   DBT key, data;
   int rc = 0;
 
@@ -1224,6 +1243,8 @@ cleanup:
     *key_ret = key;
   }
 
+  quoteP = data.data;
+  benchmark_info("PID: %d, retrieved: %s $%f", getpid(), quoteP->symbol, quoteP->current_price);
   if (data_ret != NULL) {
     *data_ret = data;
   }

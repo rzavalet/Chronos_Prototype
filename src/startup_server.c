@@ -970,7 +970,7 @@ processThread(void *argP)
       if (IS_CHRONOS_MODE_BASE(infoP->contextP) || IS_CHRONOS_MODE_AC(infoP->contextP)) {
 	for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++){
 	  data_item = i;
-	  if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item) != CHRONOS_SUCCESS) {
+	  if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item, 0) != CHRONOS_SUCCESS) {
 	    chronos_error("Failed to refresh quotes");
 	    goto cleanup;
 	  }
@@ -984,7 +984,7 @@ processThread(void *argP)
 	for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++){
 	  if (infoP->contextP->AccessUpdateRatio[current_slot][i] >= 1) {
 	    data_item = i;
-	    if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item) != CHRONOS_SUCCESS) {
+	    if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item, 0) != CHRONOS_SUCCESS) {
 	      chronos_error("Failed to refresh quotes");
 	      goto cleanup;
 	    }

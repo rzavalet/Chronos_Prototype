@@ -19,7 +19,7 @@
 #include "benchmark_common.h"
 
 int
-benchmark_refresh_quotes(void *benchmark_handle, int *symbolP)
+benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   int symbol;
@@ -41,7 +41,8 @@ benchmark_refresh_quotes(void *benchmark_handle, int *symbolP)
   }
   random_symbol = symbolsArr[symbol];
 
-  ret = update_stock(random_symbol, benchmarkP);
+  benchmark_info("PID: %d, Attempting to update %s to %f", getpid(), random_symbol, newValue);
+  ret = update_stock(random_symbol, newValue, benchmarkP);
   if (ret != 0) {
     fprintf(stderr, "Could not update quote\n");
     goto failXit;

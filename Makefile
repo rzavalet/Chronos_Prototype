@@ -33,7 +33,7 @@ LIBS=		 -lpthread
 ##################################################
 # Targets 
 ##################################################
-all: startup_server startup_client
+all: startup_server startup_client query_stocks update_stocks
 
 ##################################################
 # Compile and link
@@ -114,6 +114,22 @@ RunQueryStock : query_stocks $(UTILSDIR)/query_stocks_loop.sh
 
 TestQueryStock : query_stocks $(TESTDIR)/test_query_stocks.sh
 	sh $(TESTDIR)/test_query_stocks.sh
+
+##################################################
+# Update Stocks utility
+##################################################
+update_stocks.lo : $(UTILSDIR)/update_stocks.c
+	$(CC) $(CFLAGS) $?
+
+update_stocks : update_stocks.lo $(OBJECTS)
+	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) update_stocks.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(BINDIR)/$@
+
+RunUpdateStock : update_stocks $(UTILSDIR)/update_stocks_loop.sh
+	sh $(UTILSDIR)/update_stocks_loop.sh	
+
+TestUpdateStock : update_stocks $(TESTDIR)/test_update_stocks.sh
+	sh $(TESTDIR)/test_update_stocks.sh
 
 ##################################################
 # Useful targets for running the benchmark

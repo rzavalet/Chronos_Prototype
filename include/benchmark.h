@@ -19,7 +19,7 @@ int
 benchmark_load_portfolio(void *benchmark_handle);
 
 int
-benchmark_refresh_quotes(void *benchmark_handle, int *symbolP);
+benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue);
 
 int
 benchmark_view_stock(void *benchmark_handle, int *symbolP);
