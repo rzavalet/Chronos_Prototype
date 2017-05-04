@@ -226,6 +226,7 @@ typedef struct personal {
 int	databases_setup(BENCHMARK_DBS *, int, const char *, FILE *);
 int	databases_open(DB **, const char *, const char *, FILE *, int);
 int	databases_close(BENCHMARK_DBS *);
+int close_environment(BENCHMARK_DBS *benchmarkP);
 
 void	initialize_benchmarkdbs(BENCHMARK_DBS *);
 void	set_db_filenames(BENCHMARK_DBS *my_stock);

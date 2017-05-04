@@ -65,6 +65,9 @@ benchmark_handle_free(void *benchmark_handle)
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   databases_close(benchmarkP);
+  close_environment(benchmarkP);
+
+  benchmarkP->magic = 0;
   free(benchmarkP);
   
   return BENCHMARK_SUCCESS;

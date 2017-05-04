@@ -81,14 +81,21 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
     goto failXit;
   }
   snprintf(quotes_file, size, "%s/%s", datafilesdir, QUOTES_FILE);
-  
+ 
+#if 1
+  if (benchmark_handle_alloc(&my_benchmark, homedir, datafilesdir) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to allocate handle");
+    goto failXit;
+  }
+#else
   ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, "benchmark_initial_load", stderr);
   if (ret) {
     benchmark_error("%s:%d Error opening databases.", __FILE__, __LINE__);
     goto failXit;
   }
   databaseOpen = 1;
-  
+#endif
+
   ret = load_personal_database(&my_benchmark, personal_file);
   if (ret) {
     benchmark_error("%s:%d Error loading personal database.", __FILE__, __LINE__);
@@ -110,21 +117,38 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   ret = load_quotes_database(&my_benchmark, quotes_file);
   if (ret) {
     benchmark_error( "%s:%d Error loading personal database.", __FILE__, __LINE__);
-    return (ret);
+    goto failXit;
   }
-  
+ 
+#if 1
+  if (benchmark_handle_free(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
+    benchmark_error("Failed to free handle");
+    goto failXit;
+  }
+#else
 
-  databases_close(&my_benchmark);
-
+  if (databases_close(&my_benchmark) != 0) {
+    benchmark_error( "%s:%d Error closing databases.", __FILE__, __LINE__);
+    goto failXit;
+  }
+#endif
   benchmark_debug(1, "Done with initial load ...");
 
   return BENCHMARK_SUCCESS;
   
  failXit:
+#if 1
+  if (benchmark_handle_free(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
+    benchmark_error("Failed to free handle");
+    goto failXit;
+  }
+#else
+
   if (databaseOpen) {
     databases_close(&my_benchmark);
   }
-   
+#endif
+
   return BENCHMARK_FAIL;
 }
 
@@ -144,6 +168,7 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
   if (benchmarkP == NULL) {
     goto failXit;
   }
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   envP = benchmarkP->envP;
   if (envP == NULL || personal_file == NULL) {
@@ -228,6 +253,7 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
   }
 
   fclose(ifp);
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   return BENCHMARK_SUCCESS;
 
 failXit:
@@ -253,6 +279,7 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
   if (benchmarkP == NULL) {
     goto failXit;
   }
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   envP = benchmarkP->envP;
   if (envP == NULL || stocks_file == NULL) {
@@ -332,6 +359,7 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
   }
 
   fclose(ifp);
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   return BENCHMARK_SUCCESS;
 
 failXit:
@@ -357,6 +385,7 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
   if (benchmarkP == NULL) {
     goto failXit;
   }
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   envP = benchmarkP->envP;
   if (envP == NULL || currencies_file == NULL) {
@@ -435,6 +464,7 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
   }
 
   fclose(ifp);
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   return BENCHMARK_SUCCESS;
 
 failXit:
@@ -456,6 +486,11 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
   char ignore_buf[500];
   FILE *ifp;
   QUOTE quote;
+
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   envP = benchmarkP->envP;
   if (envP == NULL || benchmarkP->quotes_dbp == NULL || quotes_file == NULL) {

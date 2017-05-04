@@ -126,6 +126,8 @@ update_stocks : update_stocks.lo $(OBJECTS)
 	$(POSTLINK) $(BINDIR)/$@
 
 RunUpdateStock : update_stocks $(UTILSDIR)/update_stocks_loop.sh
+	make init
+	rm -rf /tmp/upd*
 	sh $(UTILSDIR)/update_stocks_loop.sh	
 
 TestUpdateStock : update_stocks $(TESTDIR)/test_update_stocks.sh

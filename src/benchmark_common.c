@@ -162,13 +162,13 @@ close_database(DB_ENV *envP,
   int rc = 0;
 
   if (envP == NULL || dbP == NULL) {
-    fprintf(stderr, "%s: Invalid argument\n", __func__);
+    fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
     goto failXit;
   } 
 
   rc = dbP->close(dbP, 0);
   if (rc != 0) {
-    envP->err(envP, rc, "Database close failed.");
+    envP->err(envP, rc, "%s:%d Database close failed.", __func__, __LINE__);
     goto failXit;
   }
 
@@ -181,6 +181,40 @@ cleanup:
   return rc; 
 }
 
+int close_environment(BENCHMARK_DBS *benchmarkP)
+{
+  int rc = 0;
+  DB_ENV  *envP = NULL;
+
+  if (benchmarkP == NULL) {
+    fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
+    goto failXit;
+  }
+
+
+  rc = envP->close(envP, 0);
+  if (rc != 0) {
+    fprintf(stderr, "%s:%d Error closing environment: %s\n",
+            __func__, __LINE__, db_strerror(rc));
+  }
+
+  benchmarkP->envP = NULL;
+  goto cleanup;
+
+failXit:
+  rc = 1;
+
+cleanup:
+  return rc;
+}
+
 int open_environment(BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
@@ -191,7 +225,6 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
     fprintf(stderr, "%s: Invalid argument\n", __func__);
     goto failXit;
   }
-
 
   rc = db_env_create(&envP, 0);
   if (rc != 0) {
@@ -254,6 +287,8 @@ failXit:
 
 cleanup:
   benchmarkP->envP = envP;
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
   return rc;
 }
 
@@ -373,6 +408,7 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
     }
   }
 
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
 #ifdef CHRONOS_DEBUG
   printf("databases opened successfully\n");
 #endif
@@ -518,10 +554,17 @@ databases_close(BENCHMARK_DBS *benchmarkP)
 {
   int ret;
 
+  if (benchmarkP == NULL) {
+    fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   if (benchmarkP->stocks_dbp != NULL) {
     ret = benchmarkP->stocks_dbp->close(benchmarkP->stocks_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      goto failXit;
     }
   }
 
@@ -529,6 +572,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
     ret = benchmarkP->quotes_dbp->close(benchmarkP->quotes_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      goto failXit;
     }
   }
 
@@ -536,6 +580,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
     ret = benchmarkP->quotes_hist_dbp->close(benchmarkP->quotes_hist_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      goto failXit;
     }
   }
 
@@ -543,6 +588,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
     ret = benchmarkP->portfolios_dbp->close(benchmarkP->portfolios_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      goto failXit;
     }
   }
 
@@ -550,6 +596,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
     ret = benchmarkP->accounts_dbp->close(benchmarkP->accounts_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      goto failXit;
     }
   }
 
@@ -557,6 +604,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
     ret = benchmarkP->currencies_dbp->close(benchmarkP->currencies_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      goto failXit;
     }
   }
 
@@ -564,13 +612,22 @@ databases_close(BENCHMARK_DBS *benchmarkP)
     ret = benchmarkP->personal_dbp->close(benchmarkP->personal_dbp, 0);
     if (ret != 0) {
       fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      goto failXit;
     }
+  }
+
+  if (close_environment(benchmarkP) != 0) {
+    fprintf(stderr, "failed to close environment\n");
+    goto failXit;
   }
 
 #ifdef CHRONOS_DEBUG
   benchmark_debug(2,"databases closed.\n");
 #endif
   return (0);
+
+failXit:
+  return 1;
 }
 
 
