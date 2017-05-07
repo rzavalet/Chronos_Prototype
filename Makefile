@@ -1,6 +1,6 @@
-#TODO: Make this more build independent. Eg DEF_LIB, CFLAGS, EXAMPLEDIR and BINDIR
+#TODO: Make this more build independent. Eg DEF_LIB, CFLAGS, SRCDIR and BINDIR
 
-EXAMPLEDIR= ./src
+SRCDIR= ./src
 BINDIR= ./bin
 UTILSDIR= ./util
 INCLUDEDIR= ./include
@@ -41,35 +41,35 @@ all: startup_server startup_client query_stocks update_stocks
 OBJECTS = benchmark_common.lo benchmark_initial_load.lo populate_portfolios.lo refresh_quotes.lo \
 					view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo
 
-benchmark_common.lo: $(EXAMPLEDIR)/benchmark_common.c
-	$(CC) -I$(EXAMPLEDIR) $(CFLAGS) $?
-
-benchmark_initial_load.lo: $(EXAMPLEDIR)/benchmark_initial_load.c
+benchmark_common.lo: $(SRCDIR)/benchmark_common.c
 	$(CC) $(CFLAGS) $?
 
-populate_portfolios.lo:	$(EXAMPLEDIR)/populate_portfolios.c
+benchmark_initial_load.lo: $(SRCDIR)/benchmark_initial_load.c
 	$(CC) $(CFLAGS) $?
 
-refresh_quotes.lo:	$(EXAMPLEDIR)/refresh_quotes.c
+populate_portfolios.lo:	$(SRCDIR)/populate_portfolios.c
 	$(CC) $(CFLAGS) $?
 
-view_stock_txn.lo:	$(EXAMPLEDIR)/view_stock_txn.c
+refresh_quotes.lo:	$(SRCDIR)/refresh_quotes.c
 	$(CC) $(CFLAGS) $?
 
-view_portfolio_txn.lo:	$(EXAMPLEDIR)/view_portfolio_txn.c
+view_stock_txn.lo:	$(SRCDIR)/view_stock_txn.c
 	$(CC) $(CFLAGS) $?
 
-purchase_txn.lo:	$(EXAMPLEDIR)/purchase_txn.c
+view_portfolio_txn.lo:	$(SRCDIR)/view_portfolio_txn.c
 	$(CC) $(CFLAGS) $?
 
-sell_txn.lo:	$(EXAMPLEDIR)/sell_txn.c
+purchase_txn.lo:	$(SRCDIR)/purchase_txn.c
+	$(CC) $(CFLAGS) $?
+
+sell_txn.lo:	$(SRCDIR)/sell_txn.c
 	$(CC) $(CFLAGS) $?
 
 
 ##################################################
 # Build the server
 ##################################################
-startup_server.lo :	$(EXAMPLEDIR)/startup_server.c
+startup_server.lo :	$(SRCDIR)/startup_server.c
 	$(CC) $(CFLAGS) $?
 
 startup_server : startup_server.lo $(OBJECTS) 
@@ -79,7 +79,7 @@ startup_server : startup_server.lo $(OBJECTS)
 ##################################################
 # Build the client
 ##################################################
-startup_client.lo :	$(EXAMPLEDIR)/startup_client.c
+startup_client.lo :	$(SRCDIR)/startup_client.c
 	$(CC) $(CFLAGS) $?
 
 startup_client : startup_client.lo $(OBJECTS)

@@ -287,7 +287,6 @@ failXit:
 
 cleanup:
   benchmarkP->envP = envP;
-  BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   return rc;
 }
@@ -408,7 +407,6 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
     }
   }
 
-  BENCHMARK_CHECK_MAGIC(benchmarkP);
 #ifdef CHRONOS_DEBUG
   printf("databases opened successfully\n");
 #endif
@@ -616,11 +614,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
     }
   }
 
-  if (close_environment(benchmarkP) != 0) {
-    fprintf(stderr, "failed to close environment\n");
-    goto failXit;
-  }
-
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
 #ifdef CHRONOS_DEBUG
   benchmark_debug(2,"databases closed.\n");
 #endif

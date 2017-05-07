@@ -36,15 +36,11 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file);
 int 
 benchmark_initial_load(char *homedir, char *datafilesdir) 
 {
-  BENCHMARK_DBS my_benchmark;
+  void *benchmarkP = NULL;
   int databaseOpen = 0;
   char *personal_file, *stocks_file, *currencies_file, *quotes_file;
   int size;
   int ret;
-
-  initialize_benchmarkdbs(&my_benchmark);
-  my_benchmark.db_home_dir = homedir;
-  set_db_filenames(&my_benchmark);
 
   assert(homedir != NULL && homedir[0] != '\0');
   assert(datafilesdir != NULL && datafilesdir[0] != '\0');
@@ -82,72 +78,49 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   }
   snprintf(quotes_file, size, "%s/%s", datafilesdir, QUOTES_FILE);
  
-#if 1
-  if (benchmark_handle_alloc(&my_benchmark, homedir, datafilesdir) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to allocate handle");
+  if (benchmark_handle_alloc(&benchmarkP, homedir, datafilesdir) != BENCHMARK_SUCCESS) {
+    benchmark_error("Failed to allocate handle");
     goto failXit;
   }
-#else
-  ret = databases_setup(&my_benchmark, ALL_DBS_FLAG, "benchmark_initial_load", stderr);
-  if (ret) {
-    benchmark_error("%s:%d Error opening databases.", __FILE__, __LINE__);
-    goto failXit;
-  }
-  databaseOpen = 1;
-#endif
 
-  ret = load_personal_database(&my_benchmark, personal_file);
+  ret = load_personal_database(benchmarkP, personal_file);
   if (ret) {
     benchmark_error("%s:%d Error loading personal database.", __FILE__, __LINE__);
     goto failXit;
   }
 
-  ret = load_stocks_database(&my_benchmark, stocks_file);
+  ret = load_stocks_database(benchmarkP, stocks_file);
   if (ret) {
     benchmark_error("%s:%d Error loading stocks database.", __FILE__, __LINE__);
     goto failXit;
   }
 
-  ret = load_currencies_database(&my_benchmark, currencies_file);
+  ret = load_currencies_database(benchmarkP, currencies_file);
   if (ret) {
     benchmark_error("%s:%d Error loading currencies database.", __FILE__, __LINE__);
     goto failXit;
   }
 
-  ret = load_quotes_database(&my_benchmark, quotes_file);
+  ret = load_quotes_database(benchmarkP, quotes_file);
   if (ret) {
     benchmark_error( "%s:%d Error loading personal database.", __FILE__, __LINE__);
     goto failXit;
   }
  
-#if 1
-  if (benchmark_handle_free(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
+  if (benchmark_handle_free(benchmarkP) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to free handle");
     goto failXit;
   }
-#else
 
-  if (databases_close(&my_benchmark) != 0) {
-    benchmark_error( "%s:%d Error closing databases.", __FILE__, __LINE__);
-    goto failXit;
-  }
-#endif
   benchmark_debug(1, "Done with initial load ...");
 
   return BENCHMARK_SUCCESS;
   
  failXit:
-#if 1
-  if (benchmark_handle_free(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
+  if (benchmark_handle_free(benchmarkP) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to free handle");
     goto failXit;
   }
-#else
-
-  if (databaseOpen) {
-    databases_close(&my_benchmark);
-  }
-#endif
 
   return BENCHMARK_FAIL;
 }
