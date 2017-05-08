@@ -37,7 +37,6 @@ int
 benchmark_initial_load(char *homedir, char *datafilesdir) 
 {
   void *benchmarkP = NULL;
-  int databaseOpen = 0;
   char *personal_file, *stocks_file, *currencies_file, *quotes_file;
   int size;
   int ret;
@@ -49,7 +48,7 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   size = strlen(datafilesdir) + strlen(PERSONAL_FILE) + 2;
   personal_file = malloc(size);
   if (personal_file == NULL) {
-    benchmark_error("%s:%d Failed to allocate memory.", __FILE__, __LINE__);
+    benchmark_error("Failed to allocate memory.");
     goto failXit;
   }
   snprintf(personal_file, size, "%s/%s", datafilesdir, PERSONAL_FILE);
@@ -57,7 +56,7 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   size = strlen(datafilesdir) + strlen(STOCKS_FILE) + 2;
   stocks_file = malloc(size);
   if (stocks_file == NULL) {
-    benchmark_error("%s:%d Failed to allocate memory.", __FILE__, __LINE__);
+    benchmark_error("Failed to allocate memory.");
     goto failXit;
   }
   snprintf(stocks_file, size, "%s/%s", datafilesdir, STOCKS_FILE);
@@ -65,7 +64,7 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   size = strlen(datafilesdir) + strlen(CURRENCIES_FILE) + 2;
   currencies_file = malloc(size);
   if (currencies_file == NULL) {
-    benchmark_error("%s:%d Failed to allocate memory.", __FILE__, __LINE__);
+    benchmark_error("Failed to allocate memory.");
     goto failXit;
   }
   snprintf(currencies_file, size, "%s/%s", datafilesdir, CURRENCIES_FILE);
@@ -73,7 +72,7 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   size = strlen(datafilesdir) + strlen(QUOTES_FILE) + 2;
   quotes_file = malloc(size);
   if (quotes_file == NULL) {
-    benchmark_error("%s:%d Failed to allocate memory.", __FILE__, __LINE__);
+    benchmark_error("Failed to allocate memory.");
     goto failXit;
   }
   snprintf(quotes_file, size, "%s/%s", datafilesdir, QUOTES_FILE);
@@ -85,25 +84,25 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
 
   ret = load_personal_database(benchmarkP, personal_file);
   if (ret) {
-    benchmark_error("%s:%d Error loading personal database.", __FILE__, __LINE__);
+    benchmark_error("Error loading personal database.");
     goto failXit;
   }
 
   ret = load_stocks_database(benchmarkP, stocks_file);
   if (ret) {
-    benchmark_error("%s:%d Error loading stocks database.", __FILE__, __LINE__);
+    benchmark_error("Error loading stocks database.");
     goto failXit;
   }
 
   ret = load_currencies_database(benchmarkP, currencies_file);
   if (ret) {
-    benchmark_error("%s:%d Error loading currencies database.", __FILE__, __LINE__);
+    benchmark_error("Error loading currencies database.");
     goto failXit;
   }
 
   ret = load_quotes_database(benchmarkP, quotes_file);
   if (ret) {
-    benchmark_error( "%s:%d Error loading personal database.", __FILE__, __LINE__);
+    benchmark_error("Error loading personal database.");
     goto failXit;
   }
  
@@ -134,7 +133,6 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
   char buf[MAXLINE];
-  char ignore_buf[500];
   FILE *ifp;
   PERSONAL my_personal;
 
@@ -204,7 +202,7 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction begin failed.");
+      envP->err(envP, rc, "[%d] [%d] Transaction begin failed.", __LINE__, getpid());
       goto failXit; 
     }
 
@@ -213,14 +211,14 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
 
     rc = benchmarkP->personal_dbp->put(benchmarkP->personal_dbp, txnP, &key, &data, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Database put failed.");
+      envP->err(envP, rc, "[%d] [%d] Database put failed.", __LINE__, getpid());
       txnP->abort(txnP);
       goto failXit; 
     }
 
     rc = txnP->commit(txnP, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction commit failed.");
+      envP->err(envP, rc, "[%d] [%d] Transaction commit failed.", __LINE__, getpid());
       goto failXit; 
     }
   }
@@ -312,21 +310,21 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction begin failed.");
+      envP->err(envP, rc, "[%d] [%d] Transaction begin failed.", __LINE__, getpid());
       goto failXit; 
     }
 
     rc = benchmarkP->stocks_dbp->put(benchmarkP->stocks_dbp, txnP, &key, &data, 0);
 
     if (rc != 0) {
-      envP->err(envP, rc, "Database put failed.");
+      envP->err(envP, rc, "[%d] [%d] Database put failed.", __LINE__, getpid());
       txnP->abort(txnP);
       goto failXit; 
     }
 
     rc = txnP->commit(txnP, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction commit failed.");
+      envP->err(envP, rc, "[%d] [%d] Transaction commit failed.", __LINE__, getpid());
       goto failXit; 
     }
   }
@@ -351,7 +349,6 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
   char buf[MAXLINE];
-  char ignore_buf[500];
   FILE *ifp;
   CURRENCY my_currencies;
 
@@ -417,21 +414,21 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction begin failed.");
+      envP->err(envP, rc, "[%d] [%d] Transaction begin failed.", __LINE__, getpid());
       goto failXit; 
     }
 
     rc = benchmarkP->currencies_dbp->put(benchmarkP->currencies_dbp, txnP, &key, &data, 0);
 
     if (rc != 0) {
-      envP->err(envP, rc, "Database put failed.");
+      envP->err(envP, rc, "[%d] [%d] Database put failed.", __LINE__, getpid());
       txnP->abort(txnP);
       goto failXit; 
     }
 
     rc = txnP->commit(txnP, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction commit failed.");
+      envP->err(envP, rc, "[%d] [%d] Transaction commit failed.", __LINE__, getpid());
       goto failXit; 
     }
   }
@@ -456,7 +453,6 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
   char buf[MAXLINE];
-  char ignore_buf[500];
   FILE *ifp;
   QUOTE quote;
 
@@ -525,20 +521,20 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
 
     rc = envP->txn_begin(envP, NULL, &txnP, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction begin failed.");
+      envP->err(envP, rc, "[%d] [%d] Transaction begin failed.", __LINE__, getpid());
       goto failXit; 
     }
 
     rc = benchmarkP->quotes_dbp->put(benchmarkP->quotes_dbp, txnP, &key, &data, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Database put failed.");
+      envP->err(envP, rc, "[%d] [%d] Database put failed.", __LINE__, getpid());
       txnP->abort(txnP);
       goto failXit; 
     }
 
     rc = txnP->commit(txnP, 0);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction commit failed.");
+      envP->err(envP, rc, "[%d] [%d] Transaction commit failed.", __LINE__, getpid());
       goto failXit; 
     }
   }

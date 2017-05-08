@@ -41,7 +41,7 @@ benchmark_handle_alloc(void **benchmark_handle, char *homedir, char *datafilesdi
 
   ret = databases_setup(benchmarkP, ALL_DBS_FLAG, __FILE__, stderr);
   if (ret != 0) {
-    fprintf(stderr, "Error opening databases\n");
+    benchmark_error("Error opening databases.");
     databases_close(benchmarkP);
     goto failXit;
   }
@@ -64,8 +64,12 @@ benchmark_handle_free(void *benchmark_handle)
   BENCHMARK_DBS *benchmarkP = benchmark_handle;
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-  databases_close(benchmarkP);
-  close_environment(benchmarkP);
+  if (databases_close(benchmarkP) != BENCHMARK_SUCCESS) {
+    return BENCHMARK_FAIL;
+  }
+  if (close_environment(benchmarkP) != BENCHMARK_SUCCESS) {
+    return BENCHMARK_FAIL;
+  }
 
   benchmarkP->magic = 0;
   free(benchmarkP);
@@ -88,10 +92,18 @@ benchmark_view_stock(void *benchmark_handle, int *symbolP)
   
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
-  symbol = rand() % BENCHMARK_NUM_SYMBOLS;
+  if (symbolP != NULL && *symbolP >= 0) {
+    symbol = *symbolP;
+  }
+  else {
+    symbol = rand() % BENCHMARK_NUM_SYMBOLS;
+  } 
+
   random_symbol = symbolsArr[symbol];
-  
+#if 0
   ret = show_stocks_records(random_symbol, benchmarkP);
+#endif
+  ret = show_quote(random_symbol, benchmarkP);
 
   if (symbolP != NULL) {
     *symbolP = symbol;

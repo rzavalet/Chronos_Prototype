@@ -26,19 +26,31 @@ int main(int argc, char *argv[])
   int i;
   int ch;
   int doInitialLoad = 0;
+  int updateAll = 0;
+  int updateValue = 0;
   void *benchmarkCtxtP = NULL;
+  int attemptedTxns = 0;
+  int failedTxns = 0;
+  int successfulTxns = 0;
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "lh")) != EOF)
+  while ((ch = getopt(argc, argv, "lhav:")) != EOF)
   {
     switch (ch) {
+      case 'a':
+        updateAll = 1;
+        break;
+
+      case 'v':
+        updateValue = atoi(optarg);
+        break;
+
       case 'l':
         doInitialLoad = 1;
         break;
 
       case 'h':
-
       default:
           return (usage());
     }
@@ -57,10 +69,30 @@ int main(int argc, char *argv[])
   }
 
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN + 5;
-  for (i=0; i<100; i++) {
-    if (benchmark_refresh_quotes(benchmarkCtxtP, NULL, i) != BENCHMARK_SUCCESS) {
-      benchmark_error("Failed to update stock info");
-      goto failXit;
+  if (updateAll) {
+    int symbolToUpdate;
+    for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++) {
+      attemptedTxns ++;
+      symbolToUpdate = i;
+      if (benchmark_refresh_quotes(benchmarkCtxtP, &symbolToUpdate, updateValue) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to update stock info");
+        /* Simply try another transaction */
+        failedTxns ++;
+        continue;
+      }
+      successfulTxns ++;
+    }
+  }
+  else {
+    for (i=0; i<100; i++) {
+      attemptedTxns ++;
+      if (benchmark_refresh_quotes(benchmarkCtxtP, NULL, i) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to update stock info");
+        /* Simply try another transaction */
+        failedTxns ++;
+        continue;
+      }
+      successfulTxns ++;
     }
   }
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
@@ -69,6 +101,9 @@ int main(int argc, char *argv[])
     benchmark_error("Failed to free handle");
     goto failXit;
   }
+
+  benchmark_info("Attempted transactions: %d, Successful transactions: %d, Failed transactions: %d", attemptedTxns, successfulTxns, failedTxns);
+  assert(attemptedTxns == successfulTxns+failedTxns);
 
   return 0;
 

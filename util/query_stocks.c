@@ -25,14 +25,19 @@ int main(int argc, char *argv[])
   int i;
   int ch;
   int doInitialLoad = 0;
+  int showAll = 0;
   int data_item = 0;
   void *benchmarkCtxtP = NULL;
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "lh")) != EOF)
+  while ((ch = getopt(argc, argv, "alh")) != EOF)
   {
     switch (ch) {
+      case 'a':
+        showAll = 1;
+        break;
+
       case 'l':
         doInitialLoad = 1;
         break;
@@ -57,10 +62,23 @@ int main(int argc, char *argv[])
   }
 
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN + 5;
-  for (i=0; i<100; i++) {
-    if (benchmark_view_stock(benchmarkCtxtP, &data_item) != BENCHMARK_SUCCESS) {
-      benchmark_error("Failed to retrieve stock info");
-      goto failXit;
+  if (showAll) {
+    int symbolToShow = 0;
+
+    for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++) {
+      symbolToShow = i;
+      if (benchmark_view_stock(benchmarkCtxtP, &symbolToShow) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to retrieve stock info");
+        goto failXit;
+      }
+    }
+  }
+  else {
+    for (i=0; i<100; i++) {
+      if (benchmark_view_stock(benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to retrieve stock info");
+        goto failXit;
+      }
     }
   }
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;

@@ -246,6 +246,9 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 int 
 show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP);
 
+int
+show_quote(char *symbolP, BENCHMARK_DBS *benchmarkP);
+
 int 
 show_currencies_records(BENCHMARK_DBS *my_benchmarkP);
 

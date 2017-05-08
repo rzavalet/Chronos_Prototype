@@ -33,7 +33,7 @@ benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue)
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
-  if (symbolP != NULL && *symbolP <0) {
+  if (symbolP != NULL && *symbolP >= 0) {
     symbol = *symbolP;
   }
   else {
@@ -44,7 +44,7 @@ benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue)
   benchmark_info("PID: %d, Attempting to update %s to %f", getpid(), random_symbol, newValue);
   ret = update_stock(random_symbol, newValue, benchmarkP);
   if (ret != 0) {
-    fprintf(stderr, "Could not update quote\n");
+    benchmark_error("Could not update quote");
     goto failXit;
   }
 

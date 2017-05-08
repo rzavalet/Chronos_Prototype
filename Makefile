@@ -110,9 +110,13 @@ query_stocks : query_stocks.lo $(OBJECTS)
 	$(POSTLINK) $(BINDIR)/$@
 
 RunQueryStock : query_stocks $(UTILSDIR)/query_stocks_loop.sh
+	make init
+	rm -rf /tmp/upd*
 	sh $(UTILSDIR)/query_stocks_loop.sh	
 
 TestQueryStock : query_stocks $(TESTDIR)/test_query_stocks.sh
+	make init
+	rm -rf /tmp/upd*
 	sh $(TESTDIR)/test_query_stocks.sh
 
 ##################################################
@@ -130,8 +134,20 @@ RunUpdateStock : update_stocks $(UTILSDIR)/update_stocks_loop.sh
 	rm -rf /tmp/upd*
 	sh $(UTILSDIR)/update_stocks_loop.sh	
 
+TestUpdateAll : update_stocks $(TESTDIR)/test_update_all.sh
+	make init
+	rm -rf /tmp/upd*
+	sh $(TESTDIR)/test_update_all.sh
+
 TestUpdateStock : update_stocks $(TESTDIR)/test_update_stocks.sh
+	make init
+	rm -rf /tmp/upd*
 	sh $(TESTDIR)/test_update_stocks.sh
+
+Test : 
+	make TestQueryStock
+	make TestUpdateAll
+	make TestUpdateStock
 
 ##################################################
 # Useful targets for running the benchmark
@@ -140,8 +156,10 @@ init :
 	-@echo "#---------------------------------------------------#"
 	-@echo "#--------- Setting up directory structure ----------#"
 	-@echo "#---------------------------------------------------#"
-	rm -rf /tmp/chronos/databases
-	rm -rf /tmp/chronos/datafiles
+	-rm -rf /tmp/cnt*
+	-rm -rf /tmp/upd*
+	-rm -rf /tmp/chronos/databases
+	-rm -rf /tmp/chronos/datafiles
 	mkdir -p /tmp/chronos/databases
 	mkdir -p /tmp/chronos/datafiles
 	cp datafiles/* /tmp/chronos/datafiles

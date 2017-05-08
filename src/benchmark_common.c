@@ -49,7 +49,7 @@ int
 get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP);
 
 int
-get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP);
+get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, int flags, BENCHMARK_DBS *benchmarkP);
 
 /*=============== STATIC FUNCTIONS =======================*/
 static int
@@ -110,8 +110,7 @@ open_database(DB_ENV *envP,
   /* Initialize the DB handle */
   ret = db_create(&dbp, envP, 0);
   if (ret != 0) {
-    fprintf(error_file_pointer, "%s: %s\n", program_name,
-            db_strerror(ret));
+    envP->err(envP, ret, "[%s:%d] [%d] Could not create db handle.", __FILE__, __LINE__, getpid());
     return (ret);
   }
   /* Point to the memory malloc'd by db_create() */
@@ -147,7 +146,7 @@ open_database(DB_ENV *envP,
                   open_flags, /* Open flags */
                   0);         /* File mode. Using defaults */
   if (ret != 0) {
-    envP->err(envP, ret, "%d: Database '%s' open failed", __LINE__, file_name);
+    envP->err(envP, ret, "[%s:%d] [%d]: Database '%s' open failed", __FILE__, __LINE__, getpid(), file_name);
     return (ret);
   }
 
@@ -162,13 +161,13 @@ close_database(DB_ENV *envP,
   int rc = 0;
 
   if (envP == NULL || dbP == NULL) {
-    fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
+    benchmark_error("Invalid argument");
     goto failXit;
   } 
 
   rc = dbP->close(dbP, 0);
   if (rc != 0) {
-    envP->err(envP, rc, "%s:%d Database close failed.", __func__, __LINE__);
+    envP->err(envP, rc, "[%s:%d] [%d] Database close failed.", __FILE__, __LINE__, getpid());
     goto failXit;
   }
 
@@ -187,22 +186,21 @@ int close_environment(BENCHMARK_DBS *benchmarkP)
   DB_ENV  *envP = NULL;
 
   if (benchmarkP == NULL) {
-    fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   envP = benchmarkP->envP;
   if (envP == NULL) {
-    fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
 
   rc = envP->close(envP, 0);
   if (rc != 0) {
-    fprintf(stderr, "%s:%d Error closing environment: %s\n",
-            __func__, __LINE__, db_strerror(rc));
+    benchmark_error("Error closing environment: %s", db_strerror(rc));
   }
 
   benchmarkP->envP = NULL;
@@ -222,14 +220,13 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
   DB_ENV  *envP = NULL;
 
   if (benchmarkP == NULL) {
-    fprintf(stderr, "%s: Invalid argument\n", __func__);
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
   rc = db_env_create(&envP, 0);
   if (rc != 0) {
-    fprintf(stderr, "Error creating environment handle: %s\n",
-            db_strerror(rc));
+    benchmark_error("Error creating environment handle: %s", db_strerror(rc));
     goto failXit;
   }
  
@@ -250,15 +247,13 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
    */  
   rc = envP->set_lk_detect(envP, DB_LOCK_MINWRITE);
   if (rc != 0) {
-      fprintf(stderr, "Error setting lock detect: %s\n",
-          db_strerror(rc));
+      benchmark_error("Error setting lock detect: %s", db_strerror(rc));
       goto failXit;
   } 
 
   rc = envP->set_shm_key(envP, CHRONOS_SHMKEY); 
   if (rc != 0) {
-      fprintf(stderr, "Error setting shm key: %s\n",
-          db_strerror(rc));
+      benchmark_error("Error setting shm key: %s", db_strerror(rc));
       goto failXit;
   } 
 #ifdef CHRONOS_DEBUG
@@ -268,8 +263,7 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
 
   rc = envP->open(envP, benchmarkP->db_home_dir, env_flags, 0); 
   if (rc != 0) {
-    fprintf(stderr, "Error opening environment: %s\n",
-            db_strerror(rc));
+    benchmark_error("Error opening environment: %s", db_strerror(rc));
     goto failXit;
   }
 
@@ -279,8 +273,7 @@ failXit:
   if (envP != NULL) {
     rc = envP->close(envP, 0);
     if (rc != 0) {
-      fprintf(stderr, "Error closing environment: %s\n",
-              db_strerror(rc));
+      benchmark_error("Error closing environment: %s", db_strerror(rc));
     }
   }
   rc = 1;
@@ -300,12 +293,23 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                 FILE *error_fileP)
 {
   int ret;
+  DB_ENV  *envP = NULL;
+
+  if (benchmarkP == NULL) {
+    benchmark_error("Invalid argument");
+    goto failXit;
+  }
 
   /* TODO: Maybe better to receive the envP and pass the home dir? */
   ret = open_environment(benchmarkP);
   if (ret != 0) {
-    fprintf(stderr, "%s: Could not open environment\n",
-            __func__);
+    benchmark_error("Could not open environment");
+    goto failXit;
+  }
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
@@ -369,6 +373,7 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                    0);
 
     if (ret != 0) {
+      envP->err(envP, ret, "[%s:%d] [%d] Failed to associated secondary database.", __FILE__, __LINE__, getpid());
       return (ret);
     }
 
@@ -552,8 +557,16 @@ databases_close(BENCHMARK_DBS *benchmarkP)
 {
   int ret;
 
+  DB_ENV  *envP = NULL;
+
   if (benchmarkP == NULL) {
     fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
+    goto failXit;
+  }
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
@@ -561,7 +574,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   if (benchmarkP->stocks_dbp != NULL) {
     ret = benchmarkP->stocks_dbp->close(benchmarkP->stocks_dbp, 0);
     if (ret != 0) {
-      fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      envP->err(envP, ret, "[%s:%d] [%d] Stocks database close failed.", __FILE__, __LINE__, getpid());
       goto failXit;
     }
   }
@@ -569,7 +582,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   if (benchmarkP->quotes_dbp != NULL) {
     ret = benchmarkP->quotes_dbp->close(benchmarkP->quotes_dbp, 0);
     if (ret != 0) {
-      fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      envP->err(envP, ret, "[%s:%d] [%d] Quotes database close failed.", __FILE__, __LINE__, getpid());
       goto failXit;
     }
   }
@@ -577,7 +590,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   if (benchmarkP->quotes_hist_dbp != NULL) {
     ret = benchmarkP->quotes_hist_dbp->close(benchmarkP->quotes_hist_dbp, 0);
     if (ret != 0) {
-      fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      envP->err(envP, ret, "[%s:%d] [%d] Quotes History database close failed.", __FILE__, __LINE__, getpid());
       goto failXit;
     }
   }
@@ -585,7 +598,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   if (benchmarkP->portfolios_dbp != NULL) {
     ret = benchmarkP->portfolios_dbp->close(benchmarkP->portfolios_dbp, 0);
     if (ret != 0) {
-      fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      envP->err(envP, ret, "[%s:%d] [%d] Portfolios database close failed.", __FILE__, __LINE__, getpid());
       goto failXit;
     }
   }
@@ -593,7 +606,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   if (benchmarkP->accounts_dbp != NULL) {
     ret = benchmarkP->accounts_dbp->close(benchmarkP->accounts_dbp, 0);
     if (ret != 0) {
-      fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      envP->err(envP, ret, "[%s:%d] [%d] Accounts database close failed.", __FILE__, __LINE__, getpid());
       goto failXit;
     }
   }
@@ -601,7 +614,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   if (benchmarkP->currencies_dbp != NULL) {
     ret = benchmarkP->currencies_dbp->close(benchmarkP->currencies_dbp, 0);
     if (ret != 0) {
-      fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      envP->err(envP, ret, "[%s:%d] [%d] Currencies database close failed.", __FILE__, __LINE__, getpid());
       goto failXit;
     }
   }
@@ -609,7 +622,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   if (benchmarkP->personal_dbp != NULL) {
     ret = benchmarkP->personal_dbp->close(benchmarkP->personal_dbp, 0);
     if (ret != 0) {
-      fprintf(stderr, "Inventory database close failed: %s\n", db_strerror(ret));
+      envP->err(envP, ret, "[%s:%d] [%d] Personal database close failed.", __FILE__, __LINE__, getpid());
       goto failXit;
     }
   }
@@ -628,9 +641,26 @@ failXit:
 int 
 show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
 {
-  DBC *stock_cursorp = NULL;
+  DBC *cursorP = NULL;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
   DBT key, data;
-  int exit_value, ret;
+  int ret;
+  int rc = BENCHMARK_SUCCESS;
+
+  if (benchmarkP==NULL|| symbolId == NULL)
+  {
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid argument");
+    goto failXit;
+  }
 
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
@@ -640,12 +670,21 @@ show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
     key.size = (u_int32_t)strlen(symbolId) + 1;
   }
 
-  benchmarkP->stocks_dbp->cursor(benchmarkP->stocks_dbp, NULL,
-                                    &stock_cursorp, 0);
+  ret = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
 
-  exit_value = 0;
-  while ((ret =
-    stock_cursorp->get(stock_cursorp, &key, &data, DB_NEXT)) == 0)
+  ret = benchmarkP->stocks_dbp->cursor(benchmarkP->stocks_dbp, txnP,
+                                    &cursorP, DB_READ_COMMITTED);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to create cursor for Stocks.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+#if 0
+  while ((ret = cursorP->get(cursorP, &key, &data, DB_NEXT)) == 0)
   {
     /*Uhhh, this is ugly.... */
     if (symbolId != NULL) {
@@ -657,9 +696,62 @@ show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
       (void) show_stock_item(data.data);
     }
   }
+#endif
+  
+  /* Position the cursor */
+  ret = cursorP->get(cursorP, &key, &data, DB_SET | DB_READ_COMMITTED | DB_RMW );
+  if (ret != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Quotes.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
 
-  stock_cursorp->close(stock_cursorp);
-  return (exit_value);
+  if (symbolId != NULL) {
+    if (strcmp(symbolId, (char *)key.data) == 0) {
+      (void) show_stock_item(data.data);
+    }
+  }
+  else {
+    (void) show_stock_item(data.data);
+  }
+
+  ret = cursorP->close(cursorP);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+  }
+  cursorP = NULL;
+
+  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  ret = txnP->commit(txnP, 0);
+  if (ret != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
+    goto failXit; 
+  }
+  txnP = NULL;
+
+  goto cleanup;
+
+failXit:
+  rc = BENCHMARK_FAIL;
+  if (txnP != NULL) {
+    if (cursorP != NULL) {
+      ret = cursorP->close(cursorP);
+      if (ret != 0) {
+        envP->err(envP, ret, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+      }
+      cursorP = NULL;
+    }
+
+    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    ret = txnP->abort(txnP);
+    if (ret != 0) {
+      envP->err(envP, ret, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+    }
+  }
+
+
+cleanup:
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  return rc;
 }
 
 int 
@@ -902,9 +994,9 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
 
 
 int 
-update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
+show_quote(char *symbolP, BENCHMARK_DBS *benchmarkP)
 {
-  int rc = 0;
+  int rc = BENCHMARK_SUCCESS;
   DB_TXN  *txnP = NULL;
   DB_ENV  *envP = NULL;
   DBT      key, data;
@@ -915,9 +1007,10 @@ update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
     goto failXit;
   }
 
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   envP = benchmarkP->envP;
   if (envP == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("Invalid arguments");
     goto failXit;
   }
 
@@ -926,14 +1019,98 @@ update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
 
   rc = envP->txn_begin(envP, NULL, &txnP, 0);
   if (rc != 0) {
-    envP->err(envP, rc, "Transaction begin failed.");
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
     goto failXit; 
   }
 
   benchmark_info("PID: %d, Starting transaction: %p", getpid(), txnP);
-  rc = get_stock(symbolP, txnP, &cursorp, &key, &data, benchmarkP);
+  rc = get_stock(symbolP, txnP, &cursorp, &key, &data, 0, benchmarkP);
+  if (rc != BENCHMARK_SUCCESS) {
+    benchmark_error("Could not find record.");
+    goto failXit; 
+  }
+  
+  quoteP = data.data;
+  benchmark_info("*** Value of %s is %f", quoteP->symbol, quoteP->current_price);
+
+  /* Close the record */
+  if (cursorp != NULL) {
+    rc = cursorp->close(cursorp);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor for quote", __FILE__, __LINE__, getpid());
+      goto failXit; 
+    }
+    cursorp = NULL;
+  }
+
+  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  rc = txnP->commit(txnP, 0);
   if (rc != 0) {
-    envP->err(envP, rc, "Could not find record.");
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
+    goto failXit; 
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  goto cleanup;
+
+failXit:
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  if (txnP != NULL) {
+    if (cursorp != NULL) {
+      rc = cursorp->close(cursorp);
+      if (rc != 0) {
+        envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+      }
+      cursorp = NULL;
+    }
+
+    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    rc = txnP->abort(txnP);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+    }
+  }
+
+  rc = BENCHMARK_FAIL;
+
+cleanup:
+  return rc;
+}
+
+int 
+update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
+{
+  int rc = BENCHMARK_SUCCESS;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
+  DBT      key, data;
+  DBC     *cursorp = NULL; /* To iterate over the porfolios */
+  QUOTE   *quoteP = NULL;
+
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
+    goto failXit; 
+  }
+
+  benchmark_info("PID: %d, Starting transaction: %p", getpid(), txnP);
+  rc = get_stock(symbolP, txnP, &cursorp, &key, &data, DB_RMW, benchmarkP);
+  if (rc != BENCHMARK_SUCCESS) {
+    benchmark_error("Could not find record.");
     goto failXit; 
   }
   
@@ -949,51 +1126,51 @@ update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
   benchmark_info("PID: %d, txnP: %p Updating %s to %f", getpid(), txnP, quoteP->symbol, quoteP->current_price);
 
   /* Save the record */
-  cursorp->put(cursorp, &key, &data, DB_CURRENT);
+  rc = cursorp->put(cursorp, &key, &data, DB_CURRENT);
   if (rc != 0) {
-    fprintf(stderr, "%s: Failed to update quote", __func__);
+    envP->err(envP, rc, "[%s:%d] [%d] failed to update quote", __FILE__, __LINE__, getpid());
     goto failXit; 
   }
 
   /* Close the record */
   if (cursorp != NULL) {
-    cursorp->close(cursorp);
+    rc = cursorp->close(cursorp);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor for quote", __FILE__, __LINE__, getpid());
+      goto failXit; 
+    }
     cursorp = NULL;
   }
 
   benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
   rc = txnP->commit(txnP, 0);
   if (rc != 0) {
-    envP->err(envP, rc, "%s:%d PID: %d Transaction commit failed. txnP: %p", __func__, __LINE__, getpid(), txnP);
-    {
-      FILE *fp;
-      fp = fopen("/tmp/myfile", "a+");
-      envP->set_msgfile(envP, fp);  
-      envP->txn_stat_print(envP, DB_STAT_ALL);
-      envP->set_msgfile(envP, NULL);  
-      fclose(fp);
-    }
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
     goto failXit; 
   }
 
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   goto cleanup;
 
 failXit:
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   if (txnP != NULL) {
     if (cursorp != NULL) {
-      cursorp->close(cursorp);
+      rc = cursorp->close(cursorp);
+      if (rc != 0) {
+        envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+      }
       cursorp = NULL;
     }
 
-    benchmark_info("%s:%d PID: %d About to abort transaction. txnP: %p", __func__, __LINE__, getpid(), txnP);
+    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     rc = txnP->abort(txnP);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction abort failed.");
-      goto failXit; 
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
     }
   }
 
-  rc = 1;
+  rc = BENCHMARK_FAIL;
 
 cleanup:
   return rc;
@@ -1179,6 +1356,7 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
   DBC *cursorp = NULL;
   DB  *portfoliosdbP= NULL;
   DB  *portfoliossdbP= NULL;
+  DB_ENV  *envP = NULL;
   DBT pkey, pdata;
   DBT key;
   int rc = 0;
@@ -1188,6 +1366,14 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
       txnP == NULL || benchmarkP == NULL) 
   {
     fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
@@ -1210,8 +1396,12 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
   key.data = account_id;
   key.size = ID_SZ;
 
-  portfoliossdbP->cursor(portfoliossdbP, txnP,
+  rc = portfoliossdbP->cursor(portfoliossdbP, txnP,
                          &cursorp, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to create cursor for Portfolios.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
   
   while ((rc=cursorp->pget(cursorp, &key, &pkey, &pdata, DB_NEXT)) == 0)
   {
@@ -1226,6 +1416,9 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
   }
 
   cursorp->close(cursorp);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor for Portfolios.", __FILE__, __LINE__, getpid());
+  }
   cursorp = NULL;
 
   goto cleanup;
@@ -1247,23 +1440,32 @@ cleanup:
 }
 
 int
-get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP) 
+get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, int flags, BENCHMARK_DBS *benchmarkP) 
 {
   DBC *cursorp = NULL;
   DB  *quotesdbP= NULL;
+  DB_ENV  *envP = NULL;
   QUOTE   *quoteP = NULL;
   DBT key, data;
   int rc = 0;
 
-  if (symbol == NULL || symbol[0] == '\0')
+  if (benchmarkP==NULL || txnP == NULL || cursorPP == NULL || symbol == NULL || symbol[0] == '\0')
   {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
   quotesdbP = benchmarkP->quotes_dbp;
   if (quotesdbP == NULL) {
-    fprintf(stderr, "%s: Quotes database is not open\n", __func__);
+    benchmark_error("Quotes database is not open");
     goto failXit;
   }
 
@@ -1272,24 +1474,38 @@ get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_re
 
   key.data = symbol;
   key.size = (u_int32_t) strlen(symbol) + 1;
-  quotesdbP->cursor(quotesdbP, txnP, &cursorp, 0);
-
-  /* Position the cursor */
-  rc = cursorp->get(cursorp, &key, &data, DB_SET);
-  if (rc == 0) {
-    goto cleanup;
+  rc = quotesdbP->cursor(quotesdbP, txnP, &cursorp, DB_READ_COMMITTED);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to create cursor for Quotes.", __FILE__, __LINE__, getpid());
+    goto failXit;
   }
 
-  cursorp->close(cursorp);
-  cursorp = NULL;
-
-  goto cleanup;
+  /* Position the cursor */
+  rc = cursorp->get(cursorp, &key, &data, DB_SET | DB_READ_COMMITTED | flags );
+  if (rc == 0) {
+    goto done;
+  }
+  envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Quotes.", __FILE__, __LINE__, getpid());
 
 failXit:
-  rc = 1;
+  rc = cursorp->close(cursorp);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor for Quotes.", __FILE__, __LINE__, getpid());
+  }
+  cursorp = NULL;
+  if (cursorPP != NULL) {
+    *cursorPP = NULL;
+  }
 
-cleanup:
-  *cursorPP = cursorp;
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  return BENCHMARK_FAIL;
+
+done:
+  if (cursorPP != NULL) {
+    *cursorPP = cursorp;
+  }
+
   if (key_ret != NULL) {
     *key_ret = key;
   }
@@ -1300,7 +1516,8 @@ cleanup:
     *data_ret = data;
   }
 
-  return rc;
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  return BENCHMARK_SUCCESS;
 }
 
 static int
