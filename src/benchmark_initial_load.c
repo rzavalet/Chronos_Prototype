@@ -200,7 +200,7 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
     /* Put the data into the database */
     benchmark_debug(4,"Inserting: %s", (char *)key.data);
 
-    rc = envP->txn_begin(envP, NULL, &txnP, 0);
+    rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
       envP->err(envP, rc, "[%d] [%d] Transaction begin failed.", __LINE__, getpid());
       goto failXit; 
@@ -209,7 +209,7 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
     assert(txnP != NULL);
     assert(benchmarkP->personal_dbp != NULL);
 
-    rc = benchmarkP->personal_dbp->put(benchmarkP->personal_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->personal_dbp->put(benchmarkP->personal_dbp, txnP, &key, &data, DB_NOOVERWRITE);
     if (rc != 0) {
       envP->err(envP, rc, "[%d] [%d] Database put failed.", __LINE__, getpid());
       txnP->abort(txnP);
@@ -308,13 +308,13 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
     benchmark_debug(4,"Inserting: %s", (char *)key.data);
     benchmark_debug(4, "\t(%s, %s)", my_stocks.stock_symbol, my_stocks.full_name);
 
-    rc = envP->txn_begin(envP, NULL, &txnP, 0);
+    rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
       envP->err(envP, rc, "[%d] [%d] Transaction begin failed.", __LINE__, getpid());
       goto failXit; 
     }
 
-    rc = benchmarkP->stocks_dbp->put(benchmarkP->stocks_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->stocks_dbp->put(benchmarkP->stocks_dbp, txnP, &key, &data, DB_NOOVERWRITE);
 
     if (rc != 0) {
       envP->err(envP, rc, "[%d] [%d] Database put failed.", __LINE__, getpid());
@@ -412,13 +412,13 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
     /* Put the data into the database */
     benchmark_debug(4,"Inserting: %s", (char *)key.data);
 
-    rc = envP->txn_begin(envP, NULL, &txnP, 0);
+    rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
       envP->err(envP, rc, "[%d] [%d] Transaction begin failed.", __LINE__, getpid());
       goto failXit; 
     }
 
-    rc = benchmarkP->currencies_dbp->put(benchmarkP->currencies_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->currencies_dbp->put(benchmarkP->currencies_dbp, txnP, &key, &data, 0 /* Same currency for multiple contries*/);
 
     if (rc != 0) {
       envP->err(envP, rc, "[%d] [%d] Database put failed.", __LINE__, getpid());
@@ -519,13 +519,13 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
     /* Put the data into the database */
     benchmark_debug(6,"Inserting: %s", (char *)key.data);
 
-    rc = envP->txn_begin(envP, NULL, &txnP, 0);
+    rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
       envP->err(envP, rc, "[%d] [%d] Transaction begin failed.", __LINE__, getpid());
       goto failXit; 
     }
 
-    rc = benchmarkP->quotes_dbp->put(benchmarkP->quotes_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->quotes_dbp->put(benchmarkP->quotes_dbp, txnP, &key, &data, DB_NOOVERWRITE);
     if (rc != 0) {
       envP->err(envP, rc, "[%d] [%d] Database put failed.", __LINE__, getpid());
       txnP->abort(txnP);

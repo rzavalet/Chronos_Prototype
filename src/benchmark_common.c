@@ -27,9 +27,6 @@ symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
 static int
 account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
 
-static int
-show_portfolio_item(void *vBuf, char **symbolIdPP);
-
 static int 
 show_stock_item(void *);
 
@@ -127,9 +124,8 @@ open_database(DB_ENV *envP,
   if (is_secondary) {
     ret = dbp->set_flags(dbp, DB_DUPSORT);
     if (ret != 0) {
-        envP->err(envP, ret, "Attempt to set DUPSORT flags failed.",
-          file_name);
-        return (ret);
+      envP->err(envP, ret, "[%s:%d] [%d] Attempt to set DUPSORT flags failed.", __FILE__, __LINE__, getpid());
+      return (ret);
     }
   }
 
@@ -373,7 +369,7 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                    0);
 
     if (ret != 0) {
-      envP->err(envP, ret, "[%s:%d] [%d] Failed to associated secondary database.", __FILE__, __LINE__, getpid());
+      envP->err(envP, ret, "[%s:%d] [%d] Failed to associate secondary database.", __FILE__, __LINE__, getpid());
       return (ret);
     }
 
@@ -755,69 +751,241 @@ cleanup:
 }
 
 int 
-show_portfolios(BENCHMARK_DBS *benchmarkP)
+show_all_portfolios(BENCHMARK_DBS *benchmarkP)
 {
-  DBC *personal_cursorP = NULL;
+  DBC *cursorP = NULL;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
+  char *symbolIdP = NULL;
   DBT key, data;
-  int rc = 0;
+  int ret;
+  int rc = BENCHMARK_SUCCESS;
   int curRc = 0;
   int numClients = 0;
 
   if (benchmarkP == NULL || benchmarkP->personal_dbp == NULL) {
-    fprintf(stderr, "%s: Invalid argument\n", __func__);
+    benchmark_error("Invalid argument");
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  /* First read the personall account */
-  benchmarkP->personal_dbp->cursor(benchmarkP->personal_dbp, NULL,
-                                    &personal_cursorP, 0);
+  ret = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
 
-  while ((curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_NEXT)) == 0)
+  /* First read the portfolios account */
+  ret = benchmarkP->portfolios_dbp->cursor(benchmarkP->portfolios_dbp, txnP,
+                                    &cursorP, DB_READ_COMMITTED);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to create cursor for Personal.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  while ((curRc=cursorP->get(cursorP, &key, &data, DB_READ_COMMITTED | DB_NEXT)) == 0)
   {
 #ifdef CHRONOS_DEBUG
      benchmark_debug(4,"================= SHOWING PORTFOLIO ==============\n");
 #endif
-    (void) show_personal_item(data.data);   
-    (void) show_one_portfolio(key.data, benchmarkP);
-    numClients ++;
+    (void) show_portfolio_item(data.data, &symbolIdP);
 #ifdef CHRONOS_DEBUG
      benchmark_debug(4,"==================================================\n");
 #endif
   }
 
-  if (curRc != DB_NOTFOUND) {
-    fprintf(stderr, "Error retrieving portfolios: %s\n",
-            db_strerror(rc));
-    goto failXit;
+  ret = cursorP->close(cursorP);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
   }
+  cursorP = NULL;
 
-  personal_cursorP->close(personal_cursorP);
+  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  ret = txnP->commit(txnP, 0);
+  if (ret != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
+    goto failXit; 
+  }
+  txnP = NULL;
 
 #ifdef CHRONOS_DEBUG
   benchmark_debug(3,"Displayed info about %d clients\n", numClients);
 #endif
-  return (rc);
+
+  goto cleanup;
 
 failXit:
-  if (personal_cursorP) {
-    personal_cursorP->close(personal_cursorP);
+  rc = BENCHMARK_FAIL;
+  if (txnP != NULL) {
+    if (cursorP != NULL) {
+      ret = cursorP->close(cursorP);
+      if (ret != 0) {
+        envP->err(envP, ret, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+      }
+      cursorP = NULL;
+    }
+
+    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    ret = txnP->abort(txnP);
+    if (ret != 0) {
+      envP->err(envP, ret, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+    }
   }
-  rc = 1;
-  return rc;
+
+cleanup:
+  return (rc);
+}
+
+int 
+show_portfolios(BENCHMARK_DBS *benchmarkP)
+{
+  DBC *personal_cursorP = NULL;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
+  DBT key, data;
+  int ret;
+  int rc = BENCHMARK_SUCCESS;
+  int curRc = 0;
+  int numClients = 0;
+
+  if (benchmarkP == NULL || benchmarkP->personal_dbp == NULL) {
+    benchmark_error("Invalid argument");
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid argument");
+    goto failXit;
+  }
+
+  memset(&key, 0, sizeof(DBT));
+  memset(&data, 0, sizeof(DBT));
+
+  ret = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  /* First read the personall account */
+  ret = benchmarkP->personal_dbp->cursor(benchmarkP->personal_dbp, txnP,
+                                    &personal_cursorP, DB_READ_COMMITTED);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to create cursor for Personal.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  while ((curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_READ_COMMITTED | DB_NEXT)) == 0)
+  {
+     benchmark_debug(4,"================= SHOWING PORTFOLIO ==============");
+
+    (void) show_personal_item(data.data);   
+    ret = show_one_portfolio(key.data, txnP, benchmarkP);
+    if (ret != BENCHMARK_SUCCESS) {
+      benchmark_error("Failed to retrieve portfolio");
+      //goto failXit;
+    }
+    numClients ++;
+
+    benchmark_debug(4,"==================================================\n");
+  }
+
+  if (curRc != DB_NOTFOUND) {
+    envP->err(envP, ret, "[%s:%d] [%d] Error retrieving portfolios.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  ret = personal_cursorP->close(personal_cursorP);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+  }
+  personal_cursorP = NULL;
+
+  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  ret = txnP->commit(txnP, 0);
+  if (ret != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
+    goto failXit; 
+  }
+  txnP = NULL;
+
+#ifdef CHRONOS_DEBUG
+  benchmark_debug(3,"Displayed info about %d clients\n", numClients);
+#endif
+
+  goto cleanup;
+
+failXit:
+  rc = BENCHMARK_FAIL;
+  if (txnP != NULL) {
+    if (personal_cursorP != NULL) {
+      ret = personal_cursorP->close(personal_cursorP);
+      if (ret != 0) {
+        envP->err(envP, ret, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+      }
+      personal_cursorP = NULL;
+    }
+
+    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    ret = txnP->abort(txnP);
+    if (ret != 0) {
+      envP->err(envP, ret, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+    }
+  }
+
+cleanup:
+  return (rc);
 }
 
 int
-show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP)
+show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP)
 {
   DBC *portfolio_cursorP = NULL;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
   DBT key;
   DBT pkey, pdata;
   char *symbolIdP = NULL;
-  int rc = 0;
+  int rc = BENCHMARK_SUCCESS;
+  int ret;
   int numPortfolios = 0;
+
+  if (benchmarkP == NULL || benchmarkP->portfolios_sdbp == NULL) {
+    benchmark_error("Invalid argument");
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid argument");
+    goto failXit;
+  }
+
+  if (txn_inP != NULL) {
+    txnP = txn_inP;
+  }
+  else {
+    ret = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+    if (ret != 0) {
+      envP->err(envP, ret, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
+      goto failXit;
+    }
+  }
 
   memset(&key, 0, sizeof(DBT));
   memset(&pkey, 0, sizeof(DBT));
@@ -826,25 +994,88 @@ show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP)
   key.data = account_id;
   key.size = ID_SZ;
   
-  benchmarkP->portfolios_sdbp->cursor(benchmarkP->portfolios_sdbp, NULL, 
-                                   &portfolio_cursorP, 0);
-  
-  while ((rc=portfolio_cursorP->pget(portfolio_cursorP, &key, &pkey, &pdata, DB_NEXT)) == 0)
+  ret = benchmarkP->portfolios_sdbp->cursor(benchmarkP->portfolios_sdbp, txnP, 
+                                   &portfolio_cursorP, DB_READ_COMMITTED);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to create cursor for Portfolios.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  benchmark_info("PID: %d, %p : searching for account id: %s", getpid(), txnP, account_id);
+
+#if 1
+  while ((ret = portfolio_cursorP->pget(portfolio_cursorP, &key, &pkey, &pdata, DB_NEXT)) == 0)
   {
     /* TODO: Is it necessary this comparison? */
     if (strcmp(account_id, (char *)key.data) == 0) {
       (void) show_portfolio_item(pdata.data, &symbolIdP);
+
+#if 0
       if (symbolIdP != NULL && symbolIdP[0] != '\0') {
         (void) show_stocks_records(symbolIdP, benchmarkP);
       }
+#endif
       numPortfolios ++;
     }
   }
 
-  portfolio_cursorP->close(portfolio_cursorP);
+#else 
+
+  /* Position the cursor */
+  rc = portfolio_cursorP->pget(portfolio_cursorP, &key, &pkey, &pdata, DB_SET | DB_READ_COMMITTED);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to find record (%s) in Portfolio.", __FILE__, __LINE__, getpid(), account_id);
+    goto failXit;
+  }
+
+  (void) show_portfolio_item(pdata.data, &symbolIdP);
+
+#endif
+  ret = portfolio_cursorP->close(portfolio_cursorP);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+  }
+
+  portfolio_cursorP = NULL;
+
+  /* This means this function created its own txn */
+  if (txn_inP == NULL) {
+    benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+    ret = txnP->commit(txnP, 0);
+    if (ret != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
+      goto failXit; 
+    }
+    txnP = NULL;
+  }
+
 #ifdef CHRONOS_DEBUG
   benchmark_debug(3,"Displayed info about %d portfolios\n", numPortfolios);
 #endif
+  goto cleanup;
+
+failXit:
+  rc = BENCHMARK_FAIL;
+  if (txnP != NULL) {
+    if (portfolio_cursorP != NULL) {
+      ret = portfolio_cursorP->close(portfolio_cursorP);
+      if (ret != 0) {
+        envP->err(envP, ret, "[%s:%d] [%d] Failed to close cursor.", __FILE__, __LINE__, getpid());
+      }
+      portfolio_cursorP = NULL;
+    }
+
+    /* This means this function created its own txn */
+    if (txn_inP == NULL) {
+      benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+      ret = txnP->abort(txnP);
+      if (ret != 0) {
+        envP->err(envP, ret, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+      }
+    }
+  }
+
+cleanup:
   return (rc);
 }
 
@@ -895,16 +1126,16 @@ show_personal_item(void *vBuf)
   email = buf + buf_pos;
  
   /* Display all this information */
-  benchmark_debug(5,"AccountId: %s\n", account_id);
-  benchmark_debug(5,"\tLast Name: %s\n", last_name);
-  benchmark_debug(5,"\tFirst Name: %s\n", first_name);
-  benchmark_debug(5,"\tAddress: %s\n", address);
-  benchmark_debug(5,"\tAdress 2: %s\n", address_2);
-  benchmark_debug(5,"\tCity: %s\n", city);
-  benchmark_debug(5,"\tState: %s\n", state);
-  benchmark_debug(5,"\tCountry: %s\n", country);
-  benchmark_debug(5,"\tPhone: %s\n", phone);
-  benchmark_debug(5,"\tEmail: %s\n", email);
+  benchmark_debug(5,"AccountId: %s", account_id);
+  benchmark_debug(5,"\tLast Name: %s", last_name);
+  benchmark_debug(5,"\tFirst Name: %s", first_name);
+  benchmark_debug(5,"\tAddress: %s", address);
+  benchmark_debug(5,"\tAdress 2: %s", address_2);
+  benchmark_debug(5,"\tCity: %s", city);
+  benchmark_debug(5,"\tState: %s", state);
+  benchmark_debug(5,"\tCountry: %s", country);
+  benchmark_debug(5,"\tPhone: %s", phone);
+  benchmark_debug(5,"\tEmail: %s", email);
 
   return 0;
 }
@@ -959,31 +1190,31 @@ show_currencies_item(void *vBuf)
   exchange_rate_usd = *((int *)(buf + buf_pos));
 
   /* Display all this information */
-  benchmark_debug(5,"Currency Symbol: %s\n", currency_symbol);
-  benchmark_debug(5,"\tExchange Rate: %d\n", exchange_rate_usd);
-  benchmark_debug(5,"\tCountry: %s\n", country);
-  benchmark_debug(5,"\tName: %s\n", currency_name);
+  benchmark_debug(5,"Currency Symbol: %s", currency_symbol);
+  benchmark_debug(5,"\tExchange Rate: %d", exchange_rate_usd);
+  benchmark_debug(5,"\tCountry: %s", country);
+  benchmark_debug(5,"\tName: %s", currency_name);
 
   return 0;
 }
 
-static int
+int
 show_portfolio_item(void *vBuf, char **symbolIdPP)
 {
   PORTFOLIOS *portfolioP;
 
   portfolioP = (PORTFOLIOS *)vBuf;
   /* Display all this information */
-  benchmark_debug(5,"Portfolio ID: %s\n", portfolioP->portfolio_id);
-  benchmark_debug(5,"\tAccount ID: %s\n", portfolioP->account_id);
-  benchmark_debug(5,"\tSymbol ID: %s\n", portfolioP->symbol);
-  benchmark_debug(5,"\t# Stocks Hold: %d\n", portfolioP->hold_stocks);
-  benchmark_debug(5,"\tSell?: %d\n", portfolioP->to_sell);
-  benchmark_debug(5,"\t# Stocks to sell: %d\n", portfolioP->number_sell);
-  benchmark_debug(5,"\tPrice to sell: %d\n", portfolioP->price_sell);
-  benchmark_debug(5,"\tBuy?: %d\n", portfolioP->to_buy);
-  benchmark_debug(5,"\t# Stocks to buy: %d\n", portfolioP->number_buy);
-  benchmark_debug(5,"\tPrice to buy: %d\n", portfolioP->price_buy);
+  benchmark_debug(5,"Portfolio ID: %s", portfolioP->portfolio_id);
+  benchmark_debug(5,"\tAccount ID: %s", portfolioP->account_id);
+  benchmark_debug(5,"\tSymbol ID: %s", portfolioP->symbol);
+  benchmark_debug(5,"\t# Stocks Hold: %d", portfolioP->hold_stocks);
+  benchmark_debug(5,"\tSell?: %d", portfolioP->to_sell);
+  benchmark_debug(5,"\t# Stocks to sell: %d", portfolioP->number_sell);
+  benchmark_debug(5,"\tPrice to sell: %d", portfolioP->price_sell);
+  benchmark_debug(5,"\tBuy?: %d", portfolioP->to_buy);
+  benchmark_debug(5,"\t# Stocks to buy: %d", portfolioP->number_buy);
+  benchmark_debug(5,"\tPrice to buy: %d", portfolioP->price_buy);
 
   if (symbolIdPP) {
     *symbolIdPP = portfolioP->symbol; 

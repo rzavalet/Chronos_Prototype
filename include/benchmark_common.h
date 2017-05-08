@@ -235,6 +235,9 @@ int
 show_portfolios(BENCHMARK_DBS *benchmarkP);
 
 int 
+show_all_portfolios(BENCHMARK_DBS *benchmarkP);
+
+int 
 place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
 
 int 
@@ -253,9 +256,12 @@ int
 show_currencies_records(BENCHMARK_DBS *my_benchmarkP);
 
 int
-show_one_portfolio(char *account_id, BENCHMARK_DBS *benchmarkP);
+show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP);
 
 int
 show_personal_item(void *vBuf);
+
+int
+show_portfolio_item(void *vBuf, char **symbolIdPP);
 
 #endif

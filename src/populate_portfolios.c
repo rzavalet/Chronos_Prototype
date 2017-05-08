@@ -112,18 +112,22 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
      */
 
     /* Put the data into the database */
-    benchmark_debug(4,"Inserting: %s", (char *)key.data);
+    benchmark_debug(4,"Inserting: %s for symbol: %s", portfolio.portfolio_id, portfolio.symbol);
+    show_portfolio_item(data.data, NULL);
 
-    rc = envP->txn_begin(envP, NULL, &txnP, 0);
+    rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
       envP->err(envP, rc, "Transaction begin failed.");
       goto failXit; 
     }
 
-    rc = benchmarkP->portfolios_dbp->put(benchmarkP->portfolios_dbp, txnP, &key, &data, 0);
+    rc = benchmarkP->portfolios_dbp->put(benchmarkP->portfolios_dbp, txnP, &key, &data, DB_NOOVERWRITE);
     if (rc != 0) {
       envP->err(envP, rc, "Database put failed.");
-      txnP->abort(txnP);
+      rc = txnP->abort(txnP);
+      if (rc != 0) {
+        envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+      }
       goto failXit; 
     }
 
@@ -137,5 +141,7 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
   return BENCHMARK_SUCCESS;
 
 failXit:
+
   return BENCHMARK_FAIL;
+
 }

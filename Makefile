@@ -144,6 +144,16 @@ TestUpdateStock : update_stocks $(TESTDIR)/test_update_stocks.sh
 	rm -rf /tmp/upd*
 	sh $(TESTDIR)/test_update_stocks.sh
 
+##################################################
+# Query portfolios utility
+##################################################
+query_portfolios.lo : $(UTILSDIR)/query_portfolios.c
+	$(CC) $(CFLAGS) $?
+
+query_portfolios : query_portfolios.lo $(OBJECTS)
+	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) query_portfolios.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(BINDIR)/$@
+
 Test : 
 	make TestQueryStock
 	make TestUpdateAll

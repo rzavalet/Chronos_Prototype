@@ -968,42 +968,42 @@ processThread(void *argP)
       txnInfoP = dequeueTransaction(sysTxnQueueP);
       txn_type = txnInfoP->txn_type;
       if (IS_CHRONOS_MODE_BASE(infoP->contextP) || IS_CHRONOS_MODE_AC(infoP->contextP)) {
-	for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++){
-	  data_item = i;
-	  if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item, 0) != CHRONOS_SUCCESS) {
-	    chronos_error("Failed to refresh quotes");
-	    goto cleanup;
-	  }
-	
-	  if (data_item >= 0) {
-	    infoP->contextP->UpdateFrequency[current_slot][data_item] ++;
-	  }
-	}
+        for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++){
+          data_item = i;
+          if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item, 0) != CHRONOS_SUCCESS) {
+            chronos_error("Failed to refresh quotes");
+            goto cleanup;
+          }
+
+          if (data_item >= 0) {
+            infoP->contextP->UpdateFrequency[current_slot][data_item] ++;
+          }
+        }
       }
       else {
-	for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++){
-	  if (infoP->contextP->AccessUpdateRatio[current_slot][i] >= 1) {
-	    data_item = i;
-	    if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item, 0) != CHRONOS_SUCCESS) {
-	      chronos_error("Failed to refresh quotes");
-	      goto cleanup;
-	    }
-	
-	    if (data_item >= 0) {
-	      infoP->contextP->UpdateFrequency[current_slot][data_item] ++;
-	    }
-	  }
-	}
+        for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++){
+          if (infoP->contextP->AccessUpdateRatio[current_slot][i] >= 1) {
+            data_item = i;
+            if (benchmark_refresh_quotes(infoP->contextP->benchmarkCtxtP, &data_item, 0) != CHRONOS_SUCCESS) {
+              chronos_error("Failed to refresh quotes");
+              goto cleanup;
+            }
+
+            if (data_item >= 0) {
+              infoP->contextP->UpdateFrequency[current_slot][data_item] ++;
+            }
+          }
+        }
       }
       
       infoP->contextP->txn_update[current_slot] += 1;
 
       if (IS_CHRONOS_MODE_AUP(infoP->contextP) || IS_CHRONOS_MODE_FULL(infoP->contextP)) {
-	/* Notify that one more txn finished */
-	pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
-	infoP->contextP->txnToWait--;
-	pthread_cond_signal(&infoP->contextP->admissionControlWait);
-	pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
+        /* Notify that one more txn finished */
+        pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+        infoP->contextP->txnToWait--;
+        pthread_cond_signal(&infoP->contextP->admissionControlWait);
+        pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
       }
       chronos_info("Done processing update...");
     }
@@ -1055,7 +1055,7 @@ processThread(void *argP)
 
 
       if (txn_rc != CHRONOS_SUCCESS) {
-	chronos_error("Transaction failed");
+        chronos_error("Transaction failed");
       }
       
       CHRONOS_TIME_GET(txn_end);
@@ -1063,15 +1063,15 @@ processThread(void *argP)
       /* One more transasction finished */
       infoP->contextP->txn_count[current_slot] += 1;
       if (data_item >= 0) {
-	infoP->contextP->AccessFrequency[current_slot][data_item] ++;
+        infoP->contextP->AccessFrequency[current_slot][data_item] ++;
       }
       
       if (IS_CHRONOS_MODE_AUP(infoP->contextP) || IS_CHRONOS_MODE_FULL(infoP->contextP)) {
-	/* Notify that one more txn finished */
-	pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
-	infoP->contextP->txnToWait--;
-	pthread_cond_signal(&infoP->contextP->admissionControlWait);
-	pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
+        /* Notify that one more txn finished */
+        pthread_mutex_lock(&infoP->contextP->admissionControlMutex);
+        infoP->contextP->txnToWait--;
+        pthread_cond_signal(&infoP->contextP->admissionControlWait);
+        pthread_mutex_unlock(&infoP->contextP->admissionControlMutex);
       }
       
       /* Calculate the delay of this transaction */
@@ -1091,7 +1091,7 @@ processThread(void *argP)
 
       /* ttps */
       if (txn_delay < 0) {
-	infoP->contextP->txn_timely[current_slot] += 1;
+        infoP->contextP->txn_timely[current_slot] += 1;
       }
 
       chronos_info("Done processing user txn...");

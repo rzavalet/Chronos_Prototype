@@ -23,11 +23,11 @@ usage()
 
 int main(int argc, char *argv[]) 
 {
-  int i;
   int ch;
   int doInitialLoad = 0;
   int showAll = 0;
   int data_item = 0;
+  int rc = BENCHMARK_SUCCESS;
   void *benchmarkCtxtP = NULL;
 
   srand(time(NULL));
@@ -63,41 +63,43 @@ int main(int argc, char *argv[])
   }
 
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN + 5;
-  if (showAll) {
-    int symbolToShow = 0;
-
-    for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++) {
-      symbolToShow = i;
-      if (benchmark_view_stock(benchmarkCtxtP, &symbolToShow) != BENCHMARK_SUCCESS) {
-        benchmark_error("Failed to retrieve stock info");
-        goto failXit;
-      }
+  if (doInitialLoad) {
+    if (benchmark_load_portfolio(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
+      benchmark_error("Failed to load portfolios");
+      goto failXit;
     }
   }
-  else {
-    for (i=0; i<100; i++) {
-      if (benchmark_view_stock(benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
-        benchmark_error("Failed to retrieve stock info");
-        goto failXit;
-      }
+
+  if (showAll) {
+#if 1
+    if (show_portfolios(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
+      benchmark_error("Failed to retrieve all portfolios");
+      goto failXit;
     }
+#else
+    if (show_all_portfolios(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
+      benchmark_error("Failed to retrieve all portfolios");
+      goto failXit;
+    }
+#endif
+  }
+  else {
   }
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 
   benchmark_info("** Retrieved info for: %d", data_item);
+  
+  goto cleanup;
 
+failXit:
+  rc = BENCHMARK_FAIL;
+
+cleanup:
   if (benchmark_handle_free(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to free handle");
     goto failXit;
   }
 
-  return 0;
-
-failXit:
-  if (benchmark_handle_free(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
-    benchmark_error("Failed to free handle");
-  }
-
-  return 1;
+  return rc;
 }
 
