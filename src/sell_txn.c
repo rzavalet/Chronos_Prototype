@@ -44,7 +44,7 @@ benchmark_sell(void *benchmark_handle, int *symbolP)
  
   ret = sell_stocks(random_account, random_symbol, random_price, random_amount, benchmarkP);
   if (ret != 0) {
-    fprintf(stderr, "Could not place order\n");
+    benchmark_error("Could not place order");
     goto failXit;
   }
 

@@ -1248,7 +1248,7 @@ show_quote(char *symbolP, BENCHMARK_DBS *benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
     goto failXit; 
@@ -1332,7 +1332,7 @@ update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
     goto failXit; 
@@ -1424,9 +1424,11 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
     goto failXit;
   }
 
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
   envP = benchmarkP->envP;
   if (envP == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("Invalid arguments");
     goto failXit;
   }
 
@@ -1435,7 +1437,7 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 
   sprintf(account_id, "%d", account);
 
-  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
   if (rc != 0) {
     envP->err(envP, rc, "Transaction begin failed.");
     goto failXit; 
@@ -1444,27 +1446,30 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
   /* 1) search the account */
   exists = account_exists(account_id, txnP, benchmarkP);
   if (!exists) {
-    fprintf(stderr, "%s: This user account does not exist.\n", __func__);
+    benchmark_error("This user account does not exist.");
     goto failXit; 
   }
 
   /* 2) search the symbol */
   exists = symbol_exists(symbol, txnP, benchmarkP);
   if (!exists) {
-    fprintf(stderr, "%s: This symbol does not exist.\n", __func__);
+    benchmark_error("This symbol does not exist.");
     goto failXit; 
   }
 
+  benchmark_info("Looking up portfolio for account: %s and symbol: %s", account_id, symbol);
+
   rc = get_portfolio(account_id, symbol, txnP, &cursorp, &skey, &data, benchmarkP);
   if (rc != 0) {
-    fprintf(stderr, "%s: Failed to obtain portfolio", __func__);
+    benchmark_error("Failed to obtain portfolio.");
     goto failXit; 
   }
 
   /* Update whatever we need to update */
-  memcpy(&portfolio, &data, sizeof(PORTFOLIOS));
+  memcpy(&portfolio, &data.data, sizeof(PORTFOLIOS));
+  benchmark_info("Found portfolio for account: %s and symbol: %s -> %s", account_id, symbol, portfolio.portfolio_id);
   if (portfolio.hold_stocks < amount) {
-    fprintf(stderr, "%s: Not enough stocks for this symbol", __func__);
+    benchmark_error("Not enough stocks for this symbol. Have: %d, wanted: %d", portfolio.hold_stocks, amount);
     goto failXit; 
   }
   portfolio.to_sell = 1;
@@ -1472,15 +1477,20 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
   portfolio.price_sell = price;
 
   /* Save the record */
-  cursorp->put(cursorp, &skey, &data, DB_CURRENT);
+  rc = cursorp->put(cursorp, &skey, &data, DB_CURRENT);
   if (rc != 0) {
-    fprintf(stderr, "%s: Failed to update portfolio", __func__);
+    envP->err(envP, rc, "[%s:%d] [%d] Could not update record.", __FILE__, __LINE__, getpid());
     goto failXit; 
   }
 
   /* Close the record */
   if (cursorp != NULL) {
-    cursorp->close(cursorp);
+    rc = cursorp->close(cursorp);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
+      goto failXit; 
+    }
+
     cursorp = NULL;
   }
 
@@ -1490,25 +1500,30 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
     goto failXit; 
   }
 
+  rc = BENCHMARK_SUCCESS;
   goto cleanup;
 
 failXit:
   if (txnP != NULL) {
     if (cursorp != NULL) {
-      cursorp->close(cursorp);
+      rc = cursorp->close(cursorp);
+      if (rc != 0) {
+        envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
+      }
       cursorp = NULL;
     }
 
     rc = txnP->abort(txnP);
     if (rc != 0) {
-      envP->err(envP, rc, "Transaction abort failed.");
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
       goto failXit; 
     }
   }
 
-  rc = 1;
+  rc = BENCHMARK_FAIL;
 
 cleanup:
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
   return rc;
 }
 
@@ -1533,7 +1548,7 @@ place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 
   sprintf(account_id, "%d", account);
 
-  rc = envP->txn_begin(envP, NULL, &txnP, 0);
+  rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
   if (rc != 0) {
     envP->err(envP, rc, "Transaction begin failed.");
     goto failXit; 
@@ -1596,7 +1611,7 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
       symbol == NULL || symbol[0] == '\0' || 
       txnP == NULL || benchmarkP == NULL) 
   {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
@@ -1610,13 +1625,13 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
 
   portfoliosdbP = benchmarkP->portfolios_dbp;
   if (portfoliosdbP == NULL) {
-    fprintf(stderr, "%s: Portfolios database is not open\n", __func__);
+    benchmark_error("Portfolios database is not open");
     goto failXit;
   }
 
   portfoliossdbP = benchmarkP->portfolios_sdbp;
   if (portfoliossdbP == NULL) {
-    fprintf(stderr, "%s: Portfolios secondary database is not open\n", __func__);
+    benchmark_error("Portfolios secondary database is not open");
     goto failXit;
   }
 
@@ -1640,22 +1655,22 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
     if (strcmp(account_id, (char *)key.data) == 0) {
       if ( symbol != NULL && symbol[0] != '\0') {
         if (strcmp(symbol, ((PORTFOLIOS *)pdata.data)->symbol)) {
+          rc = BENCHMARK_SUCCESS;
           goto cleanup;
         }
       }
     }
   }
 
-  cursorp->close(cursorp);
+failXit:
+  rc = cursorp->close(cursorp);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor for Portfolios.", __FILE__, __LINE__, getpid());
   }
   cursorp = NULL;
 
-  goto cleanup;
-
-failXit:
-  rc = 1;
+  rc = BENCHMARK_FAIL;
+  return rc;
 
 cleanup:
   *cursorPP = cursorp;
@@ -1756,18 +1771,27 @@ symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
 {
   DBC *cursorp = NULL;
   DB  *stocksdbP = NULL;
+  DB_ENV  *envP = NULL;
   DBT key, data;
   int exists = 0;
   int ret = 0;
 
   if (symbol == NULL || symbol[0] == '\0' || txnP == NULL || benchmarkP == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid arguments");
     goto failXit;
   }
 
   stocksdbP = benchmarkP->stocks_dbp;
   if (stocksdbP == NULL) {
-    fprintf(stderr, "%s: Stocks database is not open\n", __func__);
+    benchmark_error("Stocks database is not open");
     goto failXit;
   }
 
@@ -1776,7 +1800,11 @@ symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
 
   key.data = symbol;
   key.size = (u_int32_t) strlen(symbol) + 1;
-  stocksdbP->cursor(stocksdbP, txnP, &cursorp, 0);
+  ret = stocksdbP->cursor(stocksdbP, txnP, &cursorp, DB_READ_COMMITTED);
+  if (ret != 0) {
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to create cursor for Stocks.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
 
   /* Position the cursor */
   ret = cursorp->get(cursorp, &key, &data, DB_SET);
@@ -1800,18 +1828,27 @@ account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
 {
   DBC *cursorp = NULL;
   DB  *personaldbP = NULL;
+  DB_ENV  *envP = NULL;
   DBT key, data;
   int exists = 0;
   int ret = 0;
 
   if (account_id == NULL || account_id[0] == '\0' || txnP == NULL || benchmarkP == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid arguments");
     goto failXit;
   }
 
   personaldbP = benchmarkP->personal_dbp;
   if (personaldbP == NULL) {
-    fprintf(stderr, "%s: Personal database is not open\n", __func__);
+    benchmark_error("Personal database is not open");
     goto failXit;
   }
 
@@ -1820,9 +1857,9 @@ account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
 
   key.data = account_id;
   key.size = (u_int32_t) strlen(account_id) + 1;
-  ret = personaldbP->cursor(personaldbP, txnP, &cursorp, 0);
+  ret = personaldbP->cursor(personaldbP, txnP, &cursorp, DB_READ_COMMITTED);
   if (ret != 0) {
-    fprintf(stderr, "%s: Could not open cursor\n", __func__);
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to create cursor for Personal.", __FILE__, __LINE__, getpid());
     goto failXit;
   }
 

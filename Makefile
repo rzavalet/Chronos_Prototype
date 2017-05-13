@@ -145,6 +145,17 @@ TestUpdateStock : update_stocks $(TESTDIR)/test_update_stocks.sh
 	sh $(TESTDIR)/test_update_stocks.sh
 
 ##################################################
+# Sell Stocks utility
+##################################################
+sell_stock.lo : $(UTILSDIR)/sell_stock.c
+	$(CC) $(CFLAGS) $?
+
+sell_stock : sell_stock.lo $(OBJECTS)
+	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) sell_stock.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(BINDIR)/$@
+
+
+##################################################
 # Query portfolios utility
 ##################################################
 query_portfolios.lo : $(UTILSDIR)/query_portfolios.c
