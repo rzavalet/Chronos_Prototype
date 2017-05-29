@@ -28,15 +28,20 @@ int main(int argc, char *argv[])
   int doInitialLoad = 0;
   int showAll = 0;
   int data_item = 0;
+  int num_reps = 100;
   void *benchmarkCtxtP = NULL;
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "alh")) != EOF)
+  while ((ch = getopt(argc, argv, "ac:lh")) != EOF)
   {
     switch (ch) {
       case 'a':
         showAll = 1;
+        break;
+
+      case 'c':
+        num_reps = atoi(optarg);
         break;
 
       case 'l':
@@ -57,7 +62,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (benchmark_handle_alloc(&benchmarkCtxtP, CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != BENCHMARK_SUCCESS) {
+  if (benchmark_handle_alloc(&benchmarkCtxtP, 0, CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to perform initial load");
     goto failXit;
   }
@@ -75,7 +80,7 @@ int main(int argc, char *argv[])
     }
   }
   else {
-    for (i=0; i<100; i++) {
+    for (i=0; i<num_reps; i++) {
       if (benchmark_view_stock(benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
         benchmark_error("Failed to retrieve stock info");
         goto failXit;

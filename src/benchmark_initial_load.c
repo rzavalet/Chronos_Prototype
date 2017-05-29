@@ -37,7 +37,10 @@ int
 benchmark_initial_load(char *homedir, char *datafilesdir) 
 {
   void *benchmarkP = NULL;
-  char *personal_file, *stocks_file, *currencies_file, *quotes_file;
+  char *personal_file = NULL;
+  char *stocks_file = NULL;
+  char *currencies_file = NULL;
+  char *quotes_file = NULL;
   int size;
   int ret;
 
@@ -77,7 +80,7 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
   }
   snprintf(quotes_file, size, "%s/%s", datafilesdir, QUOTES_FILE);
  
-  if (benchmark_handle_alloc(&benchmarkP, homedir, datafilesdir) != BENCHMARK_SUCCESS) {
+  if (benchmark_handle_alloc(&benchmarkP, 1, homedir, datafilesdir) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to allocate handle");
     goto failXit;
   }
@@ -111,17 +114,26 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
     goto failXit;
   }
 
+  BENCHMARK_CLEAR_CREATE_DB(benchmarkP);
   benchmark_debug(1, "Done with initial load ...");
 
-  return BENCHMARK_SUCCESS;
-  
+  ret = BENCHMARK_SUCCESS;
+  goto cleanup;
+
  failXit:
   if (benchmark_handle_free(benchmarkP) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to free handle");
-    goto failXit;
   }
 
-  return BENCHMARK_FAIL;
+  ret = BENCHMARK_FAIL;
+
+cleanup:
+  free(personal_file);
+  free(stocks_file);
+  free(currencies_file);
+  free(quotes_file);
+
+  return ret;
 }
 
 

@@ -20,7 +20,7 @@
 #include "benchmark_common.h"
 
 int 
-benchmark_handle_alloc(void **benchmark_handle, char *homedir, char *datafilesdir)
+benchmark_handle_alloc(void **benchmark_handle, int create, char *homedir, char *datafilesdir)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   int ret = BENCHMARK_FAIL;
@@ -30,9 +30,9 @@ benchmark_handle_alloc(void **benchmark_handle, char *homedir, char *datafilesdi
     goto failXit;
   }
 
-  memset(benchmarkP, 0, sizeof(*benchmarkP));
-  
   initialize_benchmarkdbs(benchmarkP);
+  benchmarkP->magic = BENCHMARK_MAGIC_WORD;
+  if (create) benchmarkP->createDBs = 1;
   benchmarkP->db_home_dir = homedir;
   benchmarkP->datafilesdir = datafilesdir;
   
@@ -46,7 +46,7 @@ benchmark_handle_alloc(void **benchmark_handle, char *homedir, char *datafilesdi
     goto failXit;
   }
 
-  benchmarkP->magic = BENCHMARK_MAGIC_WORD;
+  if (create) benchmarkP->createDBs = 0;
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   
   *benchmark_handle = benchmarkP;
@@ -63,6 +63,10 @@ benchmark_handle_free(void *benchmark_handle)
 {
   BENCHMARK_DBS *benchmarkP = benchmark_handle;
 
+  if (benchmarkP == NULL) {
+    return BENCHMARK_SUCCESS;
+  }
+
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   if (databases_close(benchmarkP) != BENCHMARK_SUCCESS) {
     return BENCHMARK_FAIL;
@@ -70,6 +74,15 @@ benchmark_handle_free(void *benchmark_handle)
   if (close_environment(benchmarkP) != BENCHMARK_SUCCESS) {
     return BENCHMARK_FAIL;
   }
+
+  free(benchmarkP->stocks_db_name);
+  free(benchmarkP->quotes_db_name);
+  free(benchmarkP->quotes_hist_db_name);
+  free(benchmarkP->portfolios_db_name);
+  free(benchmarkP->portfolios_sdb_name);
+  free(benchmarkP->accounts_db_name);
+  free(benchmarkP->currencies_db_name);
+  free(benchmarkP->personal_db_name);
 
   benchmarkP->magic = 0;
   free(benchmarkP);

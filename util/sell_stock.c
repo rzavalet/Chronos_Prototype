@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (benchmark_handle_alloc(&benchmarkCtxtP, CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != BENCHMARK_SUCCESS) {
+  if (benchmark_handle_alloc(&benchmarkCtxtP, 0, CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to perform initial load");
     goto failXit;
   }

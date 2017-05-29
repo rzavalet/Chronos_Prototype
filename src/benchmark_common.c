@@ -98,7 +98,8 @@ open_database(DB_ENV *envP,
               const char *file_name,     
               const char *program_name,  
               FILE *error_file_pointer,
-              int is_secondary)
+              int is_secondary,
+              int create)
 {
   DB *dbp;
   u_int32_t open_flags;
@@ -130,8 +131,10 @@ open_database(DB_ENV *envP,
   }
 
   /* Set the open flags */
-  open_flags = DB_CREATE |    /* Allow database creation */
-               DB_AUTO_COMMIT; 
+  open_flags = DB_AUTO_COMMIT; 
+
+  if (create)
+    open_flags |= DB_CREATE; /*  Allow database creation */
 
   /* Now open the database */
   ret = dbp->open(dbp,        /* Pointer to the database */
@@ -226,11 +229,13 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
     goto failXit;
   }
  
-  env_flags = DB_CREATE    |
-              DB_INIT_TXN  |
+  env_flags = DB_INIT_TXN  |
               DB_INIT_LOCK |
               DB_INIT_LOG  |
               DB_INIT_MPOOL;
+
+  if (benchmarkP->createDBs == 1) 
+    env_flags |= DB_CREATE;
 
 #ifdef CHRONOS_INMEMORY
  env_flags |= DB_SYSTEM_MEM;
@@ -314,7 +319,8 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                         &(benchmarkP->stocks_dbp),
                         benchmarkP->stocks_db_name,
                         program_name, error_fileP,
-                        PRIMARY_DB);
+                        PRIMARY_DB,
+                        benchmarkP->createDBs);
     if (ret != 0) {
       return (ret);
     }
@@ -325,7 +331,8 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                         &(benchmarkP->quotes_dbp),
                         benchmarkP->quotes_db_name,
                         program_name, error_fileP,
-                        PRIMARY_DB);
+                        PRIMARY_DB,
+                        benchmarkP->createDBs);
     if (ret != 0) {
       return (ret);
     }
@@ -336,7 +343,8 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                         &(benchmarkP->quotes_hist_dbp),
                         benchmarkP->quotes_hist_db_name,
                         program_name, error_fileP,
-                        PRIMARY_DB);
+                        PRIMARY_DB,
+                        benchmarkP->createDBs);
     if (ret != 0) {
       return (ret);
     }
@@ -347,7 +355,8 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                         &(benchmarkP->portfolios_dbp),
                         benchmarkP->portfolios_db_name,
                         program_name, error_fileP,
-                        PRIMARY_DB);
+                        PRIMARY_DB,
+                        benchmarkP->createDBs);
     if (ret != 0) {
       return (ret);
     }
@@ -356,7 +365,8 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                         &(benchmarkP->portfolios_sdbp),
                         benchmarkP->portfolios_sdb_name,
                         program_name, error_fileP,
-                        SECONDARY_DB);
+                        SECONDARY_DB,
+                        benchmarkP->createDBs);
     if (ret != 0) {
       return (ret);
     }
@@ -380,7 +390,8 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                         &(benchmarkP->accounts_dbp),
                         benchmarkP->accounts_db_name,
                         program_name, error_fileP,
-                        PRIMARY_DB);
+                        PRIMARY_DB,
+                        benchmarkP->createDBs);
     if (ret != 0) {
       return (ret);
     }
@@ -391,7 +402,8 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                         &(benchmarkP->currencies_dbp),
                         benchmarkP->currencies_db_name,
                         program_name, error_fileP,
-                        PRIMARY_DB);
+                        PRIMARY_DB,
+                        benchmarkP->createDBs);
     if (ret != 0) {
       return (ret);
     }
@@ -402,7 +414,8 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
                         &(benchmarkP->personal_dbp),
                         benchmarkP->personal_db_name,
                         program_name, error_fileP,
-                        PRIMARY_DB);
+                        PRIMARY_DB,
+                        benchmarkP->createDBs);
     if (ret != 0) {
       return (ret);
     }

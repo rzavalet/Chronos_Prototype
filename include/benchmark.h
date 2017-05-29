@@ -7,7 +7,7 @@
 #define BENCHMARK_FAIL      (1)
 
 int 
-benchmark_handle_alloc(void **benchmark_handle, char *homedir, char *datafilesdir);
+benchmark_handle_alloc(void **benchmark_handle, int create, char *homedir, char *datafilesdir);
 
 int 
 benchmark_handle_free(void *benchmark_handle);
@@ -69,12 +69,12 @@ extern int benchmark_debug_level;
   } while(0)
 
 #define benchmark_info(...) \
-  benchmark_msg("INFO", stdout, __VA_ARGS__)
+  benchmark_msg("INFO", stderr, __VA_ARGS__)
 
 #define benchmark_error(...) \
   benchmark_msg("ERROR", stderr, __VA_ARGS__)
 
 #define benchmark_warning(...) \
-  benchmark_msg("WARN", stdout, __VA_ARGS__)
+  benchmark_msg("WARN", stderr, __VA_ARGS__)
 
 #endif

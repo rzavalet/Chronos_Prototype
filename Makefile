@@ -22,12 +22,13 @@ SOLINK=		$(LIBTOOL) --mode=link cc -avoid-version -O0
 # C API.
 ##################################################
 #CFLAGS=		-c -I/usr/local/BerkeleyDB.6.2/include -O3 -g
-CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -g -Wall
+#CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -g -Wall
+CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -pg -g -Wall
 CC=		$(LIBTOOL) --mode=compile cc
 #CCLINK=		$(LIBTOOL) --mode=link cc -O3 
 CCLINK=		$(LIBTOOL) --mode=link cc
 
-LDFLAGS=	
+LDFLAGS= -pg
 LIBS=		 -lpthread
 
 ##################################################
@@ -112,12 +113,11 @@ query_stocks : query_stocks.lo $(OBJECTS)
 RunQueryStock : query_stocks $(UTILSDIR)/query_stocks_loop.sh
 	make init
 	rm -rf /tmp/upd*
-	sh $(UTILSDIR)/query_stocks_loop.sh	
+	sh $(UTILSDIR)/query_stocks_loop.sh
 
 TestQueryStock : query_stocks $(TESTDIR)/test_query_stocks.sh
 	make init
-	rm -rf /tmp/upd*
-	sh $(TESTDIR)/test_query_stocks.sh
+	sh $(TESTDIR)/test_query_stocks.sh	0 1000000
 
 ##################################################
 # Update Stocks utility

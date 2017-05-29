@@ -106,7 +106,8 @@ typedef enum {
 typedef struct benchmark_dbs {
 
   int magic;
-  
+  int createDBs;
+
   /* This is the environment */
   DB_ENV  *envP;
 
@@ -139,6 +140,9 @@ typedef struct benchmark_dbs {
   char *portfolios_sdb_name;
 
 } BENCHMARK_DBS;
+
+#define BENCHMARK_SET_CREATE_DB(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->createDBs = 1)
+#define BENCHMARK_CLEAR_CREATE_DB(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->createDBs = 0)
 
 /* TODO: Are these constants useful? */
 #define   ID_SZ           10

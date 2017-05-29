@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
   }
 
   /* Obtain a benchmark handle */
-  if (benchmark_handle_alloc(&serverContextP->benchmarkCtxtP, CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
+  if (benchmark_handle_alloc(&serverContextP->benchmarkCtxtP, 1, CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
     chronos_error("Failed to allocate handle");
     goto failXit;
   }
