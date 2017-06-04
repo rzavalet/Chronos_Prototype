@@ -12,6 +12,7 @@ usage()
 {
     fprintf(stderr, "update_stocks\n");
     fprintf(stderr, "\t-l \t\tPerform an initial load\n");
+    fprintf(stderr, "\t-c \t\tNumber of updates in this program run\n");
     fprintf(stderr, "\t-h \t\tThis help\n");
     fprintf(stderr, "\n");
     return (-1);
@@ -28,6 +29,7 @@ int main(int argc, char *argv[])
   int doInitialLoad = 0;
   int updateAll = 0;
   int updateValue = 0;
+  int num_reps = 100;                  /* By default, we update 100 rows per program execution */
   void *benchmarkCtxtP = NULL;
   int attemptedTxns = 0;
   int failedTxns = 0;
@@ -35,7 +37,7 @@ int main(int argc, char *argv[])
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "lhav:")) != EOF)
+  while ((ch = getopt(argc, argv, "lhav:c:")) != EOF)
   {
     switch (ch) {
       case 'a':
@@ -44,6 +46,10 @@ int main(int argc, char *argv[])
 
       case 'v':
         updateValue = atoi(optarg);
+        break;
+
+      case 'c':
+        num_reps = atoi(optarg);
         break;
 
       case 'l':
@@ -70,25 +76,32 @@ int main(int argc, char *argv[])
 
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN + 5;
   if (updateAll) {
+    /* If the updateAll flag is set, then we update all available symbols.
+     * The update value has to be received from the command line. Otherwise
+     * the update value is gonna be 0.
+     */
     int symbolToUpdate;
     for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++) {
       attemptedTxns ++;
-      symbolToUpdate = i;
+      symbolToUpdate = i;                             /* The symbol to update correspond to the for-loop idx */
       if (benchmark_refresh_quotes(benchmarkCtxtP, &symbolToUpdate, updateValue) != BENCHMARK_SUCCESS) {
         benchmark_error("Failed to update stock info");
-        /* Simply try another transaction */
-        failedTxns ++;
+        failedTxns ++;                                /* Simply try another transaction */
         continue;
       }
       successfulTxns ++;
     }
   }
   else {
-    for (i=0; i<100; i++) {
+    /* If the updateAll flag is not set, then we update a randomly chosen row.
+     * The update value is simply the index of the current iteration.
+     */
+    for (i=0; i<num_reps; i++) {
       attemptedTxns ++;
       if (benchmark_refresh_quotes(benchmarkCtxtP, NULL, i) != BENCHMARK_SUCCESS) {
         benchmark_error("Failed to update stock info");
-        /* Simply try another transaction */
+        /* For now, we don't care if the transaction failed. We simply
+	 * try another transaction right away. */
         failedTxns ++;
         continue;
       }

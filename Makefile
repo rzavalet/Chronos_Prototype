@@ -21,20 +21,30 @@ SOLINK=		$(LIBTOOL) --mode=link cc -avoid-version -O0
 ##################################################
 # C API.
 ##################################################
-#CFLAGS=		-c -I/usr/local/BerkeleyDB.6.2/include -O3 -g
-#CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -g -Wall
-CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -pg -g -Wall
-CC=		$(LIBTOOL) --mode=compile cc
-#CCLINK=		$(LIBTOOL) --mode=link cc -O3 
-CCLINK=		$(LIBTOOL) --mode=link cc
 
-LDFLAGS= -pg
+#----- With optimization ----------------
+#CFLAGS=		-c -I/usr/local/BerkeleyDB.6.2/include -O3 -g
+#CCLINK=		$(LIBTOOL) --mode=link cc -O3 
+#LDFLAGS=
+
+#----- With profiler ----------------
+#CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -pg -g -Wall
+#CCLINK=		$(LIBTOOL) --mode=link cc
+#LDFLAGS= -pg
+
+#----- With debugger ----------------
+CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -g -Wall
+CCLINK=		$(LIBTOOL) --mode=link cc
+LDFLAGS=
+
+
+CC=		$(LIBTOOL) --mode=compile cc
 LIBS=		 -lpthread
 
 ##################################################
 # Targets 
 ##################################################
-all: startup_server startup_client query_stocks update_stocks
+all: startup_server startup_client query_stocks update_stocks query_portfolios
 
 ##################################################
 # Compile and link
@@ -115,9 +125,13 @@ RunQueryStock : query_stocks $(UTILSDIR)/query_stocks_loop.sh
 	rm -rf /tmp/upd*
 	sh $(UTILSDIR)/query_stocks_loop.sh
 
+#-------------------------------------------------------------
+# Spawn multiple processes that query a set of stock prices
+# in parallel
+#-------------------------------------------------------------
 TestQueryStock : query_stocks $(TESTDIR)/test_query_stocks.sh
 	make init
-	sh $(TESTDIR)/test_query_stocks.sh	0 1000000
+	sh $(TESTDIR)/test_query_stocks.sh 100 1000
 
 ##################################################
 # Update Stocks utility
@@ -134,15 +148,20 @@ RunUpdateStock : update_stocks $(UTILSDIR)/update_stocks_loop.sh
 	rm -rf /tmp/upd*
 	sh $(UTILSDIR)/update_stocks_loop.sh	
 
+#-------------------------------------------------------------
+# Update the stocks rows multiple times sequentially
+#-------------------------------------------------------------
 TestUpdateAll : update_stocks $(TESTDIR)/test_update_all.sh
 	make init
-	rm -rf /tmp/upd*
-	sh $(TESTDIR)/test_update_all.sh
+	sh $(TESTDIR)/test_update_all.sh 1000
 
+#-------------------------------------------------------------
+# Spawn multiple processes that update a stock row in parallel.
+# All processes must finish succcessfully
+#-------------------------------------------------------------
 TestUpdateStock : update_stocks $(TESTDIR)/test_update_stocks.sh
 	make init
-	rm -rf /tmp/upd*
-	sh $(TESTDIR)/test_update_stocks.sh
+	sh $(TESTDIR)/test_update_stocks.sh 100 1000
 
 ##################################################
 # Sell Stocks utility
@@ -165,10 +184,37 @@ query_portfolios : query_portfolios.lo $(OBJECTS)
 	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) query_portfolios.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(BINDIR)/$@
 
+#-------------------------------------------------------------
+# Spawn multiple processes that query a specific user's portfolio
+#-------------------------------------------------------------
+TestQueryPortfolios : query_portfolios $(TESTDIR)/test_query_portfolios.sh
+	make init
+	sh $(TESTDIR)/test_query_portfolios.sh 100 1000
+
+#-------------------------------------------------------------
+# Spawn multiple processes that query all user's portfolios
+#-------------------------------------------------------------
+TestQueryAllPortfolios : query_portfolios $(TESTDIR)/test_dump_portfolios.sh
+	make init
+	sh $(TESTDIR)/test_dump_portfolios.sh 100
+
+#-------------------------------------------------------------
+# Spawn multiple processes that simply dump the portfolios table
+#-------------------------------------------------------------
+TestQueryOnlyPortfolios : query_portfolios $(TESTDIR)/test_dump_only_portfolios.sh
+	make init
+	sh $(TESTDIR)/test_dump_only_portfolios.sh 100
+
+##################################################
+# Run all the available tests
+##################################################
 Test : 
 	make TestQueryStock
 	make TestUpdateAll
 	make TestUpdateStock
+	make TestQueryPortfolios
+	make TestQueryAllPortfolios
+	make TestQueryOnlyPortfolios
 
 ##################################################
 # Useful targets for running the benchmark

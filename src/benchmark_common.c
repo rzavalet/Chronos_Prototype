@@ -860,7 +860,7 @@ cleanup:
 }
 
 int 
-show_portfolios(BENCHMARK_DBS *benchmarkP)
+show_portfolios(char *account_id, int showOnlyUsers, BENCHMARK_DBS *benchmarkP)
 {
   DBC *personal_cursorP = NULL;
   DB_TXN  *txnP = NULL;
@@ -901,24 +901,60 @@ show_portfolios(BENCHMARK_DBS *benchmarkP)
     goto failXit;
   }
 
-  while ((curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_READ_COMMITTED | DB_NEXT)) == 0)
-  {
-     benchmark_debug(4,"================= SHOWING PORTFOLIO ==============");
+  /* There are two cases, depending on whether the user id is provided or not.
+   *
+   * 1) If an user is provided, then only position the cursor on that user's record.
+   * 2) If a user is NOT provided, then let's print out information for every user.
+   */
+  if (account_id != NULL && account_id[0] != '\0') {
+    key.data = account_id;
+    key.size = (u_int32_t) strlen(account_id) + 1;
+    curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_SET | DB_READ_COMMITTED);
+    if (curRc == 0) {
+      benchmark_debug(4,"================= SHOWING PORTFOLIO ==============");
 
-    (void) show_personal_item(data.data);   
-    ret = show_one_portfolio(key.data, txnP, benchmarkP);
-    if (ret != BENCHMARK_SUCCESS) {
-      benchmark_error("Failed to retrieve portfolio");
-      //goto failXit;
+      /* Show user's information */
+      (void) show_personal_item(data.data);   
+
+      if (!showOnlyUsers) {
+        /* Now display his portfolios */
+        ret = show_one_portfolio(key.data, txnP, benchmarkP);
+        if (ret != BENCHMARK_SUCCESS) {
+          benchmark_error("Failed to retrieve portfolio");
+          //goto failXit;
+        }
+      }
+      numClients ++;
+
+      benchmark_debug(4,"==================================================\n");
+      
     }
-    numClients ++;
-
-    benchmark_debug(4,"==================================================\n");
   }
+  else {
+    while ((curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_READ_COMMITTED | DB_NEXT)) == 0)
+    {
+       benchmark_debug(4,"================= SHOWING PORTFOLIO ==============");
 
-  if (curRc != DB_NOTFOUND) {
-    envP->err(envP, ret, "[%s:%d] [%d] Error retrieving portfolios.", __FILE__, __LINE__, getpid());
-    goto failXit;
+      /* Show user's information */
+      (void) show_personal_item(data.data);   
+
+      if (!showOnlyUsers) {
+        /* Now display his portfolios */
+        ret = show_one_portfolio(key.data, txnP, benchmarkP);
+        if (ret != BENCHMARK_SUCCESS) {
+          benchmark_error("Failed to retrieve portfolio");
+          //goto failXit;
+        }
+      }
+      numClients ++;
+
+      benchmark_debug(4,"==================================================\n");
+    }
+
+    if (curRc != DB_NOTFOUND) {
+      envP->err(envP, ret, "[%s:%d] [%d] Error retrieving portfolios.", __FILE__, __LINE__, getpid());
+      goto failXit;
+    }
   }
 
   ret = personal_cursorP->close(personal_cursorP);
@@ -963,6 +999,16 @@ cleanup:
   return (rc);
 }
 
+/* 
+ * Given an account_id belonging to a user, show all the symbols associated
+ * with that user.
+ *
+ * PARAMETERS:
+ *    account_id      (IN) The account id we want to explore
+ *    txn_inP         (IN) A transaction could be already open. In that case,
+ *                         there is no need to create a new one.
+ *    benchmarkP      (IN) Pointer to the benchmark context
+ */
 int
 show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP)
 {
@@ -1006,7 +1052,9 @@ show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP
 
   key.data = account_id;
   key.size = ID_SZ;
-  
+ 
+  /* Create a cursor to iterate over the portfolios given the 
+   * user id. */
   ret = benchmarkP->portfolios_sdbp->cursor(benchmarkP->portfolios_sdbp, txnP, 
                                    &portfolio_cursorP, DB_READ_COMMITTED);
   if (ret != 0) {
@@ -1017,10 +1065,13 @@ show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP
   benchmark_info("PID: %d, %p : searching for account id: %s", getpid(), txnP, account_id);
 
 #if 1
+  /* Iterate over all portfolios in order to find those belonging to the user_id */
   while ((ret = portfolio_cursorP->pget(portfolio_cursorP, &key, &pkey, &pdata, DB_NEXT)) == 0)
   {
     /* TODO: Is it necessary this comparison? */
     if (strcmp(account_id, (char *)key.data) == 0) {
+      /* Finally, go ahead and display the information about this
+       * portfolio */
       (void) show_portfolio_item(pdata.data, &symbolIdP);
 
 #if 0

@@ -109,12 +109,13 @@ benchmark_initial_load(char *homedir, char *datafilesdir)
     goto failXit;
   }
  
+  BENCHMARK_CLEAR_CREATE_DB(benchmarkP);
+
   if (benchmark_handle_free(benchmarkP) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to free handle");
     goto failXit;
   }
 
-  BENCHMARK_CLEAR_CREATE_DB(benchmarkP);
   benchmark_debug(1, "Done with initial load ...");
 
   ret = BENCHMARK_SUCCESS;

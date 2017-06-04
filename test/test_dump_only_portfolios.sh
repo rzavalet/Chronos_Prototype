@@ -6,32 +6,32 @@ BINDIR=./bin
 #VALGRIND='/usr/local/bin/valgrind --tool=massif --stacks=yes --time-unit=ms --massif-out-file=/tmp/massif_output.%p'
 VALGRIND=
 
-PROGRAM="${VALGRIND} $BINDIR/query_stocks"
+QUERY="${VALGRIND} $BINDIR/query_portfolios"
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
   echo "Invalid number of arguments"
-  echo "Usage: ${ME} <repetitions> <rows_per_repetition>"
+  echo "Usage: ${ME} <repetitions>"
   exit 254
 fi
 
 REPS=$1
-ROWS=$2
-EXPECTED=$(echo "${REPS} * ${ROWS} + ${ROWS}" | bc -l)
+DEFAULT_PORTFOLIOS=100
+DEFAULT_ACCOUNTS=50
+EXPECTED=$(echo "${REPS} * ${DEFAULT_PORTFOLIOS}" | bc -l)
 
 echo "*** Setup:"
 echo "    Num repetitions: ${REPS}"
-echo "    Num updates per repetition: ${ROWS}"
 echo ""
 
 echo "*** Initial cleanup"
-rm -rf /tmp/cnt* /tmp/valgrind_output* /tmp/massif*
+rm -rf /tmp/cnt* /tmp/valgrind_output* /tmp/massif* /tmp/load
 if [ $? -ne 0 ]; then
   echo "FAILED: Error performing initial load"
   exit 254
 fi
 
 echo "*** Performing initial load"
-${PROGRAM} -l -c ${ROWS} > /tmp/cnt0 2>&1
+${QUERY} -l > /tmp/load 2>&1
 if [ $? -ne 0 ]; then
   echo "FAILED: Error performing initial load"
   exit 254
@@ -39,16 +39,16 @@ fi
 
 echo "*** Running test"
 echo "*** Running loop"
-echo "Program is: ${PROGRAM} -c ${ROWS}"
+echo "Program is: ${QUERY} -p"
 for i in $(seq 1 ${REPS}); do 
-  ${PROGRAM} -c ${ROWS} > /tmp/cnt$i 2>&1 &
+  ${QUERY} -p > /tmp/cnt$i 2>&1 &
 done
 
 wait
 
 echo "*** Checking output"
 echo "Expecting ${EXPECTED} rows read"
-count=$(grep 'Value of' /tmp/cnt* | wc -l)
+count=$(grep 'Portfolio ID' /tmp/cnt* | wc -l)
 
 if [ $count -ne $EXPECTED ]; then
   echo "FAILED: count: $count expected: $EXPECTED"
@@ -57,5 +57,6 @@ fi
 
 echo "PASSED"
 exit 0
+
 
 

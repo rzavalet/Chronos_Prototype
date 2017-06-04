@@ -236,7 +236,7 @@ void	initialize_benchmarkdbs(BENCHMARK_DBS *);
 void	set_db_filenames(BENCHMARK_DBS *my_stock);
 
 int 
-show_portfolios(BENCHMARK_DBS *benchmarkP);
+show_portfolios(char *account_id, int showOnlyUsers, BENCHMARK_DBS *benchmarkP);
 
 int 
 show_all_portfolios(BENCHMARK_DBS *benchmarkP);

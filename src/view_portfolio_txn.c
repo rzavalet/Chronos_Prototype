@@ -31,7 +31,7 @@ benchmark_view_portfolio(void *benchmark_handle)
   }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-  ret = show_portfolios(benchmarkP);
+  ret = show_portfolios(NULL, 0, benchmarkP);
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   return (ret);

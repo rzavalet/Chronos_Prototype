@@ -12,6 +12,9 @@ usage()
     fprintf(stderr, "query_stocks\n");
     fprintf(stderr, "\t-l \t\tPerform an initial load\n");
     fprintf(stderr, "\t-a \t\tQuery all records\n");
+    fprintf(stderr, "\t-c \t\tNumber of portfolios to show\n");
+    fprintf(stderr, "\t-u \t\tOnly show the user information\n");
+    fprintf(stderr, "\t-p \t\tOnly dump the portfolios information\n");
     fprintf(stderr, "\t-h \t\tThis help\n");
     fprintf(stderr, "\n");
     return (-1);
@@ -23,24 +26,40 @@ usage()
 
 int main(int argc, char *argv[]) 
 {
+  int i;
   int ch;
   int doInitialLoad = 0;
   int showAll = 0;
+  int onlyUsers = 0;
+  int onlyPortfolios = 0;
+  int num_reps = 100;
   int data_item = 0;
   int rc = BENCHMARK_SUCCESS;
   void *benchmarkCtxtP = NULL;
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "alh")) != EOF)
+  while ((ch = getopt(argc, argv, "paulc:h")) != EOF)
   {
     switch (ch) {
       case 'a':
         showAll = 1;
         break;
 
+      case 'u':
+        onlyUsers = 1;
+        break;
+
       case 'l':
         doInitialLoad = 1;
+        break;
+
+      case 'p':
+        onlyPortfolios = 1;
+        break;
+
+      case 'c':
+        num_reps = atoi(optarg);
         break;
 
       case 'h':
@@ -63,6 +82,7 @@ int main(int argc, char *argv[])
   }
 
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN + 5;
+
   if (doInitialLoad) {
     if (benchmark_load_portfolio(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
       benchmark_error("Failed to load portfolios");
@@ -71,19 +91,26 @@ int main(int argc, char *argv[])
   }
 
   if (showAll) {
-#if 1
-    if (show_portfolios(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
+    if (show_portfolios(NULL, onlyUsers, benchmarkCtxtP) != BENCHMARK_SUCCESS) {
       benchmark_error("Failed to retrieve all portfolios");
       goto failXit;
     }
-#else
+  }
+  else if (onlyPortfolios) {
     if (show_all_portfolios(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
       benchmark_error("Failed to retrieve all portfolios");
       goto failXit;
     }
-#endif
   }
   else {
+    for (i=0; i<num_reps; i++) {
+      char user_id[ID_SZ];
+      snprintf(user_id, sizeof(user_id), "%d", rand() % 50 + 1);
+      if (show_portfolios(user_id, onlyUsers, benchmarkCtxtP) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to retrieve all portfolios");
+        goto failXit;
+      }
+    }
   }
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 
