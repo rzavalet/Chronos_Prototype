@@ -242,13 +242,13 @@ int
 show_all_portfolios(BENCHMARK_DBS *benchmarkP);
 
 int 
-place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
+place_order(int account, char *symbol, float price, int amount, int force_apply, BENCHMARK_DBS *benchmarkP);
 
 int 
 update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP);
 
 int 
-sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP);
+sell_stocks(int account, char *symbol, float price, int amount, int force_apply, BENCHMARK_DBS *benchmarkP);
 
 int 
 show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP);

@@ -20,12 +20,12 @@
 #include "benchmark_common.h"
 
 int
-benchmark_purchase(void *benchmark_handle, int *symbolP)
+benchmark_purchase(int account, int symbol, float price, int amount, int force_apply, void *benchmark_handle, int *symbolP)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   int ret;
   int random_account;
-  int symbol;
+  int symbol_idx;
   char *random_symbol;
   float random_price;
   int random_amount;
@@ -36,13 +36,37 @@ benchmark_purchase(void *benchmark_handle, int *symbolP)
   }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-  random_account = (rand() % 50) + 1;
-  symbol = rand() % BENCHMARK_NUM_SYMBOLS;
-  random_symbol = symbolsArr[symbol];
-  random_price = rand() % 100 + 1;
-  random_amount = rand() % 20 + 1;
+
+  if (account < 0) {
+    random_account = (rand() % 50) + 1;
+  }
+  else {
+    random_account = account;
+  }
+
+  if (symbol < 0) {
+    symbol_idx = rand() % BENCHMARK_NUM_SYMBOLS;
+    random_symbol = symbolsArr[symbol_idx];
+  }
+  else {
+    random_symbol = symbolsArr[symbol];
+  }
+
+  if (price < 0) {
+    random_price = rand() % 100 + 1;
+  }
+  else {
+    random_price = price;
+  }
+
+  if (amount < 0) {
+    random_amount = rand() % 20 + 1;
+  }
+  else {
+    random_amount = amount;
+  }
  
-  ret = place_order(random_account, random_symbol, random_price, random_amount, benchmarkP);
+  ret = place_order(random_account, random_symbol, random_price, random_amount, force_apply, benchmarkP);
   if (ret != 0) {
     fprintf(stderr, "Could not place order\n");
     goto failXit;

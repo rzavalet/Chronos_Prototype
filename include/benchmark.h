@@ -2,6 +2,7 @@
 #define _BENCHMARK_H_
 
 #define BENCHMARK_NUM_SYMBOLS  (10)
+#define BENCHMARK_NUM_ACCOUNTS (50)
 
 #define BENCHMARK_SUCCESS   (0)
 #define BENCHMARK_FAIL      (1)
@@ -28,10 +29,10 @@ int
 benchmark_view_portfolio(void *benchmark_handle);
 
 int
-benchmark_purchase(void *benchmark_handle, int *symbolP);
+benchmark_purchase(int account, int symbol, float price, int amount, int force_apply, void *benchmark_handle, int *symbolP);
 
 int
-benchmark_sell(void *benchmark_handle, int *symbolP);
+benchmark_sell(int account, int symbol, float price, int amount, int force_apply, void *benchmark_handle, int *symbol_ret);
 
 
 /*---------------------------------

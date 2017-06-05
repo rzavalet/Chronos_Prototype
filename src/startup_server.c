@@ -1035,11 +1035,11 @@ processThread(void *argP)
         break;
 
       case CHRONOS_USER_TXN_PURCHASE:
-        txn_rc = benchmark_purchase(infoP->contextP->benchmarkCtxtP, &data_item);
+        txn_rc = benchmark_purchase(-1, -1, -1, -1, 0, infoP->contextP->benchmarkCtxtP, &data_item);
         break;
 
       case CHRONOS_USER_TXN_SALE:
-        txn_rc = benchmark_sell(infoP->contextP->benchmarkCtxtP, &data_item);
+        txn_rc = benchmark_sell(-1, -1, -1, -1, 0, infoP->contextP->benchmarkCtxtP, &data_item);
         break;
 
       default:

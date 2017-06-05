@@ -11,7 +11,10 @@ usage()
 {
     fprintf(stderr, "sell_stock\n");
     fprintf(stderr, "\t-l \t\tPerform an initial load\n");
-    fprintf(stderr, "\t-a \t\tQuery all records\n");
+    fprintf(stderr, "\t-a \t\tApply to all users\n");
+    fprintf(stderr, "\t-n \t\tNumber of iterations\n");
+    fprintf(stderr, "\t-p \t\tPrice\n");
+    fprintf(stderr, "\t-c \t\tAmount\n");
     fprintf(stderr, "\t-h \t\tThis help\n");
     fprintf(stderr, "\n");
     return (-1);
@@ -23,20 +26,36 @@ usage()
 
 int main(int argc, char *argv[]) 
 {
+  int i;
   int ch;
   int doInitialLoad = 0;
-  int showAll = 0;
+  int price = -1;
+  int amount = -1;
+  int apply_to_all = 0;
+  int num_of_iterations = 1;
   int data_item = 0;
   int rc = BENCHMARK_SUCCESS;
   void *benchmarkCtxtP = NULL;
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "alh")) != EOF)
+  while ((ch = getopt(argc, argv, "aun:p:c:lh")) != EOF)
   {
     switch (ch) {
       case 'a':
-        showAll = 1;
+        apply_to_all = 1;
+        break;
+
+      case 'n':
+        num_of_iterations = atoi(optarg);
+        break;
+
+      case 'p':
+        price = atoi(optarg);
+        break;
+
+      case 'c':
+        amount = atoi(optarg);
         break;
 
       case 'l':
@@ -70,12 +89,37 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (showAll) {
+  if (apply_to_all) {
+    for (i=0; i<BENCHMARK_NUM_ACCOUNTS; i++) {
+      int symbol_to_sell = rand() % BENCHMARK_NUM_SYMBOLS;
+      int account_to_sell = i + 1;
+
+      if (benchmark_sell(account_to_sell,
+                         symbol_to_sell,
+                         price,
+                         amount,
+                         1,     /* force_apply */
+                         benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to sell stocks");
+        goto failXit;
+      }
+    }
   }
   else {
-    if (benchmark_sell(benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
-      benchmark_error("Failed to sell stocks");
-      goto failXit;
+
+    for (i=0; i<num_of_iterations; i++) {
+      int symbol_to_sell = rand() % BENCHMARK_NUM_SYMBOLS;
+      int account_to_sell = rand() % BENCHMARK_NUM_ACCOUNTS + 1;
+
+      if (benchmark_sell(account_to_sell,
+                         symbol_to_sell,
+                         price,
+                         amount,
+                         1,     /* force_apply */
+                         benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to sell stocks");
+        goto failXit;
+      }
     }
   }
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;

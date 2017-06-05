@@ -9,12 +9,12 @@ int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 static int
 usage()
 {
-    fprintf(stderr, "query_stocks\n");
+    fprintf(stderr, "purchase_stock\n");
     fprintf(stderr, "\t-l \t\tPerform an initial load\n");
-    fprintf(stderr, "\t-a \t\tQuery all records\n");
-    fprintf(stderr, "\t-c \t\tNumber of portfolios to show\n");
-    fprintf(stderr, "\t-u \t\tOnly show the user information\n");
-    fprintf(stderr, "\t-p \t\tOnly dump the portfolios information\n");
+    fprintf(stderr, "\t-a \t\tApply to all users\n");
+    fprintf(stderr, "\t-n \t\tNumber of iterations\n");
+    fprintf(stderr, "\t-p \t\tPrice\n");
+    fprintf(stderr, "\t-c \t\tAmount\n");
     fprintf(stderr, "\t-h \t\tThis help\n");
     fprintf(stderr, "\n");
     return (-1);
@@ -29,37 +29,37 @@ int main(int argc, char *argv[])
   int i;
   int ch;
   int doInitialLoad = 0;
-  int showAll = 0;
-  int onlyUsers = 0;
-  int onlyPortfolios = 0;
-  int num_reps = 100;
+  int price = -1;
+  int amount = -1;
+  int apply_to_all = 0;
+  int num_of_iterations = 1;
   int data_item = 0;
   int rc = BENCHMARK_SUCCESS;
   void *benchmarkCtxtP = NULL;
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "paulc:h")) != EOF)
+  while ((ch = getopt(argc, argv, "aun:p:c:lh")) != EOF)
   {
     switch (ch) {
       case 'a':
-        showAll = 1;
+        apply_to_all = 1;
         break;
 
-      case 'u':
-        onlyUsers = 1;
+      case 'n':
+        num_of_iterations = atoi(optarg);
+        break;
+
+      case 'p':
+        price = atoi(optarg);
+        break;
+
+      case 'c':
+        amount = atoi(optarg);
         break;
 
       case 'l':
         doInitialLoad = 1;
-        break;
-
-      case 'p':
-        onlyPortfolios = 1;
-        break;
-
-      case 'c':
-        num_reps = atoi(optarg);
         break;
 
       case 'h':
@@ -82,7 +82,6 @@ int main(int argc, char *argv[])
   }
 
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN + 5;
-
   if (doInitialLoad) {
     if (benchmark_load_portfolio(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
       benchmark_error("Failed to load portfolios");
@@ -90,25 +89,36 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (showAll) {
-    if (show_portfolios(NULL, onlyUsers, benchmarkCtxtP) != BENCHMARK_SUCCESS) {
-      benchmark_error("Failed to retrieve all portfolios");
-      goto failXit;
-    }
-  }
-  else if (onlyPortfolios) {
-    if (show_all_portfolios(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
-      benchmark_error("Failed to retrieve all portfolios");
-      goto failXit;
+  if (apply_to_all) {
+    for (i=0; i<BENCHMARK_NUM_ACCOUNTS; i++) {
+      int symbol_to_purchase = rand() % BENCHMARK_NUM_SYMBOLS;
+      int account_to_purchase = i + 1;
+
+      if (benchmark_purchase(account_to_purchase,
+                         symbol_to_purchase,
+                         price,
+                         amount,
+                         1,     /* force_apply */
+                         benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to purchase stocks");
+        continue;
+      }
     }
   }
   else {
-    for (i=0; i<num_reps; i++) {
-      char user_id[ID_SZ];
-      snprintf(user_id, sizeof(user_id), "%d", rand() % BENCHMARK_NUM_ACCOUNTS + 1);
-      if (show_portfolios(user_id, onlyUsers, benchmarkCtxtP) != BENCHMARK_SUCCESS) {
-        benchmark_error("Failed to retrieve all portfolios");
-        goto failXit;
+
+    for (i=0; i<num_of_iterations; i++) {
+      int symbol_to_purchase = rand() % BENCHMARK_NUM_SYMBOLS;
+      int account_to_purchase = rand() % BENCHMARK_NUM_ACCOUNTS + 1;
+
+      if (benchmark_purchase(account_to_purchase,
+                         symbol_to_purchase,
+                         price,
+                         amount,
+                         1,     /* force_apply */
+                         benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
+        benchmark_error("Failed to purchase stocks");
+        continue;
       }
     }
   }
@@ -129,4 +139,5 @@ cleanup:
 
   return rc;
 }
+
 

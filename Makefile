@@ -44,7 +44,7 @@ LIBS=		 -lpthread
 ##################################################
 # Targets 
 ##################################################
-all: startup_server startup_client query_stocks update_stocks query_portfolios
+all: startup_server startup_client query_stocks update_stocks query_portfolios sell_stock purchase_stock
 
 ##################################################
 # Compile and link
@@ -171,6 +171,16 @@ sell_stock.lo : $(UTILSDIR)/sell_stock.c
 
 sell_stock : sell_stock.lo $(OBJECTS)
 	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) sell_stock.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
+	$(POSTLINK) $(BINDIR)/$@
+
+##################################################
+# Purchase Stocks utility
+##################################################
+purchase_stock.lo : $(UTILSDIR)/purchase_stock.c
+	$(CC) $(CFLAGS) $?
+
+purchase_stock : purchase_stock.lo $(OBJECTS)
+	$(CCLINK) -o $(BINDIR)/$@ $(LDFLAGS) purchase_stock.lo $(OBJECTS) $(DEF_LIB) $(LIBS)
 	$(POSTLINK) $(BINDIR)/$@
 
 

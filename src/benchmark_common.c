@@ -40,7 +40,7 @@ get_account_id(DB *sdbp,          /* secondary db handle */
               DBT *skey);         /* secondary db record's key */
 
 static int 
-create_portfolio(char *account_id, char *symbol, float price, int amount, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
+create_portfolio(char *account_id, char *symbol, float price, int amount, int force_apply, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
 
 int
 get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP);
@@ -802,7 +802,7 @@ show_all_portfolios(BENCHMARK_DBS *benchmarkP)
   ret = benchmarkP->portfolios_dbp->cursor(benchmarkP->portfolios_dbp, txnP,
                                     &cursorP, DB_READ_COMMITTED);
   if (ret != 0) {
-    envP->err(envP, ret, "[%s:%d] [%d] Failed to create cursor for Personal.", __FILE__, __LINE__, getpid());
+    envP->err(envP, ret, "[%s:%d] [%d] Failed to create cursor for Portfolio.", __FILE__, __LINE__, getpid());
     goto failXit;
   }
 
@@ -1473,16 +1473,20 @@ cleanup:
 
 
 int 
-sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP)
+sell_stocks(int account, char *symbol, float price, int amount, int force_apply, BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
   DB_TXN  *txnP = NULL;
   DB_ENV  *envP = NULL;
-  DBT      skey, data;
-  DBC     *cursorp = NULL; /* To iterate over the porfolios */
+  DBT      key_portfolio, data_portfolio;
+  DBT      key_quote, data_quote;
+  DBC     *cursor_portfolioP = NULL; /* To iterate over the porfolios */
+  DBC     *cursor_primary_portfolioP = NULL; /* To iterate over the porfolios */
+  DBC     *cursor_quoteP = NULL; /* To iterate over the quotes */
   char     account_id[ID_SZ];
   int      exists = 0;
-  PORTFOLIOS portfolio;
+  PORTFOLIOS *portfolioP = NULL;
+  QUOTE      *quoteP = NULL;
 
   if (benchmarkP == NULL) {
     goto failXit;
@@ -1496,8 +1500,10 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
     goto failXit;
   }
 
-  memset(&skey, 0, sizeof(DBT));
-  memset(&data, 0, sizeof(DBT));
+  memset(&key_portfolio, 0, sizeof(DBT));
+  memset(&data_portfolio, 0, sizeof(DBT));
+  memset(&key_quote, 0, sizeof(DBT));
+  memset(&data_quote, 0, sizeof(DBT));
 
   sprintf(account_id, "%d", account);
 
@@ -1523,39 +1529,88 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 
   benchmark_info("Looking up portfolio for account: %s and symbol: %s", account_id, symbol);
 
-  rc = get_portfolio(account_id, symbol, txnP, &cursorp, &skey, &data, benchmarkP);
-  if (rc != 0) {
+  /* get a cursor to the portfolio */
+  rc = get_portfolio(account_id, symbol, txnP, &cursor_portfolioP, &key_portfolio, &data_portfolio, benchmarkP);
+  if (rc != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to obtain portfolio.");
     goto failXit; 
   }
 
   /* Update whatever we need to update */
-  memcpy(&portfolio, &data.data, sizeof(PORTFOLIOS));
-  benchmark_info("Found portfolio for account: %s and symbol: %s -> %s", account_id, symbol, portfolio.portfolio_id);
-  if (portfolio.hold_stocks < amount) {
-    benchmark_error("Not enough stocks for this symbol. Have: %d, wanted: %d", portfolio.hold_stocks, amount);
+  portfolioP = data_portfolio.data;
+  benchmark_info("Found portfolio for account: %s and symbol: %s -> %s", account_id, symbol, portfolioP->portfolio_id);
+  if (portfolioP->hold_stocks < amount) {
+    benchmark_error("Not enough stocks for this symbol. Have: %d, wanted: %d", portfolioP->hold_stocks, amount);
     goto failXit; 
   }
-  portfolio.to_sell = 1;
-  portfolio.number_sell = amount;
-  portfolio.price_sell = price;
+
+  /* Perform the sell right away */
+  if (force_apply == 1) {
+    rc = get_stock(symbol, txnP, &cursor_quoteP, &key_quote, &data_quote, 0, benchmarkP);
+    if (rc != BENCHMARK_SUCCESS) {
+      benchmark_error("Could not find record.");
+      goto failXit; 
+    }
+    quoteP = data_quote.data;
+    benchmark_info("Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
+    if (quoteP->current_price >= price) {
+      benchmark_info("Selling %d stocks", amount);
+      portfolioP->hold_stocks -= amount;
+    }
+    else {
+      benchmark_info("Price is to low to process request");
+      goto failXit;
+    }
+  }
+  /* Save the request and let the system decide */
+  else {
+    benchmark_info("Setting sell request for stock: %s for %d at %f", symbol, amount, price);
+    portfolioP->to_sell = 1;
+    portfolioP->number_sell = amount;
+    portfolioP->price_sell = price;
+  }
 
   /* Save the record */
-  rc = cursorp->put(cursorp, &skey, &data, DB_CURRENT);
+  
+  rc = benchmarkP->portfolios_dbp->cursor(benchmarkP->portfolios_dbp, txnP,
+                                    &cursor_primary_portfolioP, DB_READ_COMMITTED);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to create cursor for Portfolio.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  rc = cursor_primary_portfolioP->get(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_SET);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Portfolio.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  rc = cursor_primary_portfolioP->put(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_CURRENT);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Could not update record.", __FILE__, __LINE__, getpid());
     goto failXit; 
   }
 
   /* Close the record */
-  if (cursorp != NULL) {
-    rc = cursorp->close(cursorp);
+  if (cursor_portfolioP != NULL) {
+    rc = cursor_portfolioP->close(cursor_portfolioP);
     if (rc != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
       goto failXit; 
     }
 
-    cursorp = NULL;
+    cursor_portfolioP = NULL;
+  }
+
+  /* Close the record */
+  if (cursor_primary_portfolioP != NULL) {
+    rc = cursor_primary_portfolioP->close(cursor_primary_portfolioP);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
+      goto failXit; 
+    }
+
+    cursor_primary_portfolioP = NULL;
   }
 
   rc = txnP->commit(txnP, 0);
@@ -1569,12 +1624,22 @@ sell_stocks(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 
 failXit:
   if (txnP != NULL) {
-    if (cursorp != NULL) {
-      rc = cursorp->close(cursorp);
+    if (cursor_portfolioP != NULL) {
+      rc = cursor_portfolioP->close(cursor_portfolioP);
       if (rc != 0) {
         envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
       }
-      cursorp = NULL;
+      cursor_portfolioP = NULL;
+    }
+
+    if (cursor_primary_portfolioP != NULL) {
+      rc = cursor_primary_portfolioP->close(cursor_primary_portfolioP);
+      if (rc != 0) {
+        envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
+        goto failXit; 
+      }
+
+      cursor_primary_portfolioP = NULL;
     }
 
     rc = txnP->abort(txnP);
@@ -1592,14 +1657,21 @@ cleanup:
 }
 
 int 
-place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *benchmarkP)
+place_order(int account, char *symbol, float price, int amount, int force_apply, BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
+  int exists = 0;
+  DBT      key_portfolio, data_portfolio;
+  DBT      key_quote, data_quote;
+  DBC     *cursor_portfolioP = NULL; /* To iterate over the porfolios */
+  DBC     *cursor_primary_portfolioP = NULL; /* To iterate over the porfolios */
+  DBC     *cursor_quoteP = NULL; /* To iterate over the quotes */
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
   DBT key, data;
   char    account_id[ID_SZ];
-  int exists = 0;
+  PORTFOLIOS *portfolioP = NULL;
+  QUOTE      *quoteP = NULL;
 
   envP = benchmarkP->envP;
   if (envP == NULL) {
@@ -1621,21 +1693,104 @@ place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
   /* 1) search the account */
   exists = account_exists(account_id, txnP, benchmarkP);
   if (!exists) {
-    fprintf(stderr, "%s: This user account does not exist.\n", __func__);
+    benchmark_error("This user account does not exist.");
     goto failXit; 
   }
 
   /* 2) search the symbol */
   exists = symbol_exists(symbol, txnP, benchmarkP);
   if (!exists) {
-    fprintf(stderr, "%s: This symbol does not exist.\n", __func__);
+    benchmark_error("This user account does not exist.");
     goto failXit; 
   }
 
+  benchmark_info("Looking up portfolio for account: %s and symbol: %s", account_id, symbol);
+
   /* 3) exists portfolio */
+  rc = get_portfolio(account_id, symbol, txnP, &cursor_portfolioP, &key_portfolio, &data_portfolio, benchmarkP);
+
   /* 3.1) if so, update */
+  if (rc == BENCHMARK_SUCCESS) {
+    portfolioP = data_portfolio.data;
+
+    /* Perform the sell right away */
+    if (force_apply == 1) {
+      rc = get_stock(symbol, txnP, &cursor_quoteP, &key_quote, &data_quote, 0, benchmarkP);
+      if (rc != BENCHMARK_SUCCESS) {
+        benchmark_error("Could not find record.");
+        goto failXit; 
+      }
+      quoteP = data_quote.data;
+      benchmark_info("Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
+      if (quoteP->current_price <= price) {
+        benchmark_info("Purchasing %d stocks", amount);
+        portfolioP->hold_stocks += amount;
+      }
+      else {
+        benchmark_info("Price is to high to process request");
+        goto failXit;
+      }
+    }
+    /* Save the request and let the system decide */
+    else {
+      benchmark_info("Setting buy request for stock: %s for %d at %f", symbol, amount, price);
+      portfolioP->to_buy = 1;
+      portfolioP->number_buy = amount;
+      portfolioP->price_buy = price;
+    }
+
+    /* Save the record */
+    
+    rc = benchmarkP->portfolios_dbp->cursor(benchmarkP->portfolios_dbp, txnP,
+                                      &cursor_primary_portfolioP, DB_READ_COMMITTED);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Failed to create cursor for Portfolio.", __FILE__, __LINE__, getpid());
+      goto failXit;
+    }
+
+    rc = cursor_primary_portfolioP->get(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_SET);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Portfolio.", __FILE__, __LINE__, getpid());
+      goto failXit;
+    }
+
+    rc = cursor_primary_portfolioP->put(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_CURRENT);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Could not update record.", __FILE__, __LINE__, getpid());
+      goto failXit; 
+    }
+
+  }
   /* 3.2) otherwise, create a new portfolio */
-  rc = create_portfolio(account_id, symbol, price, amount, txnP, benchmarkP);
+  else {
+    rc = create_portfolio(account_id, symbol, price, amount, force_apply, txnP, benchmarkP);
+    if (rc != BENCHMARK_SUCCESS) {
+      benchmark_error("Could not create new entry in portfolio");
+      goto failXit; 
+    }
+  }
+
+  /* Close the record */
+  if (cursor_portfolioP != NULL) {
+    rc = cursor_portfolioP->close(cursor_portfolioP);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
+      goto failXit; 
+    }
+
+    cursor_portfolioP = NULL;
+  }
+
+  /* Close the record */
+  if (cursor_primary_portfolioP != NULL) {
+    rc = cursor_primary_portfolioP->close(cursor_primary_portfolioP);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
+      goto failXit; 
+    }
+
+    cursor_primary_portfolioP = NULL;
+  }
 
   rc = txnP->commit(txnP, 0);
   if (rc != 0) {
@@ -1647,6 +1802,24 @@ place_order(int account, char *symbol, float price, int amount, BENCHMARK_DBS *b
 
 failXit:
   if (txnP != NULL) {
+    if (cursor_portfolioP != NULL) {
+      rc = cursor_portfolioP->close(cursor_portfolioP);
+      if (rc != 0) {
+        envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
+      }
+      cursor_portfolioP = NULL;
+    }
+
+    if (cursor_primary_portfolioP != NULL) {
+      rc = cursor_primary_portfolioP->close(cursor_primary_portfolioP);
+      if (rc != 0) {
+        envP->err(envP, rc, "[%s:%d] [%d] Could not close cursor.", __FILE__, __LINE__, getpid());
+        goto failXit; 
+      }
+
+      cursor_primary_portfolioP = NULL;
+    }
+
     rc = txnP->abort(txnP);
     if (rc != 0) {
       envP->err(envP, rc, "Transaction abort failed.");
@@ -1715,7 +1888,7 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
   
   while ((rc=cursorp->pget(cursorp, &key, &pkey, &pdata, DB_NEXT)) == 0)
   {
-    /* TODO: Is it necessary this comparison? */
+    /* TODO: Is this comparison needed? */
     if (strcmp(account_id, (char *)key.data) == 0) {
       if ( symbol != NULL && symbol[0] != '\0') {
         if (strcmp(symbol, ((PORTFOLIOS *)pdata.data)->symbol)) {
@@ -1945,7 +2118,7 @@ cleanup:
 }
 
 static int 
-create_portfolio(char *account_id, char *symbol, float price, int amount, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
+create_portfolio(char *account_id, char *symbol, float price, int amount, int force_apply, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
   PORTFOLIOS portfolio;
@@ -1965,13 +2138,21 @@ create_portfolio(char *account_id, char *symbol, float price, int amount, DB_TXN
   sprintf(portfolio.portfolio_id, "%d", (rand()%500) + 100);
   sprintf(portfolio.account_id, "%s", account_id);
   sprintf(portfolio.symbol, "%s", symbol);
-  portfolio.hold_stocks = 0;
   portfolio.to_sell = 0;
   portfolio.number_sell = 0;
   portfolio.price_sell = 0;
-  portfolio.to_buy = 1;
-  portfolio.number_buy = amount;
-  portfolio.price_buy = price;
+  if (force_apply) {
+    portfolio.hold_stocks = amount;
+    portfolio.to_buy = 0;
+    portfolio.number_buy = 0;
+    portfolio.price_buy = 0;
+  }
+  else {
+    portfolio.hold_stocks = 0;
+    portfolio.to_buy = 1;
+    portfolio.number_buy = amount;
+    portfolio.price_buy = price;
+  }
 
   /* Set up the database record's key */
   key.data = portfolio.portfolio_id;
