@@ -85,6 +85,7 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
     sprintf(portfolio.symbol, "%s", symbolsArr[(rand() % 10)]);
     portfolio.hold_stocks = (rand() % 100) + 1;
 
+#if 0
     portfolio.to_sell = portfolio.hold_stocks ? (rand()%2) : 0;
     portfolio.number_sell = portfolio.to_sell ? (rand() % portfolio.hold_stocks) + 1 : 0;
     portfolio.price_sell = portfolio.to_sell ? (rand() % 100) + 1 : 0;
@@ -92,7 +93,15 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
     portfolio.to_buy = (rand()%2);
     portfolio.number_buy = portfolio.to_buy ? (rand() % 20) +1 : 0;
     portfolio.price_buy = portfolio.to_buy ? (rand() % 100) + 1 : 0;
+#else
+    portfolio.to_sell = 0;
+    portfolio.number_sell = 0;
+    portfolio.price_sell = 0;
 
+    portfolio.to_buy = 0;
+    portfolio.number_buy = 0;
+    portfolio.price_buy = 0;
+#endif
     /* Now that we have our structure we can load it into the database. */
 
     /* Set up the database record's key */

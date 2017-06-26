@@ -9,6 +9,16 @@ int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 static int
 usage()
 {
+    static const char usage[] = "This script implements the selling of a given symbol for one or all users. \n"
+                                "Using -a, the selling is applied to all users in the system. Otherwise, the \n"
+                                "operation is performed in <number_of_iterations> users, as specified by the  \n"
+                                "-n option. \n\n"
+                                "The symbol is chosen randomly among  the list of available symbols.\n\n"
+                                "For the operation, user can specify the price to sell the stock (-p option)  \n"
+                                "and the amount of stocks (-c option).\n\n"
+                                "Finally, an initial load can be specified with the option -l.\n\n"
+                                ;
+    fprintf(stderr, "%s", usage);
     fprintf(stderr, "sell_stock\n");
     fprintf(stderr, "\t-l \t\tPerform an initial load\n");
     fprintf(stderr, "\t-a \t\tApply to all users\n");
@@ -39,7 +49,7 @@ int main(int argc, char *argv[])
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "aun:p:c:lh")) != EOF)
+  while ((ch = getopt(argc, argv, "an:p:c:lh")) != EOF)
   {
     switch (ch) {
       case 'a':

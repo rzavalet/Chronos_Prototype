@@ -9,12 +9,23 @@ int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 static int
 usage()
 {
-    fprintf(stderr, "purchase_stock\n");
-    fprintf(stderr, "\t-l \t\tPerform an initial load\n");
+    static const char usage[] = "This script implements the purchase of a given symbol for one or all users. \n"
+                                "Using -a, the purchase is applied to all users in the system. Otherwise, the \n"
+                                "operation is performed for the specified user and symbol \n\n"
+                                "If no symbol is provided, then the symbol is chosen randomly among  the list \n"
+                                "of available symbols.\n\n"
+                                "For the operation, user can specify the price to sell the stock (-p option)  \n"
+                                "and the amount of stocks (-c option).\n\n"
+                                "Finally, an initial load can be specified with the option -l.\n\n"
+                                ;
+    fprintf(stderr, "%s", usage);
+    fprintf(stderr, "purchase_stock\n\n");
     fprintf(stderr, "\t-a \t\tApply to all users\n");
-    fprintf(stderr, "\t-n \t\tNumber of iterations\n");
+    fprintf(stderr, "\t-s \t\tSymbol\n");
+    fprintf(stderr, "\t-u \t\tUser Id\n");
     fprintf(stderr, "\t-p \t\tPrice\n");
     fprintf(stderr, "\t-c \t\tAmount\n");
+    fprintf(stderr, "\t-l \t\tPerform an initial load\n");
     fprintf(stderr, "\t-h \t\tThis help\n");
     fprintf(stderr, "\n");
     return (-1);
@@ -32,22 +43,26 @@ int main(int argc, char *argv[])
   int price = -1;
   int amount = -1;
   int apply_to_all = 0;
-  int num_of_iterations = 1;
-  int data_item = 0;
+  int symbol_to_purchase = -1;
+  int account_to_purchase = -1;
   int rc = BENCHMARK_SUCCESS;
   void *benchmarkCtxtP = NULL;
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "aun:p:c:lh")) != EOF)
+  while ((ch = getopt(argc, argv, "as:u:p:c:lh")) != EOF)
   {
     switch (ch) {
       case 'a':
         apply_to_all = 1;
         break;
 
-      case 'n':
-        num_of_iterations = atoi(optarg);
+      case 's':
+        symbol_to_purchase = atoi(optarg);
+        break;
+
+      case 'u':
+        account_to_purchase = atoi(optarg);
         break;
 
       case 'p':
@@ -91,8 +106,10 @@ int main(int argc, char *argv[])
 
   if (apply_to_all) {
     for (i=0; i<BENCHMARK_NUM_ACCOUNTS; i++) {
-      int symbol_to_purchase = rand() % BENCHMARK_NUM_SYMBOLS;
-      int account_to_purchase = i + 1;
+      if (symbol_to_purchase < 0)
+        symbol_to_purchase = rand() % BENCHMARK_NUM_SYMBOLS;
+
+      account_to_purchase = i + 1;
 
       if (benchmark_purchase(account_to_purchase,
                          symbol_to_purchase,
@@ -106,26 +123,20 @@ int main(int argc, char *argv[])
     }
   }
   else {
+    assert(0 <= symbol_to_purchase && symbol_to_purchase < BENCHMARK_NUM_SYMBOLS);
+    assert(0 <= account_to_purchase && account_to_purchase < BENCHMARK_NUM_ACCOUNTS + 1);
 
-    for (i=0; i<num_of_iterations; i++) {
-      int symbol_to_purchase = rand() % BENCHMARK_NUM_SYMBOLS;
-      int account_to_purchase = rand() % BENCHMARK_NUM_ACCOUNTS + 1;
-
-      if (benchmark_purchase(account_to_purchase,
-                         symbol_to_purchase,
-                         price,
-                         amount,
-                         1,     /* force_apply */
-                         benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
-        benchmark_error("Failed to purchase stocks");
-        continue;
-      }
+    if (benchmark_purchase(account_to_purchase,
+                       symbol_to_purchase,
+                       price,
+                       amount,
+                       1,     /* force_apply */
+                       benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
+      benchmark_error("Failed to purchase stocks");
     }
   }
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 
-  benchmark_info("** Retrieved info for: %d", data_item);
-  
   goto cleanup;
 
 failXit:

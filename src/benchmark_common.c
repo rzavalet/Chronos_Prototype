@@ -1763,6 +1763,24 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
   }
   /* 3.2) otherwise, create a new portfolio */
   else {
+    if (force_apply == 1) {
+      rc = get_stock(symbol, txnP, &cursor_quoteP, &key_quote, &data_quote, 0, benchmarkP);
+      if (rc != BENCHMARK_SUCCESS) {
+        benchmark_error("Could not find record.");
+        goto failXit; 
+      }
+      quoteP = data_quote.data;
+      benchmark_info("Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
+      if (quoteP->current_price <= price) {
+        benchmark_info("Purchasing %d stocks", amount);
+      }
+      else {
+        benchmark_info("Price is to high to process request");
+        goto failXit;
+      }
+    }
+
+    benchmark_info("User: %s doesn't hold stocks of symbol: %s. Placing order....", account_id, symbol);
     rc = create_portfolio(account_id, symbol, price, amount, force_apply, txnP, benchmarkP);
     if (rc != BENCHMARK_SUCCESS) {
       benchmark_error("Could not create new entry in portfolio");
