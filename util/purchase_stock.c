@@ -105,11 +105,11 @@ int main(int argc, char *argv[])
   }
 
   if (apply_to_all) {
-    for (i=0; i<BENCHMARK_NUM_ACCOUNTS; i++) {
+    for (i=1; i<BENCHMARK_NUM_ACCOUNTS; i++) {
       if (symbol_to_purchase < 0)
         symbol_to_purchase = rand() % BENCHMARK_NUM_SYMBOLS;
 
-      account_to_purchase = i + 1;
+      account_to_purchase = i;
 
       if (benchmark_purchase(account_to_purchase,
                          symbol_to_purchase,
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
   }
   else {
     assert(0 <= symbol_to_purchase && symbol_to_purchase < BENCHMARK_NUM_SYMBOLS);
-    assert(0 <= account_to_purchase && account_to_purchase < BENCHMARK_NUM_ACCOUNTS + 1);
+    assert(1 <= account_to_purchase && account_to_purchase < BENCHMARK_NUM_ACCOUNTS + 1);
 
     if (benchmark_purchase(account_to_purchase,
                        symbol_to_purchase,

@@ -20,11 +20,12 @@ usage()
                                 ;
     fprintf(stderr, "%s", usage);
     fprintf(stderr, "sell_stock\n");
-    fprintf(stderr, "\t-l \t\tPerform an initial load\n");
     fprintf(stderr, "\t-a \t\tApply to all users\n");
-    fprintf(stderr, "\t-n \t\tNumber of iterations\n");
+    fprintf(stderr, "\t-s \t\tSymbol\n");
+    fprintf(stderr, "\t-u \t\tUser Id\n");
     fprintf(stderr, "\t-p \t\tPrice\n");
     fprintf(stderr, "\t-c \t\tAmount\n");
+    fprintf(stderr, "\t-l \t\tPerform an initial load\n");
     fprintf(stderr, "\t-h \t\tThis help\n");
     fprintf(stderr, "\n");
     return (-1);
@@ -42,22 +43,27 @@ int main(int argc, char *argv[])
   int price = -1;
   int amount = -1;
   int apply_to_all = 0;
-  int num_of_iterations = 1;
+  int symbol_to_sell = -1;
+  int account_to_sell = -1;
   int data_item = 0;
   int rc = BENCHMARK_SUCCESS;
   void *benchmarkCtxtP = NULL;
 
   srand(time(NULL));
 
-  while ((ch = getopt(argc, argv, "an:p:c:lh")) != EOF)
+  while ((ch = getopt(argc, argv, "as:u:p:c:lh")) != EOF)
   {
     switch (ch) {
       case 'a':
         apply_to_all = 1;
         break;
 
-      case 'n':
-        num_of_iterations = atoi(optarg);
+      case 's':
+        symbol_to_sell = atoi(optarg);
+        break;
+
+      case 'u':
+        account_to_sell = atoi(optarg);
         break;
 
       case 'p':
@@ -100,9 +106,11 @@ int main(int argc, char *argv[])
   }
 
   if (apply_to_all) {
-    for (i=0; i<BENCHMARK_NUM_ACCOUNTS; i++) {
-      int symbol_to_sell = rand() % BENCHMARK_NUM_SYMBOLS;
-      int account_to_sell = i + 1;
+    for (i=1; i<BENCHMARK_NUM_ACCOUNTS; i++) {
+      if (symbol_to_sell < 0)
+        symbol_to_sell = rand() % BENCHMARK_NUM_SYMBOLS;
+
+      account_to_sell = i;
 
       if (benchmark_sell(account_to_sell,
                          symbol_to_sell,
@@ -111,25 +119,22 @@ int main(int argc, char *argv[])
                          1,     /* force_apply */
                          benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
         benchmark_error("Failed to sell stocks");
-        goto failXit;
+        continue;
       }
     }
   }
   else {
 
-    for (i=0; i<num_of_iterations; i++) {
-      int symbol_to_sell = rand() % BENCHMARK_NUM_SYMBOLS;
-      int account_to_sell = rand() % BENCHMARK_NUM_ACCOUNTS + 1;
+    assert(0 <= symbol_to_sell && symbol_to_sell < BENCHMARK_NUM_SYMBOLS);
+    assert(1 <= account_to_sell && account_to_sell < BENCHMARK_NUM_ACCOUNTS + 1);
 
-      if (benchmark_sell(account_to_sell,
-                         symbol_to_sell,
-                         price,
-                         amount,
-                         1,     /* force_apply */
-                         benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
-        benchmark_error("Failed to sell stocks");
-        goto failXit;
-      }
+    if (benchmark_sell(account_to_sell,
+                       symbol_to_sell,
+                       price,
+                       amount,
+                       1,     /* force_apply */
+                       benchmarkCtxtP, NULL) != BENCHMARK_SUCCESS) {
+      benchmark_error("Failed to sell stocks");
     }
   }
   benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;

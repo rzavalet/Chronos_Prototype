@@ -1544,6 +1544,22 @@ sell_stocks(int account, char *symbol, float price, int amount, int force_apply,
     goto failXit; 
   }
 
+  /* Locate the porfolio in the primary database */
+  rc = benchmarkP->portfolios_dbp->cursor(benchmarkP->portfolios_dbp, txnP,
+                                    &cursor_primary_portfolioP, DB_READ_COMMITTED);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to create cursor for Portfolio.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  rc = cursor_primary_portfolioP->get(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_SET);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Portfolio.", __FILE__, __LINE__, getpid());
+    goto failXit;
+  }
+
+  portfolioP = data_portfolio.data;
+
   /* Perform the sell right away */
   if (force_apply == 1) {
     rc = get_stock(symbol, txnP, &cursor_quoteP, &key_quote, &data_quote, 0, benchmarkP);
@@ -1571,20 +1587,6 @@ sell_stocks(int account, char *symbol, float price, int amount, int force_apply,
   }
 
   /* Save the record */
-  
-  rc = benchmarkP->portfolios_dbp->cursor(benchmarkP->portfolios_dbp, txnP,
-                                    &cursor_primary_portfolioP, DB_READ_COMMITTED);
-  if (rc != 0) {
-    envP->err(envP, rc, "[%s:%d] [%d] Failed to create cursor for Portfolio.", __FILE__, __LINE__, getpid());
-    goto failXit;
-  }
-
-  rc = cursor_primary_portfolioP->get(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_SET);
-  if (rc != 0) {
-    envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Portfolio.", __FILE__, __LINE__, getpid());
-    goto failXit;
-  }
-
   rc = cursor_primary_portfolioP->put(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_CURRENT);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Could not update record.", __FILE__, __LINE__, getpid());
@@ -1711,6 +1713,19 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
 
   /* 3.1) if so, update */
   if (rc == BENCHMARK_SUCCESS) {
+    rc = benchmarkP->portfolios_dbp->cursor(benchmarkP->portfolios_dbp, txnP,
+                                      &cursor_primary_portfolioP, DB_READ_COMMITTED);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Failed to create cursor for Portfolio.", __FILE__, __LINE__, getpid());
+      goto failXit;
+    }
+
+    rc = cursor_primary_portfolioP->get(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_SET);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Portfolio.", __FILE__, __LINE__, getpid());
+      goto failXit;
+    }
+
     portfolioP = data_portfolio.data;
 
     /* Perform the sell right away */
@@ -1740,19 +1755,6 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
     }
 
     /* Save the record */
-    
-    rc = benchmarkP->portfolios_dbp->cursor(benchmarkP->portfolios_dbp, txnP,
-                                      &cursor_primary_portfolioP, DB_READ_COMMITTED);
-    if (rc != 0) {
-      envP->err(envP, rc, "[%s:%d] [%d] Failed to create cursor for Portfolio.", __FILE__, __LINE__, getpid());
-      goto failXit;
-    }
-
-    rc = cursor_primary_portfolioP->get(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_SET);
-    if (rc != 0) {
-      envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Portfolio.", __FILE__, __LINE__, getpid());
-      goto failXit;
-    }
 
     rc = cursor_primary_portfolioP->put(cursor_primary_portfolioP, &key_portfolio, &data_portfolio, DB_CURRENT);
     if (rc != 0) {
@@ -1909,7 +1911,7 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
     /* TODO: Is this comparison needed? */
     if (strcmp(account_id, (char *)key.data) == 0) {
       if ( symbol != NULL && symbol[0] != '\0') {
-        if (strcmp(symbol, ((PORTFOLIOS *)pdata.data)->symbol)) {
+        if (strcmp(symbol, ((PORTFOLIOS *)pdata.data)->symbol) == 0) {
           rc = BENCHMARK_SUCCESS;
           goto cleanup;
         }
@@ -1918,6 +1920,8 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
   }
 
 failXit:
+  benchmark_error("Could not find symbol %s for account_id: %s", symbol, account_id);
+
   rc = cursorp->close(cursorp);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor for Portfolios.", __FILE__, __LINE__, getpid());
