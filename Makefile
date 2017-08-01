@@ -131,7 +131,7 @@ RunQueryStock : query_stocks $(UTILSDIR)/query_stocks_loop.sh
 #-------------------------------------------------------------
 TestQueryStock : query_stocks $(TESTDIR)/test_query_stocks.sh
 	make init
-	sh $(TESTDIR)/test_query_stocks.sh 100 1000
+	$(TESTDIR)/test_query_stocks.sh 100 1000
 
 ##################################################
 # Update Stocks utility
@@ -153,7 +153,7 @@ RunUpdateStock : update_stocks $(UTILSDIR)/update_stocks_loop.sh
 #-------------------------------------------------------------
 TestUpdateAll : update_stocks $(TESTDIR)/test_update_all.sh
 	make init
-	sh $(TESTDIR)/test_update_all.sh 1000
+	$(TESTDIR)/test_update_all.sh 1000
 
 #-------------------------------------------------------------
 # Spawn multiple processes that update a stock row in parallel.
@@ -161,7 +161,7 @@ TestUpdateAll : update_stocks $(TESTDIR)/test_update_all.sh
 #-------------------------------------------------------------
 TestUpdateStock : update_stocks $(TESTDIR)/test_update_stocks.sh
 	make init
-	sh $(TESTDIR)/test_update_stocks.sh 100 1000
+	$(TESTDIR)/test_update_stocks.sh 100 1000
 
 ##################################################
 # Sell Stocks utility
@@ -199,21 +199,21 @@ query_portfolios : query_portfolios.lo $(OBJECTS)
 #-------------------------------------------------------------
 TestQueryPortfolios : query_portfolios $(TESTDIR)/test_query_portfolios.sh
 	make init
-	sh $(TESTDIR)/test_query_portfolios.sh 100 1000
+	$(TESTDIR)/test_query_portfolios.sh 100 1000
 
 #-------------------------------------------------------------
 # Spawn multiple processes that query all user's portfolios
 #-------------------------------------------------------------
 TestQueryAllPortfolios : query_portfolios $(TESTDIR)/test_dump_portfolios.sh
 	make init
-	sh $(TESTDIR)/test_dump_portfolios.sh 100
+	$(TESTDIR)/test_dump_portfolios.sh 100
 
 #-------------------------------------------------------------
 # Spawn multiple processes that simply dump the portfolios table
 #-------------------------------------------------------------
 TestQueryOnlyPortfolios : query_portfolios $(TESTDIR)/test_dump_only_portfolios.sh
 	make init
-	sh $(TESTDIR)/test_dump_only_portfolios.sh 100
+	$(TESTDIR)/test_dump_only_portfolios.sh 100
 
 ##################################################
 # Run all the available tests

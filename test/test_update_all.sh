@@ -55,7 +55,7 @@ fi
 echo "*** Entering update loop"
 for i in $(seq 1 $REPS); do
     UPDATE_VALUE=$RANDOM
-    
+    echo "Update value is: ${RANDOM}" 
     ${UPDATE} -a -v ${UPDATE_VALUE} > /tmp/upd${i} 2>&1
     cnt=$(grep 'Attempted transactions: 10, Successful transactions: 10, Failed transactions: 0' /tmp/upd$i  | wc -l)
     if [ $cnt -ne 1 ]; then
