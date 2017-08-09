@@ -33,7 +33,7 @@ SOLINK=		$(LIBTOOL) --mode=link cc -avoid-version -O0
 #LDFLAGS= -pg
 
 #----- With debugger ----------------
-CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -g -Wall
+CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -g -Wall -DCHRONOS_DEBUG -DCHRONOS_UPDATE_TRANSACTIONS_ENABLED 
 CCLINK=		$(LIBTOOL) --mode=link cc
 LDFLAGS=
 

@@ -116,8 +116,8 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
         break;
 
       case 'r':
-        contextP->duration = atoi(optarg);
-        chronos_debug(2, "*** Duration: %d", contextP->duration);
+        contextP->duration_sec = atof(optarg);
+        chronos_debug(2, "*** Duration: %lf", contextP->duration_sec);
         break;
 
       case 'a':
@@ -161,8 +161,8 @@ processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_
     goto failXit;
   }
 
-  if (contextP->duration <=0) {
-    chronos_error("duration must be > 0");
+  if (contextP->duration_sec <=0) {
+    chronos_error("duration_sec must be > 0");
     goto failXit;
   }
 

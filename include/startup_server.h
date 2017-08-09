@@ -79,12 +79,8 @@ typedef struct {
   chronos_time_t txn_start;
 } txn_info_t;
   
-#define BSIZE 1024
 typedef struct {
-#if 0
-  char buf[BSIZE]; /* we actually store TXN identifiers -- see chronos.h */
-#endif
-  txn_info_t txnInfoArr[BSIZE];
+  txn_info_t txnInfoArr[CHRONOS_READY_QUEUE_SIZE];
   int occupied;
   int nextin;
   int nextout;
@@ -120,11 +116,19 @@ typedef struct chronosServerContext_t {
    * data in the system periodically */
   int numUpdateThreads;
 
-  int duration;
+  /* The duration of one chronos experiment */
+  double duration_sec;
   
-  long long validityInterval;
+  /* Each data item is associated with a validity interval,
+   * this is the initial value. */
+  double validityIntervalms;
+
+  /* Each data item is refreshed in a certain interval.
+   * This update period is related to the validityIntervalms */
+  double updatePeriodMS;
+
   int serverPort;
-  struct timespec updatePeriod;
+
   int runningMode;
   int debugLevel;
   chronosServerStats_t *stats;
@@ -151,13 +155,23 @@ typedef struct chronosServerContext_t {
   long long FlexibleValidityInterval[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
 
   int numSamples;
-  int samplingPeriod;
+
+  /* Metrics are obtained by sampling. This is the sampling interval */
+  double samplingPeriodSec;
+
   int currentSlot;
   struct timespec start;
   struct timespec end;
-  timer_t timer_id;
-  struct itimerspec timer_et;
-  struct sigevent timer_ev;
+
+  /* Variables for the sampling timer */
+  timer_t sampling_timer_id;
+  struct itimerspec sampling_timer_et;
+  struct sigevent sampling_timer_ev;
+
+  /* Variables for the experiment timer */
+  timer_t experiment_timer_id;
+  struct itimerspec experiment_timer_et;
+  struct sigevent experiment_timer_ev;
 
   /* These fields are for the benchmark framework */
   void *benchmarkCtxtP;
@@ -174,33 +188,4 @@ typedef struct chronosServerThreadInfo_t {
   chronosServerContext_t *contextP;
 } chronosServerThreadInfo_t;
 
-static int
-processArguments(int argc, char *argv[], chronosServerContext_t *contextP);
-
-static void
-chronos_usage();
-
-static void *
-daListener(void *argP);
-
-static void *
-daHandler(void *argP);
-
-static void *
-updateThread(void *argP);
-
-static void *
-processThread(void *argP);
-
-static int
-dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP);
-
-static int
-waitPeriod(struct timespec updatePeriod);
-
-static int
-updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chronosServerThreadInfo_t *infoP);
-
-static int
-performanceMonitor(chronos_time_t *begin_time, chronos_time_t *end_time, chronos_user_transaction_t txn_type, chronosServerThreadInfo_t *infoP);
 #endif

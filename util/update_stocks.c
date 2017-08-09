@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN + 5;
+  //benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN + 5;
   if (updateAll) {
     /* If the updateAll flag is set, then we update all available symbols.
      * The update value has to be received from the command line. Otherwise
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
       successfulTxns ++;
     }
   }
-  benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
+  //benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 
   if (benchmark_handle_free(benchmarkCtxtP) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to free handle");

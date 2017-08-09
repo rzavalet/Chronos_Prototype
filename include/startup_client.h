@@ -28,7 +28,7 @@ typedef struct chronosClientContext_t {
   char serverAddress[256];
   int serverPort;
   int numTransactions;
-  int duration;
+  double duration_sec;
   int percentageViewStockTransactions;
   int debugLevel;
 } chronosClientContext_t;
