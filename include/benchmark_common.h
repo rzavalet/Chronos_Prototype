@@ -28,7 +28,6 @@
 #include "benchmark.h"
 
 #define BENCHMARK_MAGIC_WORD   (0xCAFE)
-#define CHRONOS_INMEMORY
 #define CHRONOS_SHMKEY 35
 #define CHRONOS_PORTFOLIOS_NUM	100
 
@@ -139,8 +138,13 @@ typedef struct benchmark_dbs {
   /* secondary databases */
   char *portfolios_sdb_name;
 
+  /* How many stores do we have in the system */
+  int   number_stocks;
+  char *quotes_list[4000];
+
 } BENCHMARK_DBS;
 
+#define BENCHMARK_NUM_STOCKS(_benchmarkP)    (((BENCHMARK_DBS *)_benchmarkP)->number_stocks)
 #define BENCHMARK_SET_CREATE_DB(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->createDBs = 1)
 #define BENCHMARK_CLEAR_CREATE_DB(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->createDBs = 0)
 

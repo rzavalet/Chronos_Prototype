@@ -18,6 +18,7 @@
 
 #include "benchmark.h"
 #include "benchmark_common.h"
+#include "benchmark_stocks.h"
 
 int 
 benchmark_handle_alloc(void **benchmark_handle, int create, char *homedir, char *datafilesdir)
@@ -42,6 +43,12 @@ benchmark_handle_alloc(void **benchmark_handle, int create, char *homedir, char 
   ret = databases_setup(benchmarkP, ALL_DBS_FLAG, __FILE__, stderr);
   if (ret != 0) {
     benchmark_error("Error opening databases.");
+    databases_close(benchmarkP);
+    goto failXit;
+  }
+
+  if (benchmark_stocks_stats_get(benchmarkP) != BENCHMARK_SUCCESS) {
+    benchmark_error("Could not obtain stats for Stocks table.");
     databases_close(benchmarkP);
     goto failXit;
   }
@@ -109,7 +116,7 @@ benchmark_view_stock(void *benchmark_handle, int *symbolP)
     symbol = *symbolP;
   }
   else {
-    symbol = rand() % BENCHMARK_NUM_SYMBOLS;
+    symbol = rand() % benchmarkP->number_stocks;
   } 
 
   random_symbol = symbolsArr[symbol];

@@ -33,7 +33,7 @@ SOLINK=		$(LIBTOOL) --mode=link cc -avoid-version -O0
 #LDFLAGS= -pg
 
 #----- With debugger ----------------
-CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -g -Wall -DCHRONOS_DEBUG -DCHRONOS_UPDATE_TRANSACTIONS_ENABLED 
+CFLAGS=		-c -I$(INCLUDEDIR) -I/usr/local/BerkeleyDB.6.2/include -g -Wall -DCHRONOS_DEBUG -DCHRONOS_UPDATE_TRANSACTIONS_ENABLED -DBENCHMARK_DEBUG
 CCLINK=		$(LIBTOOL) --mode=link cc
 LDFLAGS=
 
@@ -49,7 +49,7 @@ all: startup_server startup_client query_stocks update_stocks query_portfolios s
 ##################################################
 # Compile and link
 ##################################################
-OBJECTS = benchmark_common.lo benchmark_initial_load.lo populate_portfolios.lo refresh_quotes.lo \
+OBJECTS = benchmark_common.lo benchmark_initial_load.lo benchmark_stocks.lo populate_portfolios.lo refresh_quotes.lo \
 					view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo
 
 benchmark_common.lo: $(SRCDIR)/benchmark_common.c
@@ -58,7 +58,10 @@ benchmark_common.lo: $(SRCDIR)/benchmark_common.c
 benchmark_initial_load.lo: $(SRCDIR)/benchmark_initial_load.c
 	$(CC) $(CFLAGS) $?
 
-populate_portfolios.lo:	$(SRCDIR)/populate_portfolios.c
+benchmark_stocks.lo: $(SRCDIR)/benchmark_stocks.c
+	$(CC) $(CFLAGS) $?
+
+populate_portfolios.lo:	$(SRCDIR)/populate_portfolios.c 
 	$(CC) $(CFLAGS) $?
 
 refresh_quotes.lo:	$(SRCDIR)/refresh_quotes.c
@@ -242,6 +245,8 @@ init :
 	cp datafiles/* /tmp/chronos/datafiles
 	-@echo "#-------------------- DONE -------------------------#"
 
+cscope:
+	cscope -bqRv
 
 .PHONY : clean
 

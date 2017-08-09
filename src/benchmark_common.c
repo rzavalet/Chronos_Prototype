@@ -237,7 +237,6 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
   if (benchmarkP->createDBs == 1) 
     env_flags |= DB_CREATE;
 
-#ifdef CHRONOS_INMEMORY
  env_flags |= DB_SYSTEM_MEM;
 
   /*
@@ -259,7 +258,6 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
   } 
 #ifdef CHRONOS_DEBUG
   printf("shm key set to: %d\n", CHRONOS_SHMKEY); 
-#endif
 #endif
 
   rc = envP->open(envP, benchmarkP->db_home_dir, env_flags, 0); 

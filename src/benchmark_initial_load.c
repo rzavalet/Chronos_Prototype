@@ -141,8 +141,9 @@ cleanup:
 static int
 load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
 {
-  int rc = 0;
-  DBT key, data;
+  int     rc = 0;
+  int     cnt = 0;
+  DBT     key, data;
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
   char buf[MAXLINE];
@@ -211,7 +212,7 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
      */
 
     /* Put the data into the database */
-    benchmark_debug(4,"Inserting: %s", (char *)key.data);
+    benchmark_debug(4,"Inserting into Personal table (%d): %s", cnt++, (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
@@ -251,7 +252,8 @@ failXit:
 static int
 load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
 {
-  int rc = 0;
+  int     rc = 0;
+  int     cnt = 0;
   DBT key, data;
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
@@ -318,7 +320,7 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
      */ 
 
     /* Put the data into the database */
-    benchmark_debug(4,"Inserting: %s", (char *)key.data);
+    benchmark_debug(4,"Inserting into Stocks table (%d): %s", cnt++, (char *)key.data);
     benchmark_debug(4, "\t(%s, %s)", my_stocks.stock_symbol, my_stocks.full_name);
 
     rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
@@ -357,7 +359,8 @@ failXit:
 static int
 load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
 {
-  int rc = 0;
+  int     rc = 0;
+  int     cnt = 0;
   DBT key, data;
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
@@ -423,7 +426,7 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
      */
 
     /* Put the data into the database */
-    benchmark_debug(4,"Inserting: %s", (char *)key.data);
+    benchmark_debug(4,"Inserting into Currencies table (%d): %s", cnt++, (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
@@ -461,13 +464,15 @@ failXit:
 static int
 load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
 {
-  int rc = 0;
-  DBT key, data;
+  int     rc = 0;
+  int     current_slot = 0;
+  int     cnt = 0;
+  FILE   *ifp;
   DB_TXN *txnP = NULL;
-  DB_ENV  *envP = NULL;
-  char buf[MAXLINE];
-  FILE *ifp;
-  QUOTE quote;
+  DB_ENV *envP = NULL;
+  DBT     key, data;
+  QUOTE   quote;
+  char    buf[MAXLINE];
 
   if (benchmarkP == NULL) {
     goto failXit;
@@ -530,7 +535,7 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
      */
 
     /* Put the data into the database */
-    benchmark_debug(6,"Inserting: %s", (char *)key.data);
+    benchmark_debug(6,"Inserting into Quotes table (%d): %s", cnt++, (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
@@ -550,7 +555,12 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
       envP->err(envP, rc, "[%d] [%d] Transaction commit failed.", __LINE__, getpid());
       goto failXit; 
     }
+
+    benchmarkP->quotes_list[current_slot] = strdup(quote.symbol);
+    current_slot ++;
   }
+
+  benchmarkP->number_stocks = current_slot;
 
   fclose(ifp);
   return BENCHMARK_SUCCESS;

@@ -69,7 +69,7 @@ extern int benchmark_debug_level;
     fprintf(_fp,"\n");					     \
   } while(0)
 
-#if 0
+#if BENCHMARK_DEBUG
 #define benchmark_info(...) \
   benchmark_msg("INFO", stderr, __VA_ARGS__)
 #else
