@@ -34,6 +34,10 @@ benchmark_purchase(int account, int symbol, float price, int amount, int force_a
 int
 benchmark_sell(int account, int symbol, float price, int amount, int force_apply, void *benchmark_handle, int *symbol_ret);
 
+int
+benchmark_stock_list_get(void *benchmark_handle, 
+                         char ***stocks_list, 
+                         int *num_stocks);
 
 /*---------------------------------
  * Debugging routines

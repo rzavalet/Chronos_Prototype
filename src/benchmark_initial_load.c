@@ -556,7 +556,6 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
       goto failXit; 
     }
 
-    benchmarkP->quotes_list[current_slot] = strdup(quote.symbol);
     current_slot ++;
   }
 

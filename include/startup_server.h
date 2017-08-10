@@ -126,6 +126,7 @@ typedef struct chronosServerContext_t {
   /* Each data item is refreshed in a certain interval.
    * This update period is related to the validityIntervalms */
   double updatePeriodMS;
+  int    numUpdatesPerUpdateThread;
 
   int serverPort;
 
@@ -178,6 +179,11 @@ typedef struct chronosServerContext_t {
   
 } chronosServerContext_t;
 
+typedef struct chronosUpdateThreadInfo_t {
+  int   num_stocks;       /* How many stocks should the thread handle */
+  char *stocks_list;      /* Pointer to the array that contains the stocks managed by this thread */
+} chronosUpdateThreadInfo_t;
+
 typedef struct chronosServerThreadInfo_t {
   int       magic;
   pthread_t thread_id;
@@ -186,6 +192,11 @@ typedef struct chronosServerThreadInfo_t {
   chronosServerThreadState_t state;
   chronosServerThreadType_t thread_type;
   chronosServerContext_t *contextP;
+
+  /* These are fields specific to each thread type */
+  union {
+    chronosUpdateThreadInfo_t updateParameters;
+  } parameters;
 } chronosServerThreadInfo_t;
 
 #endif

@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
     chronos_error("Failed to allocate handle");
     goto failXit;
   }
-  
+ 
   /* Populate the porfolio tables */
   if (benchmark_load_portfolio(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
     chronos_error("Failed to load portfolios");
@@ -289,11 +289,21 @@ int main(int argc, char *argv[])
   }
 
   for (i=0; i<serverContextP->numUpdateThreads; i++) {
+    /* Set the generic data */
     updateThreadInfoArrP[i].thread_type = CHRONOS_SERVER_THREAD_UPDATE;
     updateThreadInfoArrP[i].contextP = serverContextP;
     updateThreadInfoArrP[i].thread_num = thread_num ++;
     updateThreadInfoArrP[i].magic = CHRONOS_SERVER_THREAD_MAGIC;
 
+    /* Set the update specific data */
+    rc = benchmark_stock_list_get(serverContextP->benchmarkCtxtP,
+              &(updateThreadInfoArrP[i].parameters.updateParameters.stocks_list),
+              &(updateThreadInfoArrP[i].parameters.updateParameters.num_stocks));
+    if (rc != 0) {
+      chronos_error("failed to get list of stocks");
+      goto failXit;
+    }
+              
     rc = pthread_create(&updateThreadInfoArrP[i].thread_id,
 			&attr,
 			&updateThread,
@@ -499,6 +509,7 @@ initProcessArguments(chronosServerContext_t *contextP)
 {
   contextP->numClientsThreads = CHRONOS_NUM_CLIENT_THREADS;
   contextP->numUpdateThreads = CHRONOS_NUM_UPDATE_THREADS;
+  contextP->numUpdatesPerUpdateThread = CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD;
   contextP->serverPort = CHRONOS_SERVER_PORT;
   contextP->validityIntervalms = CHRONOS_UPDATE_PERIOD_MS_TO_FVI(CHRONOS_INITIAL_UPDATE_PERIOD_MS);
   contextP->samplingPeriodSec = CHRONOS_SAMPLING_PERIOD_SEC;
@@ -1256,7 +1267,8 @@ cleanup:
  * This is the driver function of an update thread
  */
 static void *
-updateThread(void *argP) {
+updateThread(void *argP) 
+{
   
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
   chronos_queue_t *userTxnQueueP = NULL;

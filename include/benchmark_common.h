@@ -140,10 +140,11 @@ typedef struct benchmark_dbs {
 
   /* How many stores do we have in the system */
   int   number_stocks;
-  char *quotes_list[4000];
+  char **stocks;
 
 } BENCHMARK_DBS;
 
+#define BENCHMARK_STOCKS_LIST(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->stocks)
 #define BENCHMARK_NUM_STOCKS(_benchmarkP)    (((BENCHMARK_DBS *)_benchmarkP)->number_stocks)
 #define BENCHMARK_SET_CREATE_DB(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->createDBs = 1)
 #define BENCHMARK_CLEAR_CREATE_DB(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->createDBs = 0)

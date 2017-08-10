@@ -62,7 +62,11 @@
 
 /* Each update thread handles 30 stocks
  */
-#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  30
+#ifdef CHRONOS_DEBUG
+#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  5
+#else
+#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  300
+#endif
 
 /* Chronos tries to relax the period by 10% every time
  */

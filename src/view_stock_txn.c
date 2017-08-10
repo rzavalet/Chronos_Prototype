@@ -47,10 +47,28 @@ benchmark_handle_alloc(void **benchmark_handle, int create, char *homedir, char 
     goto failXit;
   }
 
-  if (benchmark_stocks_stats_get(benchmarkP) != BENCHMARK_SUCCESS) {
-    benchmark_error("Could not obtain stats for Stocks table.");
-    databases_close(benchmarkP);
-    goto failXit;
+  if (!create) {
+#if 0
+    if (benchmark_stocks_stats_get(benchmarkP) != BENCHMARK_SUCCESS) {
+      benchmark_error("Could not obtain stats for Stocks table.");
+      databases_close(benchmarkP);
+      goto failXit;
+    }
+#endif
+    if (benchmark_stocks_symbols_get(benchmarkP) != BENCHMARK_SUCCESS) {
+      benchmark_error("Could not obtain list of stock symbols.");
+      databases_close(benchmarkP);
+      goto failXit;
+    }
+
+#ifdef BENCHMARK_DEBUG
+    if (benchmark_stocks_symbols_print(benchmarkP) != BENCHMARK_SUCCESS) {
+      benchmark_error("Could not print stock symbols.");
+      databases_close(benchmarkP);
+      goto failXit;
+    }
+#endif
+
   }
 
   if (create) benchmarkP->createDBs = 0;
@@ -90,6 +108,17 @@ benchmark_handle_free(void *benchmark_handle)
   free(benchmarkP->accounts_db_name);
   free(benchmarkP->currencies_db_name);
   free(benchmarkP->personal_db_name);
+
+  /* Don't forget to free the list of stocks */
+  if (benchmarkP->number_stocks > 0 && benchmarkP->stocks != NULL) {
+    int i;
+    for (i=0; i<benchmarkP->number_stocks; i++) {
+      if (benchmarkP->stocks[i] != NULL) {
+        free(benchmarkP->stocks[i]);
+        benchmarkP->stocks[i] = NULL;
+      }
+    }
+  }
 
   benchmarkP->magic = 0;
   free(benchmarkP);
