@@ -1,4 +1,30 @@
-#include "startup_server.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
+#include "chronos.h"
+#include "chronos_config.h"
+#include "chronos_packets.h"
+#include "chronos_queue.h"
+#include "chronos_server.h"
+#include "chronos_transactions.h"
+#include "chronos_transaction_names.h"
+
+int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
+int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
+
+const char *chronosServerThreadNames[] ={
+  "CHRONOS_SERVER_THREAD_LISTENER",
+  "CHRONOS_SERVER_THREAD_UPDATE"
+};
 
 static int
 processArguments(int argc, char *argv[], chronosServerContext_t *contextP);
@@ -106,6 +132,8 @@ int main(int argc, char *argv[])
   pthread_attr_t attr;
   int *thread_rc = NULL;
   const int stack_size = 0x100000; // 1 MB
+  char **pkeys_list = NULL;
+  int    num_pkeys = 0;
 
   set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN);
   set_benchmark_debug_level(BENCHMARK_DEBUG_LEVEL_MIN);
@@ -131,8 +159,8 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  /* set the signal hanlder for sigint */
-  if (signal(SIGINT, handler_sigint) == SIG_ERR) {
+  /* set the signal handler for sigint */
+  if (signal(SIGUSR1, handler_sigint) == SIG_ERR) {
     chronos_error("Failed to set signal handler");
     goto failXit;    
   }  
@@ -217,27 +245,48 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  /* Create the system tables */
-  if (benchmark_initial_load(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to perform initial load");
-    goto failXit;
-  }
+  if (serverContextP->initialLoad) {
+    /* Create the system tables */
+    if (benchmark_initial_load(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
+      chronos_error("Failed to perform initial load");
+      goto failXit;
+    }
 
-  /* Obtain a benchmark handle */
-  if (benchmark_handle_alloc(&serverContextP->benchmarkCtxtP, 1, CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to allocate handle");
-    goto failXit;
-  }
+    if (benchmark_handle_alloc(&serverContextP->benchmarkCtxtP, 
+                               1, 
+                               CHRONOS_SERVER_HOME_DIR, 
+                               CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
+      chronos_error("Failed to allocate handle");
+      goto failXit;
+    }
  
-  /* Populate the porfolio tables */
-  if (benchmark_load_portfolio(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to load portfolios");
-    goto failXit;
+    /* Populate the porfolio tables */
+    if (benchmark_load_portfolio(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
+      chronos_error("Failed to load portfolios");
+      goto failXit;
+    }
+
+    if (benchmark_handle_free(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
+      chronos_error("Failed to free handle");
+      goto failXit;
+    }
+  }
+  else {
+    chronos_info("*** Skipping initial load");
   }
 
   set_chronos_debug_level(serverContextP->debugLevel);
   set_benchmark_debug_level(serverContextP->debugLevel);
   
+  /* Obtain a benchmark handle */
+  if (benchmark_handle_alloc(&serverContextP->benchmarkCtxtP, 
+                             0, 
+                             CHRONOS_SERVER_HOME_DIR, 
+                             CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
+    chronos_error("Failed to allocate handle");
+    goto failXit;
+  }
+ 
   rc = pthread_attr_init(&attr);
   if (rc != 0) {
     chronos_error("failed to init thread attributes");
@@ -281,6 +330,14 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef CHRONOS_UPDATE_TRANSACTIONS_ENABLED
+  rc = benchmark_stock_list_get(serverContextP->benchmarkCtxtP,
+                                &pkeys_list,
+                                &num_pkeys);
+  if (rc != 0) {
+    chronos_error("failed to get list of stocks");
+    goto failXit;
+  }
+              
   /* Spawn the update threads */
   updateThreadInfoArrP = calloc(serverContextP->numUpdateThreads, sizeof(chronosServerThreadInfo_t));
   if (updateThreadInfoArrP == NULL) {
@@ -296,14 +353,13 @@ int main(int argc, char *argv[])
     updateThreadInfoArrP[i].magic = CHRONOS_SERVER_THREAD_MAGIC;
 
     /* Set the update specific data */
-    rc = benchmark_stock_list_get(serverContextP->benchmarkCtxtP,
-              &(updateThreadInfoArrP[i].parameters.updateParameters.stocks_list),
-              &(updateThreadInfoArrP[i].parameters.updateParameters.num_stocks));
-    if (rc != 0) {
-      chronos_error("failed to get list of stocks");
-      goto failXit;
-    }
-              
+    updateThreadInfoArrP[i].parameters.updateParameters.stocks_list = &(pkeys_list[i * serverContextP->numUpdatesPerUpdateThread]);
+    updateThreadInfoArrP[i].parameters.updateParameters.num_stocks = serverContextP->numUpdatesPerUpdateThread;
+    chronos_debug(5,"Thread: %d, will handle from %d to %d", 
+                  updateThreadInfoArrP[i].thread_num, 
+                  i * serverContextP->numUpdatesPerUpdateThread, 
+                  (i+1) * serverContextP->numUpdatesPerUpdateThread - 1);
+
     rc = pthread_create(&updateThreadInfoArrP[i].thread_id,
 			&attr,
 			&updateThread,
@@ -515,6 +571,7 @@ initProcessArguments(chronosServerContext_t *contextP)
   contextP->samplingPeriodSec = CHRONOS_SAMPLING_PERIOD_SEC;
   contextP->updatePeriodMS  = CHRONOS_INITIAL_UPDATE_PERIOD_MS;
   contextP->duration_sec = CHRONOS_EXPERIMENT_DURATION_SEC;
+  contextP->initialLoad = 1;
 
 #ifdef CHRONOS_DEBUG
   contextP->debugLevel = CHRONOS_DEBUG_LEVEL_MAX;
@@ -540,7 +597,7 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
   memset(contextP, 0, sizeof(*contextP));
   (void) initProcessArguments(contextP);
 
-  while ((c = getopt(argc, argv, "m:c:v:s:u:r:t:p:d:h")) != -1) {
+  while ((c = getopt(argc, argv, "m:c:v:s:u:r:t:p:d:nh")) != -1) {
     switch(c) {
       case 'c':
         contextP->numClientsThreads = atoi(optarg);
@@ -585,6 +642,11 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
       case 'd':
         contextP->debugLevel = atoi(optarg);
         chronos_debug(2, "*** Debug Level: %d", contextP->debugLevel);
+        break;
+
+      case 'n':
+        contextP->initialLoad = 0;
+        chronos_debug(2, "*** Do not perform initial load");
         break;
 
       case 'h':
@@ -1122,19 +1184,40 @@ cleanup:
 static int
 processRefreshTransaction(chronosServerThreadInfo_t *infoP)
 {
-  int               i;
   int               rc = CHRONOS_SUCCESS;
-  int               data_item = 0;
-  int               current_slot = 0;
-  chronos_queue_t  *sysTxnQueueP = NULL;
-  txn_info_t       *txnInfoP     = NULL;
-  chronos_user_transaction_t txn_type;
+  const char       *pkey = NULL;
+  chronosServerContext_t *contextP = NULL;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
 
+  CHRONOS_SERVER_THREAD_CHECK(infoP);
+  CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
+
+  contextP = infoP->contextP;
+
+  chronos_info("Processing update...");
+
+  rc = chronos_dequeue_system_transaction(&pkey, contextP);
+  if (rc != CHRONOS_SUCCESS) {
+    chronos_error("Failed to dequeue a user transaction");
+    goto failXit;
+  }
+
+  assert(pkey != NULL);
+  chronos_debug(3, "Updating value for pkey: %s...", pkey);
+
+  chronos_info("Done processing update...");
+
+#if 0
+  int               i;
+  int               data_item = 0;
+  int               current_slot = 0;
+  chronos_queue_t  *sysTxnQueueP = NULL;
+  chronos_user_transaction_t txn_type;
+  txn_info_t       *txnInfoP     = NULL;
   sysTxnQueueP = &(infoP->contextP->sysTxnQueue);
 
   if (sysTxnQueueP->occupied > 0) {
@@ -1185,6 +1268,7 @@ processRefreshTransaction(chronosServerThreadInfo_t *infoP)
     }
     chronos_info("Done processing update...");
   }
+#endif
   goto cleanup;
 
 failXit:
@@ -1269,9 +1353,11 @@ cleanup:
 static void *
 updateThread(void *argP) 
 {
-  
+  int    i;
+  int    num_updates = 0;
+  char **managed_keys =  NULL;
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
-  chronos_queue_t *userTxnQueueP = NULL;
+  chronosServerContext_t *contextP = NULL;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -1281,7 +1367,13 @@ updateThread(void *argP)
   CHRONOS_SERVER_THREAD_CHECK(infoP);
   CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
 
-  userTxnQueueP = &(infoP->contextP->sysTxnQueue);
+  contextP = infoP->contextP;
+
+  num_updates = infoP->parameters.updateParameters.num_stocks;
+  assert(num_updates > 0);
+
+  managed_keys = infoP->parameters.updateParameters.stocks_list;
+  assert(managed_keys != NULL);
 
   while (1) {
     CHRONOS_SERVER_THREAD_CHECK(infoP);
@@ -1289,30 +1381,13 @@ updateThread(void *argP)
 
     chronos_debug(3, "new update period");
 
-    pthread_mutex_lock(&userTxnQueueP->mutex);
-     
-    while (userTxnQueueP->occupied >= CHRONOS_READY_QUEUE_SIZE)
-      pthread_cond_wait(&userTxnQueueP->less, &userTxnQueueP->mutex);
+    for (i=0; i<num_updates; i++) {
+      char *pkey = managed_keys[i];
+      chronos_debug(3, "Enqueuing update for key: %s", pkey);
+      chronos_enqueue_system_transaction(pkey, contextP);
+    }
 
-    assert(userTxnQueueP->occupied < CHRONOS_READY_QUEUE_SIZE);
-    
-    chronos_info("Put a new update request in queue");
-    userTxnQueueP->txnInfoArr[userTxnQueueP->nextin++].txn_type = CHRONOS_SYS_TXN_UPDATE_STOCK;
-    
-    userTxnQueueP->nextin %= CHRONOS_READY_QUEUE_SIZE;
-    userTxnQueueP->occupied++;
-
-    /* now: either b->occupied < CHRONOS_READY_QUEUE_SIZE and b->nextin is the index
-         of the next empty slot in the buffer, or
-         b->occupied == CHRONOS_READY_QUEUE_SIZE and b->nextin is the index of the
-         next (occupied) slot that will be emptied by a dequeueTransaction
-         (such as b->nextin == b->nextout) */
-
-    pthread_cond_signal(&userTxnQueueP->more);
-
-    pthread_mutex_unlock(&userTxnQueueP->mutex);
-
-    if (waitPeriod(infoP->contextP->updatePeriodMS) != CHRONOS_SUCCESS) {
+    if (waitPeriod(contextP->updatePeriodMS) != CHRONOS_SUCCESS) {
       goto cleanup;
     }
 
@@ -1619,6 +1694,7 @@ chronos_usage()
     "-p [num]              port to accept new connections\n"
     "-m [mode]             running mode: 0: BASE, 1: Admission Control, 2: Adaptive Update, 3: Admission Control + Adaptive Update\n"
     "-d [num]              debug level\n"
+    "-n                    do not perform initial load\n"
     "-h                    help";
 
   printf("%s\n", usage);

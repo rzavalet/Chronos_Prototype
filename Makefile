@@ -50,7 +50,7 @@ all: startup_server startup_client query_stocks update_stocks query_portfolios s
 # Compile and link
 ##################################################
 OBJECTS = benchmark_common.lo benchmark_initial_load.lo benchmark_stocks.lo populate_portfolios.lo refresh_quotes.lo \
-					view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo
+					view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo chronos_queue.lo
 
 benchmark_common.lo: $(SRCDIR)/benchmark_common.c
 	$(CC) $(CFLAGS) $?
@@ -77,6 +77,9 @@ purchase_txn.lo:	$(SRCDIR)/purchase_txn.c
 	$(CC) $(CFLAGS) $?
 
 sell_txn.lo:	$(SRCDIR)/sell_txn.c
+	$(CC) $(CFLAGS) $?
+
+chronos_queue.lo:	$(SRCDIR)/chronos_queue.c
 	$(CC) $(CFLAGS) $?
 
 

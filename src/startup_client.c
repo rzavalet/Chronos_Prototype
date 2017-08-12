@@ -1,4 +1,5 @@
 #include "startup_client.h"
+#include "chronos_transaction_names.h"
 #include <signal.h>
 
 int time_to_die = 0;

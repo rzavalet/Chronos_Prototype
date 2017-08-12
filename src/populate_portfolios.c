@@ -69,7 +69,7 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
     goto failXit;
   }
 
-  benchmark_debug(3,"LOADING PORTFOLIOS DATABASE ");
+  benchmark_info("Loading Portfolios database... ");
 
   for (i=0 ; i<CHRONOS_PORTFOLIOS_NUM; i++) {
 

@@ -101,8 +101,8 @@ benchmark_stocks_symbols_get(BENCHMARK_DBS *benchmarkP)
 
   /* Iterate over the database, retrieving each record in turn. */
   while ((ret = cursorP->get(cursorP, &key, &data, DB_NEXT | DB_READ_COMMITTED)) == 0) {
-    benchmark_debug(5, "PID: %d, Copying stock number %d", 
-                    getpid(), current_slot);
+    benchmark_debug(5, "PID: %d, Copying stock number %d, %s", 
+                    getpid(), current_slot, (char *)key.data);
 
     assert(0 <= current_slot && current_slot < benchmarkP->number_stocks);
 
@@ -163,7 +163,6 @@ failXit:
     }
   }
 
-cleanup:
   if (benchmarkP->number_stocks > 0 && benchmarkP->stocks != NULL) {
     int i;
     for (i=0; i<benchmarkP->number_stocks; i++) {
@@ -174,6 +173,7 @@ cleanup:
     }
   }
 
+cleanup:
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   return rc;
 }

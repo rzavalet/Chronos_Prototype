@@ -161,7 +161,7 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
     goto failXit;
   }
 
-  benchmark_debug(3,"LOADING PERSONAL DATABASE ");
+  benchmark_info("-- Loading Personal database... ");
 
   ifp = fopen(personal_file, "r");
   if (ifp == NULL) {
@@ -273,7 +273,7 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
     goto failXit;
   }
 
-  benchmark_debug(3,"LOADING STOCKS DATABASE ");
+  benchmark_info("-- Loading Stocks database... ");
 
   ifp = fopen(stocks_file, "r");
   if (ifp == NULL) {
@@ -379,7 +379,7 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
     goto failXit;
   }
 
-  benchmark_debug(3,"LOADING CURRENCIES DATABASE ");
+  benchmark_info("Loading currencies database... ");
 
   ifp = fopen(currencies_file, "r");
   if (ifp == NULL) {
@@ -485,7 +485,7 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
     goto failXit;
   }
 
-  benchmark_debug(2, "LOADING QUOTES DATABASE");
+  benchmark_info("-- Loading quotes database... ");
 
   ifp = fopen(quotes_file, "r");
   if (ifp == NULL) {

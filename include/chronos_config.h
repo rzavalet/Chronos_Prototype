@@ -34,13 +34,17 @@
  * by 100 threads
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_UPDATE_THREADS    2
+#define CHRONOS_NUM_UPDATE_THREADS    1
 #else
 #define CHRONOS_NUM_UPDATE_THREADS    100
 #endif
 
 /* Chronos server has two ready queues. The default size of them is 1024 */
+#ifdef CHRONOS_DEBUG
+#define CHRONOS_READY_QUEUE_SIZE     (10)
+#else
 #define CHRONOS_READY_QUEUE_SIZE     (1024)
+#endif
 
 /* The update period is initially set to 0.5 in Chronos
  */
