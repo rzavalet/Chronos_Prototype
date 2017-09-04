@@ -19,13 +19,17 @@
 /* In the Chronos paper, the number of client threads start
  * at 900 and it can increase up to 1800
  */
+#ifdef CHRONOS_DEBUG
+#define CHRONOS_NUM_CLIENT_THREADS    1
+#else
 #define CHRONOS_NUM_CLIENT_THREADS    900
+#endif
 
 /* In the Chronos paper, the number of server threads
  * is 350 for their linux settings
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_SERVER_THREADS    5
+#define CHRONOS_NUM_SERVER_THREADS    1
 #else
 #define CHRONOS_NUM_SERVER_THREADS    350
 #endif
@@ -34,7 +38,7 @@
  * by 100 threads
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_UPDATE_THREADS    1
+#define CHRONOS_NUM_UPDATE_THREADS    2
 #else
 #define CHRONOS_NUM_UPDATE_THREADS    100
 #endif
@@ -96,4 +100,6 @@
 #define CHRONOS_EXPERIMENT_DURATION_SEC (CHRONOS_MIN_TO_S(15))
 #endif
 
+#define CHRONOS_RATE_VIEW_TRANSACTIONS  (60)
+#define CHRONOS_THINK_TIME_SEC          (5)
 #endif

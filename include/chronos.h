@@ -31,8 +31,8 @@ extern int chronos_debug_level;
     if (chronos_debug_level >= level) {                        \
       char _local_buf_[256];                                   \
       snprintf(_local_buf_, sizeof(_local_buf_), __VA_ARGS__); \
-      printf("%s:%d: %s", __FILE__, __LINE__, _local_buf_);    \
-      printf("\n");	   \
+      fprintf(stderr, "%s:%d: %s", __FILE__, __LINE__, _local_buf_);    \
+      fprintf(stderr, "\n");	   \
     } \
   } while(0)
 
@@ -45,8 +45,8 @@ extern int chronos_debug_level;
   do {                     \
     char _local_buf_[256];				     \
     snprintf(_local_buf_, sizeof(_local_buf_), __VA_ARGS__); \
-    printf("%s: %s: at %s:%d", _prefix,_local_buf_, __FILE__, __LINE__);   \
-    printf("\n");					     \
+    fprintf(stderr,"%s: %s: at %s:%d", _prefix,_local_buf_, __FILE__, __LINE__);   \
+    fprintf(stderr,"\n");					     \
   } while(0)
 
 #define chronos_info(...) \

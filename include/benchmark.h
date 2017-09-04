@@ -23,7 +23,13 @@ int
 benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue);
 
 int
+benchmark_refresh_quotes2(void *benchmark_handle, const char *symbolP, float newValue);
+
+int
 benchmark_view_stock(void *benchmark_handle, int *symbolP);
+
+int
+benchmark_view_stock2(void *benchmark_handle, const char *symbolP);
 
 int
 benchmark_view_portfolio(void *benchmark_handle);

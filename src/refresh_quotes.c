@@ -64,3 +64,35 @@ benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue)
   return BENCHMARK_FAIL;
 }
 
+int
+benchmark_refresh_quotes2(void *benchmark_handle, const char *symbolP, float newValue)
+{
+  BENCHMARK_DBS *benchmarkP = NULL;
+  int ret = BENCHMARK_SUCCESS;
+
+  benchmarkP = benchmark_handle;
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  if (symbolP == NULL || symbolP[0] == '\0') {
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  benchmark_info("PID: %d, Attempting to update %s to %f", getpid(), symbolP, newValue);
+  ret = update_stock((char *)symbolP, newValue, benchmarkP);
+  if (ret != 0) {
+    benchmark_error("Could not update quote");
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  benchmark_debug(2, "Done refreshing price for %s.", symbolP);
+  return ret;
+  
+ failXit:
+  
+  return BENCHMARK_FAIL;
+}

@@ -60,14 +60,21 @@ typedef struct {
   const char *pkey;         /* Primary key */
 } update_txn_info_t;
 
+/* Information required for view_stock transactions */
+typedef struct {
+  const char *pkey;         /* Primary key */
+} view_txn_info_t;
+
 /* This is the structure of a transaction request in Chronos */
 typedef struct {
   char txn_type;              /* Which transaction this is */
   chronos_time_t txn_start;
+  chronos_time_t txn_enqueue;
 
   /* We access the following union based on the txn type */
   union {
     update_txn_info_t update_info;
+    view_txn_info_t   view_info;
   } txn_specific_info;
 
 } txn_info_t;
@@ -110,6 +117,11 @@ typedef struct chronosServerContext_t {
    * update threads - threads that update the
    * data in the system periodically */
   int numUpdateThreads;
+
+  /* This is the number of server threads that
+   * dequeue transactions from the queue 
+   * and process them */
+  int numServerThreads;
 
   /* The duration of one chronos experiment */
   double duration_sec;
@@ -172,6 +184,8 @@ typedef struct chronosServerContext_t {
   struct itimerspec experiment_timer_et;
   struct sigevent experiment_timer_ev;
 
+  int (*timeToDieFp)(void);
+
   /* These fields are for the benchmark framework */
   void *benchmarkCtxtP;
   
@@ -187,6 +201,7 @@ typedef struct chronosServerThreadInfo_t {
   pthread_t thread_id;
   int       thread_num;
   int       socket_fd;
+  FILE     *trace_file;
   chronosServerThreadState_t state;
   chronosServerThreadType_t thread_type;
   chronosServerContext_t *contextP;

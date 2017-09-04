@@ -169,3 +169,26 @@ benchmark_view_stock(void *benchmark_handle, int *symbolP)
   
   return BENCHMARK_FAIL;
 }
+
+int
+benchmark_view_stock2(void *benchmark_handle, const char *symbolP)
+{
+  BENCHMARK_DBS *benchmarkP = NULL;
+  int ret;
+
+  benchmarkP = benchmark_handle;
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+  
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  ret = show_quote((char *)symbolP, benchmarkP);
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  return ret;
+
+ failXit:
+  return BENCHMARK_FAIL;
+}

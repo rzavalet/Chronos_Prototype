@@ -379,7 +379,7 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
     goto failXit;
   }
 
-  benchmark_info("Loading currencies database... ");
+  benchmark_info("-- Loading currencies database... ");
 
   ifp = fopen(currencies_file, "r");
   if (ifp == NULL) {

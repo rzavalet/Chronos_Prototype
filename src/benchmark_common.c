@@ -1413,7 +1413,7 @@ update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
     quoteP->current_price = newValue;
   }
   else {
-    quoteP->current_price += 0.5;
+    quoteP->current_price += (((rand() % 20) - 10) / 10.0);
   }
 
   benchmark_info("PID: %d, txnP: %p Updating %s to %f", getpid(), txnP, quoteP->symbol, quoteP->current_price);
@@ -1991,11 +1991,13 @@ get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_re
   envP->err(envP, rc, "[%s:%d] [%d] Failed to find record in Quotes.", __FILE__, __LINE__, getpid());
 
 failXit:
-  rc = cursorp->close(cursorp);
-  if (rc != 0) {
-    envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor for Quotes.", __FILE__, __LINE__, getpid());
+  if (cursorp) {
+    rc = cursorp->close(cursorp);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Failed to close cursor for Quotes.", __FILE__, __LINE__, getpid());
+    }
+    cursorp = NULL;
   }
-  cursorp = NULL;
   if (cursorPP != NULL) {
     *cursorPP = NULL;
   }

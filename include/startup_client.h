@@ -24,13 +24,23 @@ typedef struct chronosClientStats_t {
 } chronosClientStats_t;
 
 typedef struct chronosClientContext_t {
-  struct timespec thinkingTime;
   char serverAddress[256];
   int serverPort;
   int numTransactions;
   double duration_sec;
   int percentageViewStockTransactions;
   int debugLevel;
+
+  /* We can only create a limited number of 
+   * client threads. */
+  int numClientsThreads;
+
+  double thinkingTime;
+  
+  char **stocksListP;
+
+  int (*timeToDieFp)(void);
+
 } chronosClientContext_t;
 
 typedef struct chronosClientThreadInfo_t {
@@ -44,9 +54,6 @@ typedef struct chronosClientThreadInfo_t {
 /*========================================================
                         PROTOTYPES
 =========================================================*/
-static int
-processArguments(int argc, char *argv[], int *num_threads, chronosClientContext_t *contextP);
-
 static int
 waitClientThreads(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP);
 
@@ -69,13 +76,7 @@ static int
 pickTransactionType(chronos_user_transaction_t *txn_type_ret, chronosClientThreadInfo_t *infoP);
 
 static int
-waitThinkTime(struct timespec thinkTime);
-
-static int
 waitTransactionResponse(chronos_user_transaction_t txnType, chronosClientThreadInfo_t *infoP);
-
-static int
-sendTransactionRequest(chronos_user_transaction_t txnType, chronosClientThreadInfo_t *infoP);
 
 static void
 chronos_usage();

@@ -6,9 +6,10 @@
 #include "chronos.h"
 
 static int
-chronos_dequeue_transaction(txn_info_t *txnInfoP, chronos_queue_t *txnQueueP)
+chronos_dequeue_transaction(txn_info_t *txnInfoP, int (*timeToDieFp)(void), chronos_queue_t *txnQueueP)
 {
   int              rc = CHRONOS_SUCCESS;
+  struct timespec  ts; /* For the timed wait */
 
   if (txnQueueP == NULL || txnInfoP == NULL) {
     chronos_error("Invalid argument");
@@ -16,8 +17,17 @@ chronos_dequeue_transaction(txn_info_t *txnInfoP, chronos_queue_t *txnQueueP)
   }
 
   pthread_mutex_lock(&txnQueueP->mutex);
-  while(txnQueueP->occupied <= 0)
-    pthread_cond_wait(&txnQueueP->more, &txnQueueP->mutex);
+  while(txnQueueP->occupied <= 0) {
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec += 5;
+    pthread_cond_timedwait(&txnQueueP->more, &txnQueueP->mutex, &ts);
+
+    if (timeToDieFp && timeToDieFp()) {
+      chronos_info("Process asked to die");
+      pthread_mutex_unlock(&txnQueueP->mutex);
+      goto failXit;
+    }
+  }
 
   assert(txnQueueP->occupied > 0);
 
@@ -48,9 +58,10 @@ cleanup:
 }
 
 static int
-chronos_enqueue_transaction(txn_info_t *txnInfoP, chronos_queue_t *txnQueueP)
+chronos_enqueue_transaction(txn_info_t *txnInfoP, int (*timeToDieFp)(void), chronos_queue_t *txnQueueP)
 {
   int              rc = CHRONOS_SUCCESS;
+  struct timespec  ts; /* For the timed wait */
 
   if (txnQueueP == NULL || txnInfoP == NULL) {
     chronos_error("Invalid argument");
@@ -59,8 +70,18 @@ chronos_enqueue_transaction(txn_info_t *txnInfoP, chronos_queue_t *txnQueueP)
 
   pthread_mutex_lock(&txnQueueP->mutex);
    
-  while (txnQueueP->occupied >= CHRONOS_READY_QUEUE_SIZE)
-    pthread_cond_wait(&txnQueueP->less, &txnQueueP->mutex);
+  while (txnQueueP->occupied >= CHRONOS_READY_QUEUE_SIZE) {
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec += 5;
+
+    pthread_cond_timedwait(&txnQueueP->less, &txnQueueP->mutex, &ts);
+
+    if (timeToDieFp && timeToDieFp()) {
+      chronos_info("Process asked to die");
+      pthread_mutex_unlock(&txnQueueP->mutex);
+      goto failXit;
+    }
+  }
 
   assert(txnQueueP->occupied < CHRONOS_READY_QUEUE_SIZE);
   
@@ -95,20 +116,20 @@ cleanup:
 }
 
 int
-chronos_dequeue_system_transaction(const char **pkey, chronosServerContext_t *contextP) 
+chronos_dequeue_system_transaction(const char **pkey, chronos_time_t *ts, chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
   txn_info_t       txn_info;
   chronos_queue_t *systemTxnQueueP = NULL;
 
-  if (contextP == NULL || pkey == NULL) {
+  if (contextP == NULL || pkey == NULL || ts == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
 
   systemTxnQueueP = &(contextP->sysTxnQueue);
 
-  rc = chronos_dequeue_transaction(&txn_info, systemTxnQueueP);
+  rc = chronos_dequeue_transaction(&txn_info, contextP->timeToDieFp, systemTxnQueueP);
   if (rc != CHRONOS_SUCCESS) {
     chronos_error("Could not dequeue update transaction");
     goto failXit;
@@ -116,6 +137,7 @@ chronos_dequeue_system_transaction(const char **pkey, chronosServerContext_t *co
 
   assert(txn_info.txn_type == CHRONOS_USER_TXN_VIEW_STOCK);
   *pkey = txn_info.txn_specific_info.update_info.pkey;
+  *ts = txn_info.txn_enqueue;
 
   goto cleanup;
 
@@ -127,13 +149,13 @@ cleanup:
 }
 
 int
-chronos_enqueue_system_transaction(const char *pkey, chronosServerContext_t *contextP) 
+chronos_enqueue_system_transaction(const char *pkey, const chronos_time_t *ts, chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
   txn_info_t       txn_info;
   chronos_queue_t *systemTxnQueueP = NULL;
 
-  if (contextP == NULL || pkey == NULL) {
+  if (contextP == NULL || pkey == NULL || ts == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -144,8 +166,9 @@ chronos_enqueue_system_transaction(const char *pkey, chronosServerContext_t *con
   memset(&txn_info, 0, sizeof(txn_info));
   txn_info.txn_type = CHRONOS_SYS_TXN_UPDATE_STOCK;
   txn_info.txn_specific_info.update_info.pkey = pkey;
+  txn_info.txn_enqueue = *ts;
 
-  rc = chronos_enqueue_transaction(&txn_info, systemTxnQueueP);
+  rc = chronos_enqueue_transaction(&txn_info, contextP->timeToDieFp, systemTxnQueueP);
   if (rc != CHRONOS_SUCCESS) {
     chronos_error("Could not enqueue update transaction");
     goto failXit;
@@ -159,5 +182,74 @@ failXit:
 cleanup:
   return rc;
 }
+
+int
+chronos_dequeue_user_transaction(const char **pkey, chronos_time_t *ts, chronosServerContext_t *contextP) 
+{
+  int              rc = CHRONOS_SUCCESS;
+  txn_info_t       txn_info;
+  chronos_queue_t *userTxnQueueP = NULL;
+
+  if (contextP == NULL || pkey == NULL || ts == NULL) {
+    chronos_error("Invalid argument");
+    goto failXit;
+  }
+
+  userTxnQueueP = &(contextP->userTxnQueue);
+
+  rc = chronos_dequeue_transaction(&txn_info, contextP->timeToDieFp, userTxnQueueP);
+  if (rc != CHRONOS_SUCCESS) {
+    chronos_error("Could not dequeue update transaction");
+    goto failXit;
+  }
+
+  assert(txn_info.txn_type == CHRONOS_USER_TXN_VIEW_STOCK);
+  *pkey = txn_info.txn_specific_info.update_info.pkey;
+  *ts = txn_info.txn_enqueue;
+
+  goto cleanup;
+
+failXit:
+  rc = CHRONOS_FAIL;
+
+cleanup:
+  return rc;
+}
+
+int
+chronos_enqueue_user_transaction(const char *pkey, const chronos_time_t *ts, chronosServerContext_t *contextP) 
+{
+  int              rc = CHRONOS_SUCCESS;
+  txn_info_t       txn_info;
+  chronos_queue_t *userTxnQueueP = NULL;
+
+  if (contextP == NULL || pkey == NULL || ts == NULL) {
+    chronos_error("Invalid argument");
+    goto failXit;
+  }
+
+  userTxnQueueP = &(contextP->userTxnQueue);
+
+  /* Set the transaction information */
+  memset(&txn_info, 0, sizeof(txn_info));
+  txn_info.txn_type = CHRONOS_SYS_TXN_UPDATE_STOCK;
+  txn_info.txn_specific_info.update_info.pkey = pkey;
+  txn_info.txn_enqueue = *ts;
+
+  rc = chronos_enqueue_transaction(&txn_info, contextP->timeToDieFp, userTxnQueueP);
+  if (rc != CHRONOS_SUCCESS) {
+    chronos_error("Could not enqueue update transaction");
+    goto failXit;
+  }
+
+  goto cleanup;
+
+failXit:
+  rc = CHRONOS_FAIL;
+
+cleanup:
+  return rc;
+}
+
 
 
