@@ -20,7 +20,7 @@
  * at 900 and it can increase up to 1800
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_CLIENT_THREADS    1
+#define CHRONOS_NUM_CLIENT_THREADS    10
 #else
 #define CHRONOS_NUM_CLIENT_THREADS    900
 #endif
@@ -38,7 +38,7 @@
  * by 100 threads
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_UPDATE_THREADS    2
+#define CHRONOS_NUM_UPDATE_THREADS    10
 #else
 #define CHRONOS_NUM_UPDATE_THREADS    100
 #endif
@@ -71,7 +71,7 @@
 /* Each update thread handles 30 stocks
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  5
+#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  10
 #else
 #define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  300
 #endif
