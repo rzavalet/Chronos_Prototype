@@ -35,7 +35,8 @@ typedef struct chronosClientContext_t {
    * client threads. */
   int numClientsThreads;
 
-  double thinkingTime;
+  int minThinkingTime;
+  int maxThinkingTime;
   
   char **stocksListP;
 

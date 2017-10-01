@@ -17,11 +17,20 @@ int isTimeToDie()
  * Wait the thinking time
  */
 static int
-waitThinkTime(double thinkTime) 
+waitThinkTime(int minThinkTimeMS, int maxThinkTimeMS) 
 {
+  struct timespec waitPeriod;
+  int randomWaitTimeMS;
+
+  randomWaitTimeMS = minThinkTimeMS + (rand() % (1 + maxThinkTimeMS - minThinkTimeMS));
+   
+  waitPeriod.tv_sec = randomWaitTimeMS / 1000;
+  waitPeriod.tv_nsec = ((int)randomWaitTimeMS % 1000) * 1000000;
+
   /* TODO: do I need to check the second argument? */
-  sleep(thinkTime);
-  return CHRONOS_SUCCESS;
+  nanosleep(&waitPeriod, NULL);
+  
+  return CHRONOS_SUCCESS; 
 }
 
 static void
@@ -33,7 +42,6 @@ chronos_usage()
     "\n"
     "OPTIONS:\n"
     "-c [num]              number of threads\n"
-    "-t [num]              thinking time [in milliseconds]\n"
     "-a [address]          server ip address\n"
     "-p [num]              server port\n"
     "-v [num]              percentage of user transactions\n"
@@ -203,7 +211,8 @@ initProcessArguments(chronosClientContext_t *contextP)
   contextP->serverPort = CHRONOS_SERVER_PORT;
   contextP->percentageViewStockTransactions = CHRONOS_RATE_VIEW_TRANSACTIONS;
   contextP->numClientsThreads = CHRONOS_NUM_CLIENT_THREADS;
-  contextP->thinkingTime = CHRONOS_THINK_TIME_SEC;
+  contextP->minThinkingTime = CHRONOS_MIN_THINK_TIME_MS;
+  contextP->maxThinkingTime = CHRONOS_MAX_THINK_TIME_MS;
   contextP->timeToDieFp = isTimeToDie;
 
 #ifdef CHRONOS_DEBUG
@@ -230,16 +239,11 @@ processArguments(int argc, char *argv[], chronosClientContext_t *contextP)
 
   initProcessArguments(contextP);
 
-  while ((c = getopt(argc, argv, "n:c:t:a:p:v:d:h")) != -1) {
+  while ((c = getopt(argc, argv, "n:c:a:p:v:d:h")) != -1) {
     switch(c) {
       case 'c':
         contextP->numClientsThreads = atoi(optarg);
         chronos_debug(2,"*** Num clients: %d", contextP->numClientsThreads);
-        break;
-
-      case 't':
-        contextP->thinkingTime = atoi(optarg);
-        chronos_debug(2, "*** Thinking time: %lf [s]", contextP->thinkingTime);
         break;
 
       case 'a':
@@ -293,10 +297,6 @@ processArguments(int argc, char *argv[], chronosClientContext_t *contextP)
     goto failXit;
   }
 
-  if (contextP->thinkingTime < 0) {
-    chronos_error("Thinking time cannot be less than 0");
-    goto failXit;
-  }
   return CHRONOS_SUCCESS;
 
 failXit:
@@ -496,7 +496,8 @@ userTransactionThread(void *argP)
     }
 
     /* Wait some time before issuing next request */
-    if (waitThinkTime(infoP->contextP->thinkingTime) != CHRONOS_SUCCESS) {
+    if (waitThinkTime(infoP->contextP->minThinkingTime,
+                      infoP->contextP->maxThinkingTime) != CHRONOS_SUCCESS) {
       chronos_error("Error while waiting");
       goto cleanup;
     }
@@ -742,14 +743,6 @@ int main(int argc, char *argv[])
   set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN+4);
   memset(&client_context, 0, sizeof(client_context));
 
-  /* First process the command line arguments which are:
-   *  . # of client threads
-   *  . thinking time
-   *  . IP Address
-   *  . Port
-   *  . % of View-Stock transactions (The rest are uniformly selected
-   *    between the other three types of transactions.)
-   */
   if (processArguments(argc, argv, &client_context) != CHRONOS_SUCCESS) {
     chronos_error("Failed to process command line arguments");
     goto failXit;
