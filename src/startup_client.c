@@ -43,7 +43,7 @@ chronos_usage()
   printf("%s\n", usage);
 }
 
-#define CHRONOS_CLIENT_NUM_STOCKS     (3000)
+#define CHRONOS_CLIENT_NUM_STOCKS     (300)
 
 static int
 populateRequest(chronos_user_transaction_t txnType, chronosRequestPacket_t *reqPacketP, chronosClientThreadInfo_t *infoP)

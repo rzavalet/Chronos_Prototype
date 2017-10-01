@@ -633,6 +633,7 @@ static int
 ThreadTraceTxnElapsedTimePrint(const chronos_time_t *enqueue,
                                const chronos_time_t *start,
                                const chronos_time_t *end,
+                               int   txn_type,
                                chronosServerThreadInfo_t *infoP)
 {
   int  rc = CHRONOS_SUCCESS;
@@ -643,7 +644,7 @@ ThreadTraceTxnElapsedTimePrint(const chronos_time_t *enqueue,
   long long txn_execution_ms;
   chronos_time_t txn_duration;
   chronos_time_t txn_execution;
-#define CHRONOS_THREAD_TRACE_FMT  "[THR: %d] [ENQUEUE: %lld] [START: %lld] [END: %lld] [EXECUTION: %lld] [DURATION: %lld]\n"
+#define CHRONOS_THREAD_TRACE_FMT  "[THR: %d] [TYPE: %s] [ENQUEUE: %lld] [START: %lld] [END: %lld] [EXECUTION: %lld] [DURATION: %lld]\n"
 
   if (infoP->trace_file == NULL) {
     chronos_error("Invalid trace file pointer");
@@ -668,6 +669,7 @@ ThreadTraceTxnElapsedTimePrint(const chronos_time_t *enqueue,
   fprintf(infoP->trace_file,
           CHRONOS_THREAD_TRACE_FMT,
           infoP->thread_num,
+          txn_type == -1 ? chronos_system_transaction_str[0] : CHRONOS_TXN_NAME(txn_type),
           enqueue_ms,
           start_ms,
           end_ms,
@@ -836,9 +838,9 @@ static unsigned long long
 enqueueTransaction(chronos_queue_t *queueP, char txn_type, char *symbolP)
 {
   unsigned long long ticket;
-  chronos_time_t txn_start;
+  chronos_time_t txn_enqueue;
 
-  CHRONOS_TIME_GET(txn_start);
+  CHRONOS_TIME_GET(txn_enqueue);
   
   pthread_mutex_lock(&queueP->mutex);
   while (queueP->occupied >= CHRONOS_READY_QUEUE_SIZE)
@@ -846,7 +848,7 @@ enqueueTransaction(chronos_queue_t *queueP, char txn_type, char *symbolP)
 
   assert(queueP->occupied < CHRONOS_READY_QUEUE_SIZE);
   queueP->txnInfoArr[queueP->nextin].txn_type = txn_type;
-  queueP->txnInfoArr[queueP->nextin].txn_start = txn_start;
+  queueP->txnInfoArr[queueP->nextin].txn_enqueue = txn_enqueue;
   queueP->txnInfoArr[queueP->nextin].txn_specific_info.view_info.pkey = symbolP;
   queueP->nextin++;
   queueP->nextin %= CHRONOS_READY_QUEUE_SIZE;
@@ -1216,8 +1218,10 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   long long         txn_delay;
   chronos_time_t    txn_duration;
 #endif
-  chronos_time_t    txn_start;
+  chronos_time_t    txn_enqueue;
+  chronos_time_t    txn_begin;
   chronos_time_t    txn_end;
+
   txn_info_t       *txnInfoP     = NULL;
   chronos_user_transaction_t txn_type;
 
@@ -1235,10 +1239,12 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
 
     txnInfoP = dequeueTransaction(userTxnQueueP);
     txn_type = txnInfoP->txn_type;
-    txn_start = txnInfoP->txn_start;
+    txn_enqueue = txnInfoP->txn_enqueue;
     data_item = -1;
     
-      /* dispatch a transaction */
+    CHRONOS_TIME_GET(txn_begin);
+
+    /* dispatch a transaction */
     switch(txn_type) {
 
     case CHRONOS_USER_TXN_VIEW_STOCK:
@@ -1275,6 +1281,8 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     
     CHRONOS_TIME_GET(txn_end);
    
+    ThreadTraceTxnElapsedTimePrint(&txn_enqueue, &txn_begin, &txn_end, txn_type, infoP);
+
 #ifdef CHRONOS_STATS_ENABLED
     /* One more transasction finished */
     infoP->contextP->txn_count[current_slot] += 1;
@@ -1362,7 +1370,7 @@ processRefreshTransaction(chronosServerThreadInfo_t *infoP)
 
   chronos_info("(thr: %d) Done processing update...", infoP->thread_num);
 
-  ThreadTraceTxnElapsedTimePrint(&txn_enqueue, &txn_begin, &txn_end, infoP);
+  ThreadTraceTxnElapsedTimePrint(&txn_enqueue, &txn_begin, &txn_end, -1, infoP);
 
 #if 0
   int               i;
