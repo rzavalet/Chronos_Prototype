@@ -8,6 +8,11 @@ int time_to_die = 0;
 
 void handler_sigint(int sig);
 
+#if 0
+static void
+printClientStats(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP);
+#endif
+
 int isTimeToDie()
 {
   return time_to_die;
@@ -33,6 +38,9 @@ waitThinkTime(int minThinkTimeMS, int maxThinkTimeMS)
   return CHRONOS_SUCCESS; 
 }
 
+#define xstr(a) str(a)
+#define str(a) #a
+
 static void
 chronos_usage() 
 {
@@ -41,10 +49,10 @@ chronos_usage()
     "Starts up a number of chronos clients\n"
     "\n"
     "OPTIONS:\n"
-    "-c [num]              number of threads\n"
-    "-a [address]          server ip address\n"
-    "-p [num]              server port\n"
-    "-v [num]              percentage of user transactions\n"
+    "-c [num]              number of threads (default: "xstr(CHRONOS_NUM_CLIENT_THREADS)")\n"
+    "-a [address]          server ip address (default: "CHRONOS_SERVER_ADDRESS")\n"
+    "-p [num]              server port (default: "xstr(CHRONOS_SERVER_PORT)")\n"
+    "-v [num]              percentage of user transactions (default: "xstr(CHRONOS_RATE_VIEW_TRANSACTIONS)"%)\n"
     "-d [num]              debug level\n"
     "-h                    help";
 
@@ -615,6 +623,7 @@ failXit:
   return CHRONOS_FAIL; 
 }
 
+#if 0
 static void
 printClientStats(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP) {
   int i;
@@ -668,6 +677,7 @@ printClientStats(int num_threads, chronosClientThreadInfo_t *infoP, chronosClien
     ); 
   }
 }
+#endif
 
 static int
 disconnectFromServer(chronosClientThreadInfo_t *infoP) 

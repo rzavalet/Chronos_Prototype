@@ -50,20 +50,27 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
 static int
 waitPeriod(double updatePeriodMS);
 
+#ifdef CHRONOS_PERFORMANCE_MONITOR_ENABLED
 static int
 updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chronosServerThreadInfo_t *infoP);
 
 static int
+printStats(chronosServerThreadInfo_t *infoP);
+#endif
+
+static int
 startExperimentTimer(chronosServerContext_t *serverContextP);
 
+static int 
+createExperimentTimer(chronosServerContext_t *serverContextP);
+
+#ifdef CHRONOS_SAMPLING_ENABLED
 static int
 startSamplingTimer(chronosServerContext_t *serverContextP);
 
 static int 
 createSamplingTimer(chronosServerContext_t *serverContextP);
-
-static int 
-createExperimentTimer(chronosServerContext_t *serverContextP);
+#endif
 
 /*===================== TODO LIST ==============================
  * 1) Destroy mutexes --- DONE
@@ -81,9 +88,6 @@ chronos_queue_t *userTxnQueueP = NULL;
 chronos_queue_t *sysTxnQueueP = NULL;
 
 void handler_sigint(int sig);
-
-static int
-printStats(chronosServerThreadInfo_t *infoP);
 
 void handler_sampling(void *arg);
 
@@ -300,8 +304,6 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  serverContextP->stats = calloc(serverContextP->numUpdateThreads, sizeof(chronosServerStats_t));
-				
   CHRONOS_TIME_GET(system_start);
   serverContextP->start = system_start;
 
@@ -498,22 +500,46 @@ int isTimeToDie()
 void handler_sampling(void *arg)
 {
   chronosServerContext_t *contextP = (chronosServerContext_t *) arg;
-  int currentSlot;
-  int txnToWait = 0;
+  int previousSlot;
   int i;
+#if 0
+  int txnToWait = 0;
   float tm = 0;
   float ts = 0;
   float d = 0;
   float ds = 0;
   float ds_prev = 0;
   float alpha = 0.6;
-    
+#endif
+  double count = 0;
+  double duration_ms = 0;
+  double average_duration_ms = 0;
+
+  chronosServerStats_t *statsP = NULL;
+
   chronos_info("****** TIMER... *****");
-  CHRONOS_SERVER_CTX_CHECK(serverContextP);
+  CHRONOS_SERVER_CTX_CHECK(contextP);
+
+  previousSlot = contextP->currentSlot;
+  contextP->currentSlot = (previousSlot + 1) % CHRONOS_SAMPLING_SPACE; 
 
   /*======= Obtain average of the last period ========*/
-  currentSlot = contextP->currentSlot;
+  for (i=0; i<CHRONOS_MAX_NUM_SERVER_THREADS; i++) {
+    statsP = &(contextP->stats_matrix[previousSlot][i]);
+    count += statsP->num_txns;
+    duration_ms += statsP->cumulative_time_ms;
+  }
+  if (count > 0) {
+    average_duration_ms = duration_ms / count;
+  }
+  else {
+    average_duration_ms = 0;
+  }
 
+  chronos_info("[ACC_DURATION: %lf], [NUM_TXN: %d], [AVG_DURATION: %.3lf]", 
+                duration_ms, (int)count, average_duration_ms);
+
+#if 0
   contextP->txn_avg_delay[currentSlot] = contextP->txn_count[currentSlot] > 0 ? (float)contextP->txn_delay[currentSlot] / (float)contextP->txn_count[currentSlot] : 0;
   chronos_info("DELAY: Acc: %lld, Num: %lld, AVG: %.3f", contextP->txn_delay[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_delay[currentSlot]);
 
@@ -576,6 +602,8 @@ void handler_sampling(void *arg)
   
   contextP->currentSlot = (contextP->currentSlot + 1) % CHRONOS_SAMPLE_ARRAY_SIZE;
   contextP->numSamples ++;
+#endif
+
 }
 
 static int
@@ -1212,11 +1240,13 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   int               rc = CHRONOS_SUCCESS;
   int               data_item = 0;
   int               txn_rc = CHRONOS_SUCCESS;
+#ifdef CHRONOS_SAMPLING_ENABLED
+  int               thread_num;
   int               current_slot = 0;
-#ifdef CHRONOS_STATS_ENABLED
   long long         txn_duration_ms;
   long long         txn_delay;
   chronos_time_t    txn_duration;
+  chronosServerStats_t  *statsP = NULL;
 #endif
   chronos_time_t    txn_enqueue;
   chronos_time_t    txn_begin;
@@ -1234,8 +1264,6 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
 
   if (userTxnQueueP->occupied > 0) {
     chronos_info("Processing user txn...");
-
-    current_slot = infoP->contextP->currentSlot;
 
     txnInfoP = dequeueTransaction(userTxnQueueP);
     txn_type = txnInfoP->txn_type;
@@ -1283,8 +1311,19 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
    
     ThreadTraceTxnElapsedTimePrint(&txn_enqueue, &txn_begin, &txn_end, txn_type, infoP);
 
-#ifdef CHRONOS_STATS_ENABLED
+#ifdef CHRONOS_SAMPLING_ENABLED
+    thread_num = infoP->thread_num;
+    current_slot = infoP->contextP->currentSlot;
+    statsP = &(infoP->contextP->stats_matrix[current_slot][thread_num]);
+
     /* One more transasction finished */
+    statsP->num_txns ++;
+
+    CHRONOS_TIME_NANO_OFFSET_GET(txn_begin, txn_end, txn_duration);
+    txn_duration_ms = CHRONOS_TIME_TO_MS(txn_duration);
+    statsP->cumulative_time_ms += txn_duration_ms;
+    
+#if 0
     infoP->contextP->txn_count[current_slot] += 1;
     if (data_item >= 0) {
       infoP->contextP->AccessFrequency[current_slot][data_item] ++;
@@ -1299,10 +1338,6 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     }
     
     /* Calculate the delay of this transaction */
-    CHRONOS_TIME_NANO_OFFSET_GET(txn_start, txn_end, txn_duration);
-    txn_duration_ms = CHRONOS_TIME_TO_MS(txn_duration);
-    chronos_info("txn start: "CHRONOS_TIME_FMT", txn end: "CHRONOS_TIME_FMT", duration: "CHRONOS_TIME_FMT" = %lld",
-     CHRONOS_TIME_ARG(txn_start), CHRONOS_TIME_ARG(txn_end), CHRONOS_TIME_ARG(txn_duration), txn_duration_ms);
 
     txn_delay = txn_duration_ms - infoP->contextP->validityIntervalms;
     chronos_info("txn duration: %lld, validity interval: %lf, delay: %lld",
@@ -1317,6 +1352,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     if (txn_delay < 0) {
       infoP->contextP->txn_timely[current_slot] += 1;
     }
+#endif
 #endif
     chronos_info("Done processing user txn...");
   }
@@ -1608,7 +1644,6 @@ performanceMonitor(chronos_time_t *begin_time, chronos_time_t *end_time, chronos
  failXit:
   return CHRONOS_FAIL;
 }
-#endif
 
 static int
 updateStats(chronos_user_transaction_t txn_type, chronos_time_t *new_time, chronosServerThreadInfo_t *infoP)
@@ -1729,7 +1764,9 @@ printStats(chronosServerThreadInfo_t *infoP)
  failXit:
   return CHRONOS_FAIL;
 }
+#endif
 
+#ifdef CHRONOS_SAMPLING_ENABLED
 static int
 startSamplingTimer(chronosServerContext_t *serverContextP)
 {
@@ -1758,7 +1795,7 @@ createSamplingTimer(chronosServerContext_t *serverContextP)
   int rc = CHRONOS_SUCCESS;
 
   serverContextP->sampling_timer_ev.sigev_notify = SIGEV_THREAD;
-  serverContextP->sampling_timer_ev.sigev_value.sival_ptr = NULL;
+  serverContextP->sampling_timer_ev.sigev_value.sival_ptr = serverContextP;
   serverContextP->sampling_timer_ev.sigev_notify_function = (void *)handler_sampling;
   serverContextP->sampling_timer_ev.sigev_notify_attributes = NULL;
 
@@ -1787,6 +1824,7 @@ failXit:
 cleanup:
   return rc;
 }
+#endif
 
 static int
 startExperimentTimer(chronosServerContext_t *serverContextP)
@@ -1839,6 +1877,9 @@ cleanup:
   return rc;
 }
 
+#define xstr(a) str(a)
+#define str(a) #a
+
 static void
 chronos_usage() 
 {
@@ -1847,13 +1888,13 @@ chronos_usage()
     "Starts up a chronos server \n"
     "\n"
     "OPTIONS:\n"
-    "-c [num]              number of clients it can accept\n"
-    "-v [num]              validity interval [in milliseconds]\n"
-    "-u [num]              number of update threads\n"
-    "-r [num]              duration of the experiment [in minutes]\n"
-    "-t [num]              update period [in milliseconds]\n"
-    "-s [num]              sampling period [in seconds]\n"
-    "-p [num]              port to accept new connections\n"
+    "-c [num]              number of clients it can accept (default: "xstr(CHRONOS_NUM_CLIENT_THREADS)")\n"
+    "-v [num]              validity interval [in milliseconds] (default: 2*"xstr(CHRONOS_INITIAL_UPDATE_PERIOD_MS)" ms)\n"
+    "-u [num]              number of update threads (default: "xstr(CHRONOS_NUM_UPDATE_THREADS)")\n"
+    "-r [num]              duration of the experiment [in seconds] (default: "xstr(CHRONOS_EXPERIMENT_DURATION_SEC)" seconds)\n"
+    "-t [num]              update period [in milliseconds] (default: "xstr(CHRONOS_NUM_UPDATE_THREADS)" ms)\n"
+    "-s [num]              sampling period [in seconds] (default: "xstr(CHRONOS_SAMPLING_PERIOD_SEC)" seconds)\n"
+    "-p [num]              port to accept new connections (default: "xstr(CHRONOS_SERVER_PORT)")\n"
     "-m [mode]             running mode: 0: BASE, 1: Admission Control, 2: Adaptive Update, 3: Admission Control + Adaptive Update\n"
     "-d [num]              debug level\n"
     "-n                    do not perform initial load\n"

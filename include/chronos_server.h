@@ -48,25 +48,27 @@ typedef enum chronosServerThreadType_t {
 #define CHRONOS_SERVER_THREAD_IS_VALID(_txn_type) \
   (CHRONOS_SERVER_THREAD_MIN<=(_txn_type) && (_txn_type) < CHRONOS_SERVER_THREAD_MAX)
 
-typedef struct chronosServerStats_t {
-  chronos_time_t cumulative_time[CHRONOS_USER_TXN_MAX];
-  int num_txns[CHRONOS_USER_TXN_MAX];
-
-  chronos_time_t average_time[CHRONOS_USER_TXN_MAX];
+typedef struct chronosServerStats_t 
+{
+  int            num_txns;
+  double         cumulative_time_ms;
 } chronosServerStats_t;
 
 /* Information required for update transactions */
-typedef struct {
+typedef struct 
+{
   const char *pkey;         /* Primary key */
 } update_txn_info_t;
 
 /* Information required for view_stock transactions */
-typedef struct {
+typedef struct 
+{
   const char *pkey;         /* Primary key */
 } view_txn_info_t;
 
 /* This is the structure of a transaction request in Chronos */
-typedef struct {
+typedef struct 
+{
   char txn_type;              /* Which transaction this is */
   chronos_time_t txn_start;
   chronos_time_t txn_enqueue;
@@ -81,7 +83,8 @@ typedef struct {
   
 /* This is the structure of a ready queue in Chronos. 
  */
-typedef struct {
+typedef struct 
+{
   txn_info_t txnInfoArr[CHRONOS_READY_QUEUE_SIZE]; /* Txn requests are stored here */
   int occupied;
   int nextin;
@@ -95,9 +98,10 @@ typedef struct {
 } chronos_queue_t;
 
 
-typedef struct chronosServerContext_t {
-
+typedef struct chronosServerContext_t 
+{
   int magic;
+
   /* We can only create a limited number of 
    * client threads. */
   int numClientsThreads;
@@ -142,12 +146,14 @@ typedef struct chronosServerContext_t {
 
   int runningMode;
   int debugLevel;
-  chronosServerStats_t *stats;
   chronos_queue_t userTxnQueue;
   chronos_queue_t sysTxnQueue;
 
   /* These fields control the sampling task */
 #define CHRONOS_SAMPLE_ARRAY_SIZE  (15*60*60)
+
+  chronosServerStats_t  stats_matrix[CHRONOS_SAMPLING_SPACE][CHRONOS_MAX_NUM_SERVER_THREADS];
+
   long long txn_count[CHRONOS_SAMPLE_ARRAY_SIZE];
   long long txn_timely[CHRONOS_SAMPLE_ARRAY_SIZE];
   long long txn_received[CHRONOS_SAMPLE_ARRAY_SIZE];
@@ -170,7 +176,7 @@ typedef struct chronosServerContext_t {
   /* Metrics are obtained by sampling. This is the sampling interval */
   double samplingPeriodSec;
 
-  int currentSlot;
+  volatile int currentSlot;
   struct timespec start;
   struct timespec end;
 

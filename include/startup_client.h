@@ -58,9 +58,6 @@ typedef struct chronosClientThreadInfo_t {
 static int
 waitClientThreads(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP);
 
-static void
-printClientStats(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP);
-
 static int
 spawnClientThreads(int num_threads, chronosClientThreadInfo_t **info_ret, chronosClientContext_t *contextP);
 

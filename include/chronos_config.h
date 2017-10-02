@@ -33,6 +33,7 @@
 #else
 #define CHRONOS_NUM_SERVER_THREADS    350
 #endif
+#define CHRONOS_MAX_NUM_SERVER_THREADS  CHRONOS_NUM_SERVER_THREADS
 
 /* By default, updates to the quotes table is performed
  * by 100 threads
@@ -109,4 +110,6 @@
 #define CHRONOS_MIN_THINK_TIME_MS          (300)
 #define CHRONOS_MAX_THINK_TIME_MS          (500)
 #endif
+
+#define CHRONOS_SAMPLING_SPACE         (5)
 #endif
