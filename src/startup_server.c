@@ -503,19 +503,10 @@ void handler_sampling(void *arg)
   int previousSlot;
   int newSlot;
   int i;
-#if 0
   int txnToWait = 0;
-  float tm = 0;
-  float ts = 0;
-  float d = 0;
-  float ds = 0;
-  float ds_prev = 0;
-  float alpha = 0.6;
-#endif
   int    total_failed_txns = 0;
   double count = 0;
   double duration_ms = 0;
-  double average_duration_ms = 0;
 
   chronosServerStats_t *statsP = NULL;
 
@@ -538,14 +529,27 @@ void handler_sampling(void *arg)
     total_failed_txns += statsP->num_failed_txns;
   }
   if (count > 0) {
-    average_duration_ms = duration_ms / count;
+    contextP->average_service_delay_ms = duration_ms / count;
   }
   else {
-    average_duration_ms = 0;
+    contextP->average_service_delay_ms = 0;
   }
 
-  chronos_info("[ACC_DURATION_MS: %lf], [NUM_TXN: %d], [AVG_DURATION_MS: %.3lf] [NUM_FAILED_TXNS: %d]", 
-                duration_ms, (int)count, average_duration_ms, total_failed_txns);
+  // degree of overload
+  assert(contextP->validityIntervalms > 0);
+  if (contextP->average_service_delay_ms > contextP->validityIntervalms) {
+    contextP->degree_timing_violation = (contextP->average_service_delay_ms - contextP->validityIntervalms) / contextP->validityIntervalms;
+  }
+  else {
+    contextP->degree_timing_violation = 0;
+  }
+  contextP->smoth_degree_timing_violation = contextP->alpha * contextP->degree_timing_violation
+                                            + (1.0 - contextP->alpha) * contextP->smoth_degree_timing_violation;
+  chronos_info("SAMPLING [ACC_DURATION_MS: %lf], [NUM_TXN: %d], [AVG_DURATION_MS: %.3lf] [NUM_FAILED_TXNS: %d], "
+               "[DELTA(k): %.3lf], [DELTA_S(k): %.3lf]", 
+               duration_ms, (int)count, contextP->average_service_delay_ms, total_failed_txns,
+               contextP->degree_timing_violation,
+               contextP->smoth_degree_timing_violation);
 
 #if 0
   contextP->txn_avg_delay[currentSlot] = contextP->txn_count[currentSlot] > 0 ? (float)contextP->txn_delay[currentSlot] / (float)contextP->txn_count[currentSlot] : 0;
@@ -556,35 +560,6 @@ void handler_sampling(void *arg)
   chronos_info("DURATION: Acc: %lld, Num: %lld, AVG: %.3f", contextP->txn_duration[currentSlot], contextP->txn_count[currentSlot], contextP->txn_avg_duration[currentSlot]);
 
   contextP->txn_enqueued[currentSlot] = contextP->userTxnQueue.occupied;
-
-  // average service delay
-  tm = contextP->txn_avg_delay[currentSlot];
-
-  // desired service delay
-  ts = contextP->validityIntervalms;
-
-  // degree of overload
-  assert(ts != 0);
-  if (ts > 0) {
-    d = (tm - ts) / ts;
-  }
-  else {
-    d = 0;
-  }
-
-  // smoothed degree of overload
-  if (currentSlot > 0) {
-    ds_prev = contextP->smothed_overload_degree[currentSlot-1];
-    ds = alpha * d + (1 - alpha) * ds_prev;
-  }
-  else {
-    ds = d;
-  }
-  
-  chronos_info("DEGREE OF DELAY: tm: %.3f, ts: %.3f, d: %.3f, ds_prev: %.3f, ds: %.3f", tm, ts, d, ds_prev, ds);
-
-  contextP->smothed_overload_degree[currentSlot] = ds;
-  contextP->overload_degree[currentSlot] = d;
 
   // Access update ratio
   for (i=0; i<BENCHMARK_NUM_SYMBOLS; i++) {
@@ -734,6 +709,7 @@ initProcessArguments(chronosServerContext_t *contextP)
   contextP->samplingPeriodSec = CHRONOS_SAMPLING_PERIOD_SEC;
   contextP->updatePeriodMS  = CHRONOS_INITIAL_UPDATE_PERIOD_MS;
   contextP->duration_sec = CHRONOS_EXPERIMENT_DURATION_SEC;
+  contextP->alpha = CHRONOS_ALPHA;
   contextP->initialLoad = 1;
 
   contextP->timeToDieFp = isTimeToDie;
@@ -876,7 +852,6 @@ waitForTransaction(chronos_queue_t *queueP, unsigned long long ticket)
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
 {
-  int current_slot = 0;
   unsigned long long ticket = 0;
   chronos_time_t   txn_enqueue;
   chronos_queue_t *userTxnQueueP = NULL;
@@ -896,13 +871,9 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
    *==========================================*/
   chronos_debug(2, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
   
-  current_slot = infoP->contextP->currentSlot;  
-  infoP->contextP->txn_received[current_slot] += 1;
-
   if (reqPacketP->txn_type == CHRONOS_USER_TXN_VIEW_STOCK) {
     chronos_debug(2, "View transaction for symbol: %s", reqPacketP->symbol);
   }
-
 
   CHRONOS_TIME_GET(txn_enqueue);
   chronos_enqueue_user_transaction(reqPacketP->txn_type, reqPacketP->symbol, &txn_enqueue, &ticket, infoP->contextP);
@@ -1219,7 +1190,6 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   int               thread_num;
   int               current_slot = 0;
   long long         txn_duration_ms;
-  long long         txn_delay;
   chronos_time_t    txn_duration;
   chronosServerStats_t  *statsP = NULL;
 #endif

@@ -112,4 +112,5 @@
 #endif
 
 #define CHRONOS_SAMPLING_SPACE         (5)
+#define CHRONOS_ALPHA                  (0.4)
 #endif

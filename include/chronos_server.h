@@ -54,6 +54,7 @@ typedef struct chronosServerStats_t
   double         cumulative_time_ms;
 
   int            num_failed_txns;
+
 } chronosServerStats_t;
 
 /* Information required for update transactions */
@@ -156,18 +157,10 @@ typedef struct chronosServerContext_t
 #define CHRONOS_SAMPLE_ARRAY_SIZE  (15*60*60)
 
   chronosServerStats_t  stats_matrix[CHRONOS_SAMPLING_SPACE][CHRONOS_MAX_NUM_SERVER_THREADS];
-
-  long long txn_count[CHRONOS_SAMPLE_ARRAY_SIZE];
-  long long txn_timely[CHRONOS_SAMPLE_ARRAY_SIZE];
-  long long txn_received[CHRONOS_SAMPLE_ARRAY_SIZE];
-  long long txn_update[CHRONOS_SAMPLE_ARRAY_SIZE];
-  long long txn_enqueued[CHRONOS_SAMPLE_ARRAY_SIZE];
-  long long txn_duration[CHRONOS_SAMPLE_ARRAY_SIZE];
-  float txn_avg_duration[CHRONOS_SAMPLE_ARRAY_SIZE];
-  long long txn_delay[CHRONOS_SAMPLE_ARRAY_SIZE];
-  float txn_avg_delay[CHRONOS_SAMPLE_ARRAY_SIZE];
-  float overload_degree[CHRONOS_SAMPLE_ARRAY_SIZE];
-  float smothed_overload_degree[CHRONOS_SAMPLE_ARRAY_SIZE];
+  double         average_service_delay_ms;
+  double         degree_timing_violation;
+  double         smoth_degree_timing_violation;
+  double         alpha;
 
   long long AccessFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
   long long UpdateFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
