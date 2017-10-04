@@ -55,6 +55,7 @@ typedef struct chronosServerStats_t
 
   int            num_failed_txns;
 
+  int            num_timely_txns;
 } chronosServerStats_t;
 
 /* Information required for update transactions */
@@ -165,11 +166,10 @@ typedef struct chronosServerContext_t
   volatile int   num_txn_to_wait;
   int            total_txns_enqueued;
 
-
-  long long AccessFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
-  long long UpdateFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
-  float AccessUpdateRatio[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
-  long long FlexibleValidityInterval[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
+  volatile double    accessFrequency[CHRONOS_SAMPLING_SPACE][3100];
+  volatile double    updateFrequency[CHRONOS_SAMPLING_SPACE][3100];
+  volatile double    accessUpdateRatio[CHRONOS_SAMPLING_SPACE][3100];
+  volatile double    flexibleValidityInterval[CHRONOS_SAMPLING_SPACE][3100];
 
   int numSamples;
 
@@ -206,6 +206,7 @@ typedef struct chronosServerThreadInfo_t {
   int       magic;
   pthread_t thread_id;
   int       thread_num;
+  int       first_symbol_id;
   int       socket_fd;
   FILE     *trace_file;
   chronosServerThreadState_t state;

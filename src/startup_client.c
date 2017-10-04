@@ -78,6 +78,7 @@ populateRequest(chronos_user_transaction_t txnType, chronosRequestPacket_t *reqP
 
   memset(reqPacketP, 0, sizeof(*reqPacketP));
   reqPacketP->txn_type = txnType;
+  reqPacketP->symbolId = txnType;
   strncpy(reqPacketP->symbol, listP[random_symbol], sizeof(reqPacketP->symbol));
 
   goto cleanup;
