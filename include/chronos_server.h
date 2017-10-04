@@ -76,6 +76,7 @@ typedef struct
   chronos_time_t txn_start;
   chronos_time_t txn_enqueue;
   unsigned long long ticket;
+  volatile int *txn_done;
 
   /* We access the following union based on the txn type */
   union {
@@ -161,6 +162,9 @@ typedef struct chronosServerContext_t
   double         degree_timing_violation;
   double         smoth_degree_timing_violation;
   double         alpha;
+  volatile int   num_txn_to_wait;
+  int            total_txns_enqueued;
+
 
   long long AccessFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];
   long long UpdateFrequency[CHRONOS_SAMPLE_ARRAY_SIZE][BENCHMARK_NUM_SYMBOLS];

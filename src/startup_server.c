@@ -503,7 +503,6 @@ void handler_sampling(void *arg)
   int previousSlot;
   int newSlot;
   int i;
-  int txnToWait = 0;
   int    total_failed_txns = 0;
   double count = 0;
   double duration_ms = 0;
@@ -545,11 +544,21 @@ void handler_sampling(void *arg)
   }
   contextP->smoth_degree_timing_violation = contextP->alpha * contextP->degree_timing_violation
                                             + (1.0 - contextP->alpha) * contextP->smoth_degree_timing_violation;
+  contextP->total_txns_enqueued = contextP->userTxnQueue.occupied + contextP->sysTxnQueue.occupied;
+  if (contextP->smoth_degree_timing_violation > 0) {
+    contextP->num_txn_to_wait = contextP->total_txns_enqueued * contextP->smoth_degree_timing_violation;
+  }
+  else {
+    contextP->num_txn_to_wait = 0;
+  }
+
   chronos_info("SAMPLING [ACC_DURATION_MS: %lf], [NUM_TXN: %d], [AVG_DURATION_MS: %.3lf] [NUM_FAILED_TXNS: %d], "
-               "[DELTA(k): %.3lf], [DELTA_S(k): %.3lf]", 
+               "[DELTA(k): %.3lf], [DELTA_S(k): %.3lf] [TNX_ENQUEUED: %d] [TXN_TO_WAIT: %d]", 
                duration_ms, (int)count, contextP->average_service_delay_ms, total_failed_txns,
                contextP->degree_timing_violation,
-               contextP->smoth_degree_timing_violation);
+               contextP->smoth_degree_timing_violation,
+               contextP->total_txns_enqueued,
+               contextP->num_txn_to_wait);
 
 #if 0
   contextP->txn_avg_delay[currentSlot] = contextP->txn_count[currentSlot] > 0 ? (float)contextP->txn_delay[currentSlot] / (float)contextP->txn_count[currentSlot] : 0;
@@ -852,9 +861,9 @@ waitForTransaction(chronos_queue_t *queueP, unsigned long long ticket)
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
 {
+  volatile int txn_done = 0;
   unsigned long long ticket = 0;
   chronos_time_t   txn_enqueue;
-  chronos_queue_t *userTxnQueueP = NULL;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -863,8 +872,6 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
 
   CHRONOS_SERVER_THREAD_CHECK(infoP);
   CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
-
-  userTxnQueueP = &(infoP->contextP->userTxnQueue);
 
   /*===========================================
    * Put a new transaction in the txn queue
@@ -876,10 +883,16 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   }
 
   CHRONOS_TIME_GET(txn_enqueue);
-  chronos_enqueue_user_transaction(reqPacketP->txn_type, reqPacketP->symbol, &txn_enqueue, &ticket, infoP->contextP);
+  chronos_enqueue_user_transaction(reqPacketP->txn_type, reqPacketP->symbol, &txn_enqueue, &ticket, &txn_done, infoP->contextP);
 
+  while (!txn_done) {
+    ;
+  }
+
+#if 0
   /* Wait till the transaction is done */
   waitForTransaction(userTxnQueueP, ticket);
+#endif
   
   chronos_debug(2, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
 
@@ -965,6 +978,21 @@ daHandler(void *argP)
     assert(CHRONOS_TXN_IS_VALID(reqPacket.txn_type));
     chronos_debug(3, "Received transaction request: %s", CHRONOS_TXN_NAME(reqPacket.txn_type));
     /*-----------------------------------------------*/
+
+
+    /*----------- do admission control ---------------*/
+    while (infoP->contextP->num_txn_to_wait > 0)
+    {
+      chronos_info("### Doing admission control (%d/%d) ###",
+                   infoP->contextP->num_txn_to_wait,
+                   infoP->contextP->total_txns_enqueued);
+      if (time_to_die == 1) {
+        chronos_info("Requested to die");
+        goto cleanup;
+      }
+    }
+    /*-----------------------------------------------*/
+
 
 
     /*----------- Process the request ----------------*/
@@ -1198,6 +1226,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   chronos_time_t    txn_begin;
   chronos_time_t    txn_end;
   const char        *pkey = NULL;
+  volatile int      *txn_done = NULL;
 
   chronos_user_transaction_t txn_type;
 
@@ -1211,7 +1240,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   if (userTxnQueueP->occupied > 0) {
     chronos_info("Processing user txn...");
 
-    rc = chronos_dequeue_user_transaction(&txn_type, &pkey, &txn_enqueue, &ticket, infoP->contextP);
+    rc = chronos_dequeue_user_transaction(&txn_type, &pkey, &txn_enqueue, &ticket, &txn_done, infoP->contextP);
     if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to dequeue a user transaction");
       goto failXit;
@@ -1245,10 +1274,21 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     }
 
     /* Notify waiter thread that this txn is done */
+#if 0
     pthread_mutex_lock(&userTxnQueueP->mutex);
     userTxnQueueP->ticketDone = ticket;
     pthread_cond_signal(&userTxnQueueP->ticketReady);
     pthread_mutex_unlock(&userTxnQueueP->mutex);
+#endif
+    *txn_done = 1;
+
+    if (infoP->contextP->num_txn_to_wait > 0) {
+      chronos_info("### Need to wait for: %d/%d transactions to finish ###", 
+                    infoP->contextP->num_txn_to_wait, 
+                    infoP->contextP->total_txns_enqueued);
+      infoP->contextP->num_txn_to_wait --;
+    }
+
     /*--------------------------------------------*/
 
 
@@ -1356,6 +1396,12 @@ processRefreshTransaction(chronosServerThreadInfo_t *infoP)
   CHRONOS_TIME_GET(txn_end);
 
   chronos_info("(thr: %d) Done processing update...", infoP->thread_num);
+  if (infoP->contextP->num_txn_to_wait > 0) {
+    chronos_info("### Need to wait for: %d/%d transactions to finish ###", 
+                 contextP->num_txn_to_wait, 
+                 contextP->total_txns_enqueued);
+    infoP->contextP->num_txn_to_wait --;
+  }
 
   ThreadTraceTxnElapsedTimePrint(&txn_enqueue, &txn_begin, &txn_end, -1, infoP);
 

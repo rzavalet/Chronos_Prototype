@@ -201,6 +201,7 @@ chronos_dequeue_user_transaction(chronos_user_transaction_t *txn_type_ret,
                                  const char **pkey, 
                                  chronos_time_t *ts, 
                                  unsigned long long *ticket_ret,
+                                 volatile int **txn_done_ret,
                                  chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
@@ -225,6 +226,7 @@ chronos_dequeue_user_transaction(chronos_user_transaction_t *txn_type_ret,
   *txn_type_ret = txn_info.txn_type;
   *ts = txn_info.txn_enqueue;
   *ticket_ret = txn_info.ticket;
+  *txn_done_ret = txn_info.txn_done;
 
   goto cleanup;
 
@@ -240,6 +242,7 @@ chronos_enqueue_user_transaction(chronos_user_transaction_t txn_type,
                                  const char *pkey, 
                                  const chronos_time_t *ts, 
                                  unsigned long long *ticket_ret, 
+                                 volatile int *txn_done,
                                  chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
@@ -261,6 +264,7 @@ chronos_enqueue_user_transaction(chronos_user_transaction_t txn_type,
     txn_info.txn_specific_info.view_info.pkey = pkey;
   }
   txn_info.txn_enqueue = *ts;
+  txn_info.txn_done = txn_done;
 
   rc = chronos_enqueue_transaction(&txn_info, ticket_ret, contextP->timeToDieFp, userTxnQueueP);
   if (rc != CHRONOS_SUCCESS) {

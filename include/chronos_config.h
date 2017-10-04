@@ -104,8 +104,8 @@
 #define CHRONOS_RATE_VIEW_TRANSACTIONS  (60)
 
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_MIN_THINK_TIME_MS          (3000)
-#define CHRONOS_MAX_THINK_TIME_MS          (5000)
+#define CHRONOS_MIN_THINK_TIME_MS          (300)
+#define CHRONOS_MAX_THINK_TIME_MS          (500)
 #else
 #define CHRONOS_MIN_THINK_TIME_MS          (300)
 #define CHRONOS_MAX_THINK_TIME_MS          (500)
