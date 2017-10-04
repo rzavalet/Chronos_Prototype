@@ -31,7 +31,7 @@ extern int chronos_debug_level;
     if (chronos_debug_level >= level) {                        \
       char _local_buf_[256];                                   \
       snprintf(_local_buf_, sizeof(_local_buf_), __VA_ARGS__); \
-      fprintf(stderr, "%s:%d: %s", __FILE__, __LINE__, _local_buf_);    \
+      fprintf(stderr, "DEBUG %s:%d: %s", __FILE__, __LINE__, _local_buf_);    \
       fprintf(stderr, "\n");	   \
     } \
   } while(0)

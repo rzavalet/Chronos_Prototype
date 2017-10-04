@@ -501,6 +501,7 @@ void handler_sampling(void *arg)
 {
   chronosServerContext_t *contextP = (chronosServerContext_t *) arg;
   int previousSlot;
+  int newSlot;
   int i;
 #if 0
   int txnToWait = 0;
@@ -511,6 +512,7 @@ void handler_sampling(void *arg)
   float ds_prev = 0;
   float alpha = 0.6;
 #endif
+  int    total_failed_txns = 0;
   double count = 0;
   double duration_ms = 0;
   double average_duration_ms = 0;
@@ -521,13 +523,19 @@ void handler_sampling(void *arg)
   CHRONOS_SERVER_CTX_CHECK(contextP);
 
   previousSlot = contextP->currentSlot;
-  contextP->currentSlot = (previousSlot + 1) % CHRONOS_SAMPLING_SPACE; 
+  newSlot = (previousSlot + 1) % CHRONOS_SAMPLING_SPACE; 
+  for (i=0; i<CHRONOS_MAX_NUM_SERVER_THREADS; i++) {
+    statsP = &(contextP->stats_matrix[newSlot][i]);
+    memset(statsP, 0, sizeof(*statsP));
+  }
+  contextP->currentSlot = newSlot;
 
   /*======= Obtain average of the last period ========*/
   for (i=0; i<CHRONOS_MAX_NUM_SERVER_THREADS; i++) {
     statsP = &(contextP->stats_matrix[previousSlot][i]);
     count += statsP->num_txns;
     duration_ms += statsP->cumulative_time_ms;
+    total_failed_txns += statsP->num_failed_txns;
   }
   if (count > 0) {
     average_duration_ms = duration_ms / count;
@@ -536,8 +544,8 @@ void handler_sampling(void *arg)
     average_duration_ms = 0;
   }
 
-  chronos_info("[ACC_DURATION: %lf], [NUM_TXN: %d], [AVG_DURATION: %.3lf]", 
-                duration_ms, (int)count, average_duration_ms);
+  chronos_info("[ACC_DURATION_MS: %lf], [NUM_TXN: %d], [AVG_DURATION_MS: %.3lf] [NUM_FAILED_TXNS: %d]", 
+                duration_ms, (int)count, average_duration_ms, total_failed_txns);
 
 #if 0
   contextP->txn_avg_delay[currentSlot] = contextP->txn_count[currentSlot] > 0 ? (float)contextP->txn_delay[currentSlot] / (float)contextP->txn_count[currentSlot] : 0;
@@ -854,72 +862,23 @@ waitForTransaction(chronos_queue_t *queueP, unsigned long long ticket)
 {
   int rc = CHRONOS_SUCCESS;
   
+  chronos_debug(2, "Waiting for ticket: %llu", ticket);
+
   pthread_mutex_lock(&queueP->mutex);
-  while(ticket <= queueP->ticketDone)
+  while(ticket != queueP->ticketDone)
     pthread_cond_wait(&queueP->ticketReady, &queueP->mutex);
   pthread_mutex_unlock(&queueP->mutex);
 
+  chronos_debug(2, "Done waiting for ticket: %llu", ticket);
   return rc;
-}
-
-static unsigned long long
-enqueueTransaction(chronos_queue_t *queueP, char txn_type, char *symbolP)
-{
-  unsigned long long ticket;
-  chronos_time_t txn_enqueue;
-
-  CHRONOS_TIME_GET(txn_enqueue);
-  
-  pthread_mutex_lock(&queueP->mutex);
-  while (queueP->occupied >= CHRONOS_READY_QUEUE_SIZE)
-    pthread_cond_wait(&queueP->less, &queueP->mutex);
-
-  assert(queueP->occupied < CHRONOS_READY_QUEUE_SIZE);
-  queueP->txnInfoArr[queueP->nextin].txn_type = txn_type;
-  queueP->txnInfoArr[queueP->nextin].txn_enqueue = txn_enqueue;
-  queueP->txnInfoArr[queueP->nextin].txn_specific_info.view_info.pkey = symbolP;
-  queueP->nextin++;
-  queueP->nextin %= CHRONOS_READY_QUEUE_SIZE;
-  queueP->occupied++;
-  queueP->ticketReq++;
-  ticket = queueP->ticketReq;
-  pthread_cond_signal(&queueP->more);
-  pthread_mutex_unlock(&queueP->mutex);
-
-  return ticket;
-}
-
-static txn_info_t *
-dequeueTransaction(chronos_queue_t *queueP)
-{
-  txn_info_t *item = NULL;
-  pthread_mutex_lock(&queueP->mutex);
-  while(queueP->occupied <= 0)
-    pthread_cond_wait(&queueP->more, &queueP->mutex);
-
-  assert(queueP->occupied > 0);
-
-  item = &(queueP->txnInfoArr[queueP->nextout]);
-  queueP->nextout++;
-  queueP->nextout %= CHRONOS_READY_QUEUE_SIZE;
-  queueP->occupied--;
-  /* now: either queueP->occupied > 0 and queueP->nextout is the index
-       of the next occupied slot in the buffer, or
-       queueP->occupied == 0 and queueP->nextout is the index of the next
-       (empty) slot that will be filled by a producer (such as
-       queueP->nextout == queueP->nextin) */
-
-  pthread_cond_signal(&queueP->less);
-  pthread_mutex_unlock(&queueP->mutex);
-
-  return(item);
 }
 
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
 {
   int current_slot = 0;
-  unsigned long long ticket;
+  unsigned long long ticket = 0;
+  chronos_time_t   txn_enqueue;
   chronos_queue_t *userTxnQueueP = NULL;
 
   if (infoP == NULL || infoP->contextP == NULL) {
@@ -940,13 +899,18 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   current_slot = infoP->contextP->currentSlot;  
   infoP->contextP->txn_received[current_slot] += 1;
 
-  ticket = enqueueTransaction(userTxnQueueP, reqPacketP->txn_type, reqPacketP->symbol);
+  if (reqPacketP->txn_type == CHRONOS_USER_TXN_VIEW_STOCK) {
+    chronos_debug(2, "View transaction for symbol: %s", reqPacketP->symbol);
+  }
+
+
+  CHRONOS_TIME_GET(txn_enqueue);
+  chronos_enqueue_user_transaction(reqPacketP->txn_type, reqPacketP->symbol, &txn_enqueue, &ticket, infoP->contextP);
 
   /* Wait till the transaction is done */
   waitForTransaction(userTxnQueueP, ticket);
   
   chronos_debug(2, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
-
 
   return CHRONOS_SUCCESS;
 
@@ -1209,8 +1173,19 @@ daListener(void *argP)
     }
     pthread_cond_broadcast(&infoP->contextP->startThreadsWait);
     pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
+
   }
-  
+
+#ifdef CHRONOS_SAMPLING_ENABLED
+  if (startSamplingTimer(infoP->contextP) != CHRONOS_SUCCESS) {
+    goto cleanup;
+  }
+#endif
+
+  if (startExperimentTimer(infoP->contextP) != CHRONOS_SUCCESS) {
+    goto cleanup;
+  }
+
 cleanup:
   chronos_info("daListener exiting");
   pthread_exit(NULL);
@@ -1248,11 +1223,12 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   chronos_time_t    txn_duration;
   chronosServerStats_t  *statsP = NULL;
 #endif
+  unsigned long long ticket = 0;
   chronos_time_t    txn_enqueue;
   chronos_time_t    txn_begin;
   chronos_time_t    txn_end;
+  const char        *pkey = NULL;
 
-  txn_info_t       *txnInfoP     = NULL;
   chronos_user_transaction_t txn_type;
 
   if (infoP == NULL || infoP->contextP == NULL) {
@@ -1265,9 +1241,12 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   if (userTxnQueueP->occupied > 0) {
     chronos_info("Processing user txn...");
 
-    txnInfoP = dequeueTransaction(userTxnQueueP);
-    txn_type = txnInfoP->txn_type;
-    txn_enqueue = txnInfoP->txn_enqueue;
+    rc = chronos_dequeue_user_transaction(&txn_type, &pkey, &txn_enqueue, &ticket, infoP->contextP);
+    if (rc != CHRONOS_SUCCESS) {
+      chronos_error("Failed to dequeue a user transaction");
+      goto failXit;
+    }
+
     data_item = -1;
     
     CHRONOS_TIME_GET(txn_begin);
@@ -1276,7 +1255,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     switch(txn_type) {
 
     case CHRONOS_USER_TXN_VIEW_STOCK:
-      txn_rc = benchmark_view_stock2(infoP->contextP->benchmarkCtxtP, txnInfoP->txn_specific_info.view_info.pkey);
+      txn_rc = benchmark_view_stock2(infoP->contextP->benchmarkCtxtP, pkey);
       break;
 
     case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
@@ -1297,16 +1276,12 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
 
     /* Notify waiter thread that this txn is done */
     pthread_mutex_lock(&userTxnQueueP->mutex);
-    userTxnQueueP->ticketDone ++;
+    userTxnQueueP->ticketDone = ticket;
     pthread_cond_signal(&userTxnQueueP->ticketReady);
     pthread_mutex_unlock(&userTxnQueueP->mutex);
     /*--------------------------------------------*/
 
 
-    if (txn_rc != CHRONOS_SUCCESS) {
-      chronos_error("Transaction failed");
-    }
-    
     CHRONOS_TIME_GET(txn_end);
    
     ThreadTraceTxnElapsedTimePrint(&txn_enqueue, &txn_begin, &txn_end, txn_type, infoP);
@@ -1316,13 +1291,19 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     current_slot = infoP->contextP->currentSlot;
     statsP = &(infoP->contextP->stats_matrix[current_slot][thread_num]);
 
-    /* One more transasction finished */
-    statsP->num_txns ++;
+    if (txn_rc == CHRONOS_SUCCESS) {
+      /* One more transasction finished */
+      statsP->num_txns ++;
 
-    CHRONOS_TIME_NANO_OFFSET_GET(txn_begin, txn_end, txn_duration);
-    txn_duration_ms = CHRONOS_TIME_TO_MS(txn_duration);
-    statsP->cumulative_time_ms += txn_duration_ms;
-    
+      CHRONOS_TIME_NANO_OFFSET_GET(txn_begin, txn_end, txn_duration);
+      txn_duration_ms = CHRONOS_TIME_TO_MS(txn_duration);
+      statsP->cumulative_time_ms += txn_duration_ms;
+      chronos_info("User transaction succeeded");
+    }
+    else {
+      statsP->num_failed_txns ++;
+      chronos_error("User transaction failed");
+    }
 #if 0
     infoP->contextP->txn_count[current_slot] += 1;
     if (data_item >= 0) {
@@ -1390,7 +1371,7 @@ processRefreshTransaction(chronosServerThreadInfo_t *infoP)
 
   rc = chronos_dequeue_system_transaction(&pkey, &txn_enqueue, contextP);
   if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Failed to dequeue a user transaction");
+    chronos_error("Failed to dequeue a system transaction");
     goto failXit;
   }
 
@@ -1492,16 +1473,6 @@ processThread(void *argP)
   CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
 
   ThreadTraceOpen(infoP->thread_num, infoP);
-
-#ifdef CHRONOS_SAMPLING_ENABLED
-  if (startSamplingTimer(infoP->contextP) != CHRONOS_SUCCESS) {
-    goto cleanup;
-  }
-#endif
-
-  if (startExperimentTimer(infoP->contextP) != CHRONOS_SUCCESS) {
-    goto cleanup;
-  }
 
   /* Give update transactions more priority */
   /* TODO: Add scheduling technique */

@@ -52,6 +52,8 @@ typedef struct chronosServerStats_t
 {
   int            num_txns;
   double         cumulative_time_ms;
+
+  int            num_failed_txns;
 } chronosServerStats_t;
 
 /* Information required for update transactions */
@@ -72,6 +74,7 @@ typedef struct
   char txn_type;              /* Which transaction this is */
   chronos_time_t txn_start;
   chronos_time_t txn_enqueue;
+  unsigned long long ticket;
 
   /* We access the following union based on the txn type */
   union {

@@ -33,6 +33,7 @@ waitThinkTime(int minThinkTimeMS, int maxThinkTimeMS)
   waitPeriod.tv_nsec = ((int)randomWaitTimeMS % 1000) * 1000000;
 
   /* TODO: do I need to check the second argument? */
+  chronos_info("Waiting for %d ms", randomWaitTimeMS);
   nanosleep(&waitPeriod, NULL);
   
   return CHRONOS_SUCCESS; 

@@ -183,6 +183,7 @@ benchmark_view_stock2(void *benchmark_handle, const char *symbolP)
   
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
+  benchmark_debug(2, "Showing quote for symbol: %s", symbolP);
   ret = show_quote((char *)symbolP, benchmarkP);
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);

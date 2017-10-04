@@ -6,7 +6,9 @@
 #include "chronos.h"
 
 static int
-chronos_dequeue_transaction(txn_info_t *txnInfoP, int (*timeToDieFp)(void), chronos_queue_t *txnQueueP)
+chronos_dequeue_transaction(txn_info_t *txnInfoP, 
+                            int (*timeToDieFp)(void), 
+                            chronos_queue_t *txnQueueP)
 {
   int              rc = CHRONOS_SUCCESS;
   struct timespec  ts; /* For the timed wait */
@@ -58,7 +60,10 @@ cleanup:
 }
 
 static int
-chronos_enqueue_transaction(txn_info_t *txnInfoP, int (*timeToDieFp)(void), chronos_queue_t *txnQueueP)
+chronos_enqueue_transaction(txn_info_t *txnInfoP, 
+                            unsigned long long *ticket_ret, 
+                            int (*timeToDieFp)(void), 
+                            chronos_queue_t *txnQueueP)
 {
   int              rc = CHRONOS_SUCCESS;
   struct timespec  ts; /* For the timed wait */
@@ -87,14 +92,22 @@ chronos_enqueue_transaction(txn_info_t *txnInfoP, int (*timeToDieFp)(void), chro
   
   chronos_info("Put a new update request in queue");
 
-  memcpy(&(txnQueueP->txnInfoArr[txnQueueP->nextin++]), txnInfoP, sizeof(*txnInfoP));
+  memcpy(&(txnQueueP->txnInfoArr[txnQueueP->nextin]), txnInfoP, sizeof(*txnInfoP));
+
+  txnQueueP->ticketReq ++;
+  txnQueueP->txnInfoArr[txnQueueP->nextin].ticket = txnQueueP->ticketReq;
+  if (ticket_ret) {
+    *ticket_ret = txnQueueP->ticketReq;
+  }
   
+  txnQueueP->nextin ++;
   txnQueueP->nextin %= CHRONOS_READY_QUEUE_SIZE;
   txnQueueP->occupied++;
 
-  chronos_info("Enqueued txn (%d), type: %d",
+  chronos_info("Enqueued txn (%d), type: %d, ticket: %lld",
                txnQueueP->occupied,
-               txnInfoP->txn_type);
+               txnInfoP->txn_type,
+               txnQueueP->ticketReq);
 
   /* now: either b->occupied < CHRONOS_READY_QUEUE_SIZE and b->nextin is the index
        of the next empty slot in the buffer, or
@@ -168,7 +181,7 @@ chronos_enqueue_system_transaction(const char *pkey, const chronos_time_t *ts, c
   txn_info.txn_specific_info.update_info.pkey = pkey;
   txn_info.txn_enqueue = *ts;
 
-  rc = chronos_enqueue_transaction(&txn_info, contextP->timeToDieFp, systemTxnQueueP);
+  rc = chronos_enqueue_transaction(&txn_info, NULL, contextP->timeToDieFp, systemTxnQueueP);
   if (rc != CHRONOS_SUCCESS) {
     chronos_error("Could not enqueue update transaction");
     goto failXit;
@@ -184,7 +197,11 @@ cleanup:
 }
 
 int
-chronos_dequeue_user_transaction(const char **pkey, chronos_time_t *ts, chronosServerContext_t *contextP) 
+chronos_dequeue_user_transaction(chronos_user_transaction_t *txn_type_ret, 
+                                 const char **pkey, 
+                                 chronos_time_t *ts, 
+                                 unsigned long long *ticket_ret,
+                                 chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
   txn_info_t       txn_info;
@@ -199,13 +216,15 @@ chronos_dequeue_user_transaction(const char **pkey, chronos_time_t *ts, chronosS
 
   rc = chronos_dequeue_transaction(&txn_info, contextP->timeToDieFp, userTxnQueueP);
   if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Could not dequeue update transaction");
+    chronos_error("Could not dequeue user transaction");
     goto failXit;
   }
 
   assert(txn_info.txn_type == CHRONOS_USER_TXN_VIEW_STOCK);
   *pkey = txn_info.txn_specific_info.update_info.pkey;
+  *txn_type_ret = txn_info.txn_type;
   *ts = txn_info.txn_enqueue;
+  *ticket_ret = txn_info.ticket;
 
   goto cleanup;
 
@@ -217,13 +236,17 @@ cleanup:
 }
 
 int
-chronos_enqueue_user_transaction(const char *pkey, const chronos_time_t *ts, chronosServerContext_t *contextP) 
+chronos_enqueue_user_transaction(chronos_user_transaction_t txn_type, 
+                                 const char *pkey, 
+                                 const chronos_time_t *ts, 
+                                 unsigned long long *ticket_ret, 
+                                 chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
   txn_info_t       txn_info;
   chronos_queue_t *userTxnQueueP = NULL;
 
-  if (contextP == NULL || pkey == NULL || ts == NULL) {
+  if (contextP == NULL || pkey == NULL || ts == NULL || ticket_ret == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -232,11 +255,14 @@ chronos_enqueue_user_transaction(const char *pkey, const chronos_time_t *ts, chr
 
   /* Set the transaction information */
   memset(&txn_info, 0, sizeof(txn_info));
-  txn_info.txn_type = CHRONOS_SYS_TXN_UPDATE_STOCK;
-  txn_info.txn_specific_info.update_info.pkey = pkey;
+  txn_info.txn_type = txn_type;
+
+  if (txn_type == CHRONOS_USER_TXN_VIEW_STOCK) {
+    txn_info.txn_specific_info.view_info.pkey = pkey;
+  }
   txn_info.txn_enqueue = *ts;
 
-  rc = chronos_enqueue_transaction(&txn_info, contextP->timeToDieFp, userTxnQueueP);
+  rc = chronos_enqueue_transaction(&txn_info, ticket_ret, contextP->timeToDieFp, userTxnQueueP);
   if (rc != CHRONOS_SUCCESS) {
     chronos_error("Could not enqueue update transaction");
     goto failXit;
