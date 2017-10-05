@@ -1,7 +1,19 @@
 #!/bin/bash
 
-FILEOUT=/tmp/server.out
-FILESAMPLE=/tmp/samples.out
+if [ $# -ne 3 ]; then
+  echo "Invalid number of parameters"
+  exit 255
+fi
 
-../bin/startup_server -c $1 -u 50 -s 5 -p $2 -n -m 0 2>&1 | tee $FILEOUT
-grep -P 'SAMPLING' $FILEOUT > $FILESAMPLE ; perl sample2csv.pl $FILESAMPLE | head -n 13
+CLIENTS=$1
+PORT=$2
+MODE=$3
+
+FILEOUT=/tmp/server.out
+FILESAMPLE=/tmp/sample.out
+CLIENTOUT=/tmp/client.out
+
+echo "** Starting server"
+../bin/startup_server -c $CLIENTS -s 5 -p $PORT -n -m $MODE > $FILEOUT 2>&1
+
+grep -P 'SAMPLING' $FILEOUT | head -n 12 > $FILESAMPLE ; perl sample2csv.pl $FILESAMPLE

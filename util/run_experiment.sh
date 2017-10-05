@@ -14,7 +14,7 @@ FILESAMPLE=/tmp/sample.out
 CLIENTOUT=/tmp/client.out
 
 echo "** Starting server"
-../bin/startup_server -c $CLIENTS -u 50 -s 5 -p $PORT -n -m $MODE > $FILEOUT 2>&1 &
+../bin/startup_server -c $CLIENTS -s 5 -p $PORT -n -m $MODE > $FILEOUT 2>&1 &
 PID_SERVER=$!
 
 sleep 10

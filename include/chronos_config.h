@@ -38,32 +38,14 @@
 /* By default, updates to the quotes table is performed
  * by 100 threads
  */
-#ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_UPDATE_THREADS    10
-#else
 #define CHRONOS_NUM_UPDATE_THREADS    100
-#endif
 
 /* Chronos server has two ready queues. The default size of them is 1024 */
-#ifdef CHRONOS_DEBUG
-#define CHRONOS_READY_QUEUE_SIZE     (10)
-#else
 #define CHRONOS_READY_QUEUE_SIZE     (1024)
-#endif
 
 /* The update period is initially set to 0.5 in Chronos
  */
-#ifdef CHRONOS_DEBUG
-#define CHRONOS_INITIAL_VALIDITY_INTERVAL_MS  10000
-#else
 #define CHRONOS_INITIAL_VALIDITY_INTERVAL_MS  1000
-#endif
-
-/* Chronos uses the following relation for the flexible
- * validity interval
- */
-#define CHRONOS_UPDATE_PERIOD_MS_TO_FVI(_p)     (2.0 * (_p))
-#define CHRONOS_FVI_TO_UPDATE_PERIDO_MS(_fvi)   (0.5 * (_fvi))
 
 /* By default, Chronos uses \beta=2
  */
@@ -78,16 +60,7 @@
 
 /* Each update thread handles 30 stocks
  */
-#ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  10
-#else
-#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  300
-#endif
-
-/* Chronos tries to relax the period by 10% every time
- */
-#define CHRONOS_FVI_RELAXATION_AMOUNT   10.0
-#define CHRONOS_FVI_RELAX(_fvi)         ((_fvi) * (1.0 + CHRONOS_FVI_RELAXATION_AMOUNT / 100.0))
+#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  30
 
 /* Some utility macros to perform conversion of time units */
 #define CHRONOS_MS_TO_S(_ms)            ((_ms) / 1000.0)
@@ -110,13 +83,8 @@
 
 #define CHRONOS_RATE_VIEW_TRANSACTIONS  (60)
 
-#ifdef CHRONOS_DEBUG
-#define CHRONOS_MIN_THINK_TIME_MS          (300)
-#define CHRONOS_MAX_THINK_TIME_MS          (500)
-#else
-#define CHRONOS_MIN_THINK_TIME_MS          (300)
-#define CHRONOS_MAX_THINK_TIME_MS          (500)
-#endif
+#define CHRONOS_MIN_THINK_TIME_MS          (500)
+#define CHRONOS_MAX_THINK_TIME_MS          (1000)
 
 #define CHRONOS_SAMPLING_SPACE         (5)
 #define CHRONOS_ALPHA                  (0.4)
