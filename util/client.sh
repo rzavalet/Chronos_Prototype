@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./bin/startup_client -c $1 -p $2
+../bin/startup_client -c $1 -p $2
