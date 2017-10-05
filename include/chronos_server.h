@@ -104,86 +104,31 @@ typedef struct
 } chronos_queue_t;
 
 
+typedef struct chronosDataItem_t
+{
+  int      index;
+  char    *dataItem;
+  volatile double accessFrequency[CHRONOS_SAMPLING_SPACE];
+  volatile double updateFrequency[CHRONOS_SAMPLING_SPACE];
+  volatile double accessUpdateRatio[CHRONOS_SAMPLING_SPACE];
+  volatile double updatePeriodMS[CHRONOS_SAMPLING_SPACE];
+} chronosDataItem_t;
+
 typedef struct chronosServerContext_t 
 {
   int magic;
 
-  /* We can only create a limited number of 
-   * client threads. */
-  int numClientsThreads;
-  int currentNumClients;
-
-  /* These two variables are used to wait till 
-   * all client threads are initialized, so that
-   * we can have a fair experiment*/
-  pthread_mutex_t startThreadsMutex;
-  pthread_cond_t startThreadsWait;
-
-  pthread_mutex_t admissionControlMutex;
-  pthread_cond_t admissionControlWait;
-  int txnToWait;
-  
-  /* Apart from client threads, we also have
-   * update threads - threads that update the
-   * data in the system periodically */
-  int numUpdateThreads;
-
-  /* This is the number of server threads that
-   * dequeue transactions from the queue 
-   * and process them */
-  int numServerThreads;
-
-  /* The duration of one chronos experiment */
-  double duration_sec;
-  
-  /* Each data item is associated with a validity interval,
-   * this is the initial value. */
-  double validityIntervalms;
-
-  /* Each data item is refreshed in a certain interval.
-   * This update period is related to the validityIntervalms */
-  double updatePeriodMS;
-  int    numUpdatesPerUpdateThread;
+  int runningMode;
+  int debugLevel;
 
   int serverPort;
 
   /* Whether an initial load is required or not */
   int initialLoad;
 
-  int runningMode;
-  int debugLevel;
-  chronos_queue_t userTxnQueue;
-  chronos_queue_t sysTxnQueue;
-
-  /* These fields control the sampling task */
-#define CHRONOS_SAMPLE_ARRAY_SIZE  (15*60*60)
-
-  chronosServerStats_t  stats_matrix[CHRONOS_SAMPLING_SPACE][CHRONOS_MAX_NUM_SERVER_THREADS];
-  double         average_service_delay_ms;
-  double         degree_timing_violation;
-  double         smoth_degree_timing_violation;
-  double         alpha;
-  volatile int   num_txn_to_wait;
-  int            total_txns_enqueued;
-
-  volatile double    accessFrequency[CHRONOS_SAMPLING_SPACE][3100];
-  volatile double    updateFrequency[CHRONOS_SAMPLING_SPACE][3100];
-  volatile double    accessUpdateRatio[CHRONOS_SAMPLING_SPACE][3100];
-  volatile double    flexibleValidityInterval[CHRONOS_SAMPLING_SPACE][3100];
-
-  int numSamples;
-
-  /* Metrics are obtained by sampling. This is the sampling interval */
-  double samplingPeriodSec;
-
-  volatile int currentSlot;
-  struct timespec start;
-  struct timespec end;
-
-  /* Variables for the sampling timer */
-  timer_t sampling_timer_id;
-  struct itimerspec sampling_timer_et;
-  struct sigevent sampling_timer_ev;
+  
+  /* The duration of one chronos experiment */
+  double duration_sec;
 
   /* Variables for the experiment timer */
   timer_t experiment_timer_id;
@@ -192,6 +137,69 @@ typedef struct chronosServerContext_t
 
   int (*timeToDieFp)(void);
 
+  
+  /* We can only create a limited number of 
+   * client threads. */
+  int numClientsThreads;
+  int currentNumClients;
+
+  /* Apart from client threads, we also have
+   * update threads - threads that update the
+   * data in the system periodically */
+  int numUpdateThreads;
+  int numUpdatesPerUpdateThread;
+
+  /* This is the number of server threads that
+   * dequeue transactions from the queue 
+   * and process them */
+  int numServerThreads;
+
+  /* These two variables are used to wait till 
+   * all client threads are initialized, so that
+   * we can have a fair experiment*/
+  pthread_mutex_t startThreadsMutex;
+  pthread_cond_t startThreadsWait;
+
+  /* Each data item is associated with a validity interval,
+   * this is the initial value. */
+  double initialValidityIntervalMS;
+  double minUpdatePeriodMS;
+  double maxUpdatePeriodMS;
+
+  /* Each data item is refreshed in a certain interval.
+   * This update period is related to the validityIntervalms */
+  double updatePeriodMS;
+
+  /* This is the "deadline" for the user txns */
+  double desiredDelayBoundMS;
+
+  /* These are the queues holding requested txns */
+  chronos_queue_t userTxnQueue;
+  chronos_queue_t sysTxnQueue;
+
+  /*============ These fields control the sampling task ==========*/
+  volatile int          currentSlot;
+  chronosServerStats_t  stats_matrix[CHRONOS_SAMPLING_SPACE][CHRONOS_MAX_NUM_SERVER_THREADS];
+  double                average_service_delay_ms;
+  double                degree_timing_violation;
+  double                smoth_degree_timing_violation;
+  double                alpha;
+  volatile int          num_txn_to_wait;
+  int                   total_txns_enqueued;
+
+  chronosDataItem_t    *dataItemsArray;
+  int                   szDataItemsArray;
+
+  /* Metrics are obtained by sampling. This is the sampling interval */
+  double samplingPeriodSec;
+
+  /* Variables for the sampling timer */
+  timer_t sampling_timer_id;
+  struct itimerspec sampling_timer_et;
+  struct sigevent sampling_timer_ev;
+  /*==============================================================*/
+
+
   /* These fields are for the benchmark framework */
   void *benchmarkCtxtP;
   
@@ -199,7 +207,7 @@ typedef struct chronosServerContext_t
 
 typedef struct chronosUpdateThreadInfo_t {
   int    num_stocks;       /* How many stocks should the thread handle */
-  char **stocks_list;      /* Pointer to the array that contains the stocks managed by this thread */
+  chronosDataItem_t    *dataItemsArray;      /* Pointer to the array that contains the stocks managed by this thread */
 } chronosUpdateThreadInfo_t;
 
 typedef struct chronosServerThreadInfo_t {

@@ -54,9 +54,9 @@
 /* The update period is initially set to 0.5 in Chronos
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_INITIAL_UPDATE_PERIOD_MS  5000
+#define CHRONOS_INITIAL_VALIDITY_INTERVAL_MS  10000
 #else
-#define CHRONOS_INITIAL_UPDATE_PERIOD_MS  500
+#define CHRONOS_INITIAL_VALIDITY_INTERVAL_MS  1000
 #endif
 
 /* Chronos uses the following relation for the flexible
@@ -68,6 +68,13 @@
 /* By default, Chronos uses \beta=2
  */
 #define CHRONOS_UPDATE_PERIOD_RELAXATION_BOUND  2
+
+
+#ifdef CHRONOS_DEBUG
+#define CHRONOS_DESIRED_DELAY_BOUND_MS          1
+#else
+#define CHRONOS_DESIRED_DELAY_BOUND_MS          1000
+#endif
 
 /* Each update thread handles 30 stocks
  */

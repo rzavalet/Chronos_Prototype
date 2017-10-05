@@ -130,7 +130,6 @@ int main(int argc, char *argv[])
   const int stack_size = 0x100000; // 1 MB
   char **pkeys_list = NULL;
   int    num_pkeys = 0;
-  chronos_time_t system_start, system_end;
 
   set_chronos_debug_level(CHRONOS_DEBUG_LEVEL_MIN);
   set_benchmark_debug_level(BENCHMARK_DEBUG_LEVEL_MIN);
@@ -276,9 +275,6 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  CHRONOS_TIME_GET(system_start);
-  serverContextP->start = system_start;
-
   /* Spawn processing thread */
   processingThreadInfoArrP = calloc(serverContextP->numServerThreads, sizeof(chronosServerThreadInfo_t));
   if (processingThreadInfoArrP == NULL) {
@@ -311,7 +307,20 @@ int main(int argc, char *argv[])
     chronos_error("failed to get list of stocks");
     goto failXit;
   }
-              
+
+  serverContextP->dataItemsArray = calloc(num_pkeys, sizeof(chronosDataItem_t));
+  if (serverContextP->dataItemsArray == NULL) {
+    chronos_error("Could not allocate data items array");
+    goto failXit;
+  }
+  serverContextP->szDataItemsArray = num_pkeys;
+
+  for (i=0; i<num_pkeys; i++) {
+    serverContextP->dataItemsArray[i].index = i;
+    serverContextP->dataItemsArray[i].dataItem = pkeys_list[i];
+    serverContextP->dataItemsArray[i].updatePeriodMS[0] = serverContextP->minUpdatePeriodMS;
+  }
+
 #ifdef CHRONOS_UPDATE_TRANSACTIONS_ENABLED
   /* Spawn the update threads */
   updateThreadInfoArrP = calloc(serverContextP->numUpdateThreads, sizeof(chronosServerThreadInfo_t));
@@ -329,7 +338,7 @@ int main(int argc, char *argv[])
 
     /* Set the update specific data */
     updateThreadInfoArrP[i].first_symbol_id = i * serverContextP->numUpdatesPerUpdateThread;
-    updateThreadInfoArrP[i].parameters.updateParameters.stocks_list = &(pkeys_list[i * serverContextP->numUpdatesPerUpdateThread]);
+    updateThreadInfoArrP[i].parameters.updateParameters.dataItemsArray = &(serverContextP->dataItemsArray[i * serverContextP->numUpdatesPerUpdateThread]);
     updateThreadInfoArrP[i].parameters.updateParameters.num_stocks = serverContextP->numUpdatesPerUpdateThread;
     chronos_debug(5,"Thread: %d, will handle from %d to %d", 
                   updateThreadInfoArrP[i].thread_num, 
@@ -406,9 +415,6 @@ int main(int argc, char *argv[])
     }
   }
 
-  CHRONOS_TIME_GET(system_end);
-  serverContextP->end = system_end;
-  
 #ifdef CHRONOS_PRINT_STATS
   printStats(infoP);
 #endif
@@ -436,6 +442,10 @@ cleanup:
   if (serverContextP) {
     pthread_cond_destroy(&serverContextP->startThreadsWait);
     pthread_mutex_destroy(&serverContextP->startThreadsMutex);
+
+    if (serverContextP->dataItemsArray) {
+      free(serverContextP->dataItemsArray);
+    }
 
     if (benchmark_handle_free(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
       chronos_error("Failed to free handle");
@@ -475,9 +485,11 @@ void handler_sampling(void *arg)
   double duration_ms = 0;
 
   chronosServerStats_t *statsP = NULL;
+  chronosDataItem_t    *dataItem = NULL;
 
   chronos_info("****** TIMER... *****");
   CHRONOS_SERVER_CTX_CHECK(contextP);
+
 
   previousSlot = contextP->currentSlot;
   newSlot = (previousSlot + 1) % CHRONOS_SAMPLING_SPACE; 
@@ -485,7 +497,35 @@ void handler_sampling(void *arg)
     statsP = &(contextP->stats_matrix[newSlot][i]);
     memset(statsP, 0, sizeof(*statsP));
   }
+
+  /*=============== Obtain AUR =======================*/
+  for (i=0; i<contextP->szDataItemsArray; i++) {
+    dataItem = &(contextP->dataItemsArray[i]);
+    
+    if (dataItem->updateFrequency[previousSlot] == 0) {
+      dataItem->updateFrequency[previousSlot] = 0.1;
+    }
+
+    dataItem->accessUpdateRatio[previousSlot] = dataItem->accessUpdateRatio[previousSlot] / dataItem->updateFrequency[previousSlot];
+
+    // Data is Cold: Relax the update period
+    if (dataItem->accessUpdateRatio[previousSlot] < 1) {
+      if (dataItem->updatePeriodMS[previousSlot] * 1.1 <= contextP->maxUpdatePeriodMS) {
+        contextP->dataItemsArray[i].updatePeriodMS[newSlot] = dataItem->updatePeriodMS[previousSlot] * 1.1; 
+      }
+    }
+    // Data is hot: Update more frequently
+    else if (dataItem->accessUpdateRatio[previousSlot] > 1) {
+      if (dataItem->updatePeriodMS[previousSlot] * 0.9 >= contextP->minUpdatePeriodMS) {
+        contextP->dataItemsArray[i].updatePeriodMS[newSlot] = dataItem->updatePeriodMS[previousSlot] * 0.9;
+      }
+    }
+
+  }
+  /*==================================================*/
+
   contextP->currentSlot = newSlot;
+
 
   /*======= Obtain average of the last period ========*/
   for (i=0; i<CHRONOS_MAX_NUM_SERVER_THREADS; i++) {
@@ -501,20 +541,12 @@ void handler_sampling(void *arg)
   else {
     contextP->average_service_delay_ms = 0;
   }
+  /*==================================================*/
 
-#if 0
-  for (i=0; i<3100; i++) {
-    contextP->accessUpdateRatio[newSlot][i] = contextP->accessFrequency[previousSlot][i] / contextP->updateFrequency[previousSlot][i];
-    if (contextP->accessUpdateRatio[newSlot][i] > 0) {
-      contextP->flexibleValidityInterval[newSlot][i] = 0;
-    }
-  }
-#endif
 
-  // degree of overload
-  assert(contextP->validityIntervalms > 0);
-  if (contextP->average_service_delay_ms > contextP->validityIntervalms) {
-    contextP->degree_timing_violation = (contextP->average_service_delay_ms - contextP->validityIntervalms) / contextP->validityIntervalms;
+  /*======= Obtain Overload Degree ========*/
+  if (contextP->average_service_delay_ms > contextP->desiredDelayBoundMS) {
+    contextP->degree_timing_violation = (contextP->average_service_delay_ms - contextP->desiredDelayBoundMS) / contextP->desiredDelayBoundMS;
   }
   else {
     contextP->degree_timing_violation = 0;
@@ -530,6 +562,30 @@ void handler_sampling(void *arg)
   else {
     contextP->num_txn_to_wait = 0;
   }
+  /*==================================================*/
+
+
+  /*=============== Obtain AUR =======================*/
+  for (i=0; i<contextP->szDataItemsArray; i++) {
+    dataItem = &(contextP->dataItemsArray[i]);
+    dataItem->accessUpdateRatio[previousSlot] = dataItem->accessUpdateRatio[previousSlot] / dataItem->updateFrequency[previousSlot];
+
+    // Data is Cold: Relax the update period
+    if (dataItem->accessUpdateRatio[previousSlot] < 1) {
+      if (dataItem->updatePeriodMS[previousSlot] * 1.1 <= contextP->maxUpdatePeriodMS) {
+        contextP->dataItemsArray[i].updatePeriodMS[newSlot] = dataItem->updatePeriodMS[previousSlot] * 1.1; 
+      }
+    }
+    // Data is hot: Update more frequently
+    else if (dataItem->accessUpdateRatio[previousSlot] > 1) {
+      if (dataItem->updatePeriodMS[previousSlot] * 0.9 >= contextP->minUpdatePeriodMS) {
+        contextP->dataItemsArray[i].updatePeriodMS[newSlot] = dataItem->updatePeriodMS[previousSlot] * 0.9;
+      }
+    }
+
+  }
+  /*==================================================*/
+
 
   chronos_info("SAMPLING [ACC_DURATION_MS: %lf], [NUM_TXN: %d], [AVG_DURATION_MS: %.3lf] [NUM_FAILED_TXNS: %d], "
                "[NUM_TIMELY_TXNS: %d] [DELTA(k): %.3lf], [DELTA_S(k): %.3lf] [TNX_ENQUEUED: %d] [TXN_TO_WAIT: %d]", 
@@ -538,6 +594,8 @@ void handler_sampling(void *arg)
                contextP->smoth_degree_timing_violation,
                contextP->total_txns_enqueued,
                contextP->num_txn_to_wait);
+
+  return;
 }
 
 static int
@@ -656,10 +714,10 @@ initProcessArguments(chronosServerContext_t *contextP)
   contextP->numUpdateThreads = CHRONOS_NUM_UPDATE_THREADS;
   contextP->numUpdatesPerUpdateThread = CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD;
   contextP->serverPort = CHRONOS_SERVER_PORT;
-  contextP->validityIntervalms = CHRONOS_UPDATE_PERIOD_MS_TO_FVI(CHRONOS_INITIAL_UPDATE_PERIOD_MS);
+  contextP->initialValidityIntervalMS = CHRONOS_INITIAL_VALIDITY_INTERVAL_MS;
   contextP->samplingPeriodSec = CHRONOS_SAMPLING_PERIOD_SEC;
-  contextP->updatePeriodMS  = CHRONOS_INITIAL_UPDATE_PERIOD_MS;
   contextP->duration_sec = CHRONOS_EXPERIMENT_DURATION_SEC;
+  contextP->desiredDelayBoundMS = CHRONOS_DESIRED_DELAY_BOUND_MS;
   contextP->alpha = CHRONOS_ALPHA;
   contextP->initialLoad = 1;
 
@@ -689,36 +747,21 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
   memset(contextP, 0, sizeof(*contextP));
   (void) initProcessArguments(contextP);
 
-  while ((c = getopt(argc, argv, "m:c:v:s:u:r:t:p:d:nh")) != -1) {
+  while ((c = getopt(argc, argv, "m:c:v:s:u:r:p:d:nh")) != -1) {
     switch(c) {
-      case 'c':
-        contextP->numClientsThreads = atoi(optarg);
-        chronos_debug(2,"*** Num clients: %d", contextP->numClientsThreads);
-        break;
-      
       case 'm':
         contextP->runningMode = atoi(optarg);
         chronos_debug(2,"*** Running mode: %d", contextP->runningMode);
         break;
       
+      case 'c':
+        contextP->numClientsThreads = atoi(optarg);
+        chronos_debug(2,"*** Num clients: %d", contextP->numClientsThreads);
+        break;
+      
       case 'v':
-        contextP->validityIntervalms = atof(optarg);
-        chronos_debug(2, "*** Validity interval: %lf", contextP->validityIntervalms);
-        break;
-
-      case 't':
-        contextP->updatePeriodMS = atof(optarg);
-        chronos_debug(2, "*** Update period: %lf [sec]", contextP->updatePeriodMS);
-        break;
-
-      case 'u':
-        contextP->numUpdateThreads = atoi(optarg);
-        chronos_debug(2, "*** Num update threads: %d", contextP->numUpdateThreads);
-        break;
-
-      case 'p':
-        contextP->serverPort = atoi(optarg);
-        chronos_debug(2, "*** Server port: %d", contextP->serverPort);
+        contextP->initialValidityIntervalMS = atof(optarg);
+        chronos_debug(2, "*** Validity interval: %lf", contextP->initialValidityIntervalMS);
         break;
 
       case 's':
@@ -726,9 +769,19 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
         chronos_debug(2, "*** Sampling period: %lf [secs]", contextP->samplingPeriodSec);
         break;
 
+      case 'u':
+        contextP->numUpdateThreads = atoi(optarg);
+        chronos_debug(2, "*** Num update threads: %d", contextP->numUpdateThreads);
+        break;
+
       case 'r':
         contextP->duration_sec = atof(optarg);
         chronos_debug(2, "*** Duration: %lf", contextP->duration_sec);
+        break;
+
+      case 'p':
+        contextP->serverPort = atoi(optarg);
+        chronos_debug(2, "*** Server port: %d", contextP->serverPort);
         break;
 
       case 'd':
@@ -757,13 +810,8 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
     goto failXit;
   }
 
-  if (contextP->validityIntervalms <= 0) {
+  if (contextP->initialValidityIntervalMS <= 0) {
     chronos_error("validity interval must be > 0");
-    goto failXit;
-  }
-
-  if (contextP->updatePeriodMS <= 0) {
-    chronos_error("Update period must be > 0");
     goto failXit;
   }
 
@@ -776,6 +824,11 @@ processArguments(int argc, char *argv[], chronosServerContext_t *contextP)
     chronos_error("port must be a valid one");
     goto failXit;
   }
+
+  contextP->minUpdatePeriodMS = 0.5 * contextP->initialValidityIntervalMS;
+  contextP->maxUpdatePeriodMS = 0.5 * CHRONOS_UPDATE_PERIOD_RELAXATION_BOUND * contextP->initialValidityIntervalMS;
+  contextP->updatePeriodMS  =  0.5 * contextP->initialValidityIntervalMS;
+
 
   return CHRONOS_SUCCESS;
 
@@ -812,10 +865,8 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   CHRONOS_TIME_GET(txn_enqueue);
   chronos_enqueue_user_transaction(reqPacketP->txn_type, reqPacketP->symbol, &txn_enqueue, &ticket, &txn_done, infoP->contextP);
 
-#if 0
   current_slot = infoP->contextP->currentSlot;
-  infoP->contextP->accessFrequency[current_slot][reqPacketP->symbolId] ++;
-#endif
+  infoP->contextP->dataItemsArray[reqPacketP->symbolId].updateFrequency[current_slot] ++;
 
   while (!txn_done) {
     ;
@@ -1217,7 +1268,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
       txn_duration_ms = CHRONOS_TIME_TO_MS(txn_duration);
       statsP->cumulative_time_ms += txn_duration_ms;
 
-      if (txn_duration_ms > infoP->contextP->validityIntervalms) {
+      if (txn_duration_ms > infoP->contextP->desiredDelayBoundMS) {
         statsP->num_timely_txns ++;
       }
       chronos_info("User transaction succeeded");
@@ -1226,28 +1277,6 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
       statsP->num_failed_txns ++;
       chronos_error("User transaction failed");
     }
-#if 0
-    infoP->contextP->txn_count[current_slot] += 1;
-    if (data_item >= 0) {
-      infoP->contextP->AccessFrequency[current_slot][data_item] ++;
-    }
-    
-    /* Calculate the delay of this transaction */
-
-    txn_delay = txn_duration_ms - infoP->contextP->validityIntervalms;
-    chronos_info("txn duration: %lld, validity interval: %lf, delay: %lld",
-     txn_duration_ms, infoP->contextP->validityIntervalms, txn_delay);
-
-    infoP->contextP->txn_duration[current_slot] += txn_duration_ms;
-    infoP->contextP->txn_delay[current_slot] += txn_delay;
-    chronos_info("txn delay acc: %lld, txn duration acc: %lld",
-     infoP->contextP->txn_delay[current_slot], infoP->contextP->txn_duration[current_slot]);
-
-    /* ttps */
-    if (txn_delay < 0) {
-      infoP->contextP->txn_timely[current_slot] += 1;
-    }
-#endif
 #endif
     chronos_info("Done processing user txn...");
   }
@@ -1433,7 +1462,7 @@ updateThread(void *argP)
 {
   int    i;
   int    num_updates = 0;
-  char **managed_keys =  NULL;
+  chronosDataItem_t *dataItemArray =  NULL;
   volatile int current_slot;
   chronos_time_t   txn_enqueue;
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
@@ -1452,8 +1481,8 @@ updateThread(void *argP)
   num_updates = infoP->parameters.updateParameters.num_stocks;
   assert(num_updates > 0);
 
-  managed_keys = infoP->parameters.updateParameters.stocks_list;
-  assert(managed_keys != NULL);
+  dataItemArray = infoP->parameters.updateParameters.dataItemsArray;
+  assert(dataItemArray != NULL);
 
   while (1) {
     CHRONOS_SERVER_THREAD_CHECK(infoP);
@@ -1462,14 +1491,13 @@ updateThread(void *argP)
     chronos_debug(3, "new update period");
 
     for (i=0; i<num_updates; i++) {
-      char *pkey = managed_keys[i];
+      char *pkey = dataItemArray[i].dataItem;
       chronos_debug(3, "(thr: %d) Enqueuing update for key: %s", infoP->thread_num, pkey);
       CHRONOS_TIME_GET(txn_enqueue);
       chronos_enqueue_system_transaction(pkey, &txn_enqueue, contextP);
-#if 0
+
       current_slot = infoP->contextP->currentSlot;
-      contextP->updateFrequency[current_slot][infoP->first_symbol_id + i] ++;
-#endif
+      dataItemArray[i].updateFrequency[current_slot]++;
     }
 
     if (waitPeriod(contextP->updatePeriodMS) != CHRONOS_SUCCESS) {
