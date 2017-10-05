@@ -108,6 +108,8 @@ typedef struct chronosDataItem_t
 {
   int      index;
   char    *dataItem;
+
+  unsigned long long nextUpdateTimeMS;
   volatile double accessFrequency[CHRONOS_SAMPLING_SPACE];
   volatile double updateFrequency[CHRONOS_SAMPLING_SPACE];
   volatile double accessUpdateRatio[CHRONOS_SAMPLING_SPACE];
