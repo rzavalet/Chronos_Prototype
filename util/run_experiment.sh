@@ -9,18 +9,18 @@ CLIENTS=$1
 PORT=$2
 MODE=$3
 
-FILEOUT=myfile.txt
-FILESAMPLE=mysample.txt
-CLIENTOUT=myclient.txt
+FILEOUT=/tmp/server.out
+FILESAMPLE=/tmp/sample.out
+CLIENTOUT=/tmp/client.out
 
 echo "** Starting server"
-./bin/startup_server -c $CLIENTS -u 50 -s 5 -p $PORT -n -m $MODE > $FILEOUT 2>&1 &
+../bin/startup_server -c $CLIENTS -u 50 -s 5 -p $PORT -n -m $MODE > $FILEOUT 2>&1 &
 PID_SERVER=$!
 
 sleep 10
 
 echo "** Starting client"
-./bin/startup_client -c $CLIENTS -p $PORT > $CLIENTOUT 2>&1 &
+../bin/startup_client -c $CLIENTS -p $PORT > $CLIENTOUT 2>&1 &
 PID_CLIENT=$!
 
 echo "** Waiting for experiment to complete"
@@ -33,7 +33,7 @@ echo "** Obtaining stats"
 grep -P 'SAMPLING' $FILEOUT > $FILESAMPLE
 
 echo "## RESULTS FOR NUM CLIENTS = $CLIENTS"
-perl util/sample2csv.pl $FILESAMPLE | head -n 13
+perl sample2csv.pl $FILESAMPLE | head -n 13
 echo "-------------------------------"
 
 
