@@ -30,10 +30,10 @@ echo "** Killing client"
 kill $PID_CLIENT
 
 echo "** Obtaining stats"
-grep -P 'SAMPLING' $FILEOUT > $FILESAMPLE
+grep -P 'SAMPLING' $FILEOUT | head -n 12 > $FILESAMPLE
 
 echo "## RESULTS FOR NUM CLIENTS = $CLIENTS"
-perl sample2csv.pl $FILESAMPLE | head -n 13
+perl sample2csv.pl $FILESAMPLE
 echo "-------------------------------"
 
 
