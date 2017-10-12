@@ -836,6 +836,7 @@ failXit:
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
 {
+  int i;
   volatile int txn_done = 0;
   volatile int current_slot;
   unsigned long long ticket = 0;
@@ -854,15 +855,19 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
    *==========================================*/
   chronos_debug(2, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
   
-  if (reqPacketP->txn_type == CHRONOS_USER_TXN_VIEW_STOCK) {
-    chronos_debug(2, "View transaction for symbol: %s", reqPacketP->symbol);
-  }
-
   CHRONOS_TIME_GET(txn_enqueue);
-  chronos_enqueue_user_transaction(reqPacketP->txn_type, reqPacketP->symbol, &txn_enqueue, &ticket, &txn_done, infoP->contextP);
+  chronos_enqueue_user_transaction(reqPacketP->txn_type, 
+                                   reqPacketP->numSymbols,
+                                   reqPacketP->symbolInfo,
+                                   &txn_enqueue, 
+                                   &ticket, 
+                                   &txn_done, 
+                                   infoP->contextP);
 
   current_slot = infoP->contextP->currentSlot;
-  infoP->contextP->dataItemsArray[reqPacketP->symbolId].updateFrequency[current_slot] ++;
+  for (i=0; i<reqPacketP->numSymbols; i++) {
+    infoP->contextP->dataItemsArray[reqPacketP->symbolInfo[i].symbolId].updateFrequency[current_slot] ++;
+  }
 
   while (!txn_done) {
     ;
@@ -1173,7 +1178,9 @@ static int
 processUserTransaction(chronosServerThreadInfo_t *infoP)
 {
   int               rc = CHRONOS_SUCCESS;
+  int               i;
   int               data_item = 0;
+  int               num_data_items = 0;
   int               txn_rc = CHRONOS_SUCCESS;
 #ifdef CHRONOS_SAMPLING_ENABLED
   int               thread_num;
@@ -1186,8 +1193,9 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   chronos_time_t    txn_enqueue;
   chronos_time_t    txn_begin;
   chronos_time_t    txn_end;
-  const char        *pkey = NULL;
+  const char        *pkey_list[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
   volatile int      *txn_done = NULL;
+  chronosSymbol_t   accessed_data_items[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
 
   chronos_user_transaction_t txn_type;
 
@@ -1201,7 +1209,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   if (userTxnQueueP->occupied > 0) {
     chronos_info("Processing user txn...");
 
-    rc = chronos_dequeue_user_transaction(&txn_type, &pkey, &txn_enqueue, &ticket, &txn_done, infoP->contextP);
+    rc = chronos_dequeue_user_transaction(&txn_type, &num_data_items, accessed_data_items, &txn_enqueue, &ticket, &txn_done, infoP->contextP);
     if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to dequeue a user transaction");
       goto failXit;
@@ -1215,7 +1223,10 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     switch(txn_type) {
 
     case CHRONOS_USER_TXN_VIEW_STOCK:
-      txn_rc = benchmark_view_stock2(infoP->contextP->benchmarkCtxtP, pkey);
+      for (i=0; i<num_data_items; i++) {
+        pkey_list[i] = accessed_data_items[i].symbol;
+      }
+      txn_rc = benchmark_view_stock2(num_data_items, pkey_list, infoP->contextP->benchmarkCtxtP);
       break;
 
     case CHRONOS_USER_TXN_VIEW_PORTFOLIO:

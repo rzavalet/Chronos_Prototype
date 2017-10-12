@@ -197,18 +197,19 @@ cleanup:
 }
 
 int
-chronos_dequeue_user_transaction(chronos_user_transaction_t *txn_type_ret, 
-                                 const char **pkey, 
-                                 chronos_time_t *ts, 
-                                 unsigned long long *ticket_ret,
-                                 volatile int **txn_done_ret,
-                                 chronosServerContext_t *contextP) 
+chronos_dequeue_user_transaction(chronos_user_transaction_t   *txn_type_ret, 
+                                 int                          *num_data_items_ret,
+                                 chronosSymbol_t              *data_items_ret,
+                                 chronos_time_t               *ts, 
+                                 unsigned long long           *ticket_ret,
+                                 volatile int                **txn_done_ret,
+                                 chronosServerContext_t       *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
   txn_info_t       txn_info;
   chronos_queue_t *userTxnQueueP = NULL;
 
-  if (contextP == NULL || pkey == NULL || ts == NULL) {
+  if (contextP == NULL || num_data_items_ret == NULL || data_items_ret == NULL || ts == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -222,7 +223,9 @@ chronos_dequeue_user_transaction(chronos_user_transaction_t *txn_type_ret,
   }
 
   assert(txn_info.txn_type == CHRONOS_USER_TXN_VIEW_STOCK);
-  *pkey = txn_info.txn_specific_info.update_info.pkey;
+  *num_data_items_ret = txn_info.txn_specific_info.view_info.num_keys;
+  memcpy(data_items_ret, txn_info.txn_specific_info.view_info.symbolInfo, sizeof(chronosSymbol_t) * CHRONOS_MAX_DATA_ITEMS_PER_XACT);
+
   *txn_type_ret = txn_info.txn_type;
   *ts = txn_info.txn_enqueue;
   *ticket_ret = txn_info.ticket;
@@ -239,7 +242,8 @@ cleanup:
 
 int
 chronos_enqueue_user_transaction(chronos_user_transaction_t txn_type, 
-                                 const char *pkey, 
+                                 int num_data_items,
+                                 chronosSymbol_t *data_itemsP,
                                  const chronos_time_t *ts, 
                                  unsigned long long *ticket_ret, 
                                  volatile int *txn_done,
@@ -249,7 +253,7 @@ chronos_enqueue_user_transaction(chronos_user_transaction_t txn_type,
   txn_info_t       txn_info;
   chronos_queue_t *userTxnQueueP = NULL;
 
-  if (contextP == NULL || pkey == NULL || ts == NULL || ticket_ret == NULL) {
+  if (contextP == NULL || data_itemsP == NULL || ts == NULL || ticket_ret == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -261,7 +265,8 @@ chronos_enqueue_user_transaction(chronos_user_transaction_t txn_type,
   txn_info.txn_type = txn_type;
 
   if (txn_type == CHRONOS_USER_TXN_VIEW_STOCK) {
-    txn_info.txn_specific_info.view_info.pkey = pkey;
+    txn_info.txn_specific_info.view_info.num_keys = num_data_items;
+    memcpy(txn_info.txn_specific_info.view_info.symbolInfo, data_itemsP, sizeof(chronosSymbol_t) * CHRONOS_MAX_DATA_ITEMS_PER_XACT);
   }
   txn_info.txn_enqueue = *ts;
   txn_info.txn_done = txn_done;

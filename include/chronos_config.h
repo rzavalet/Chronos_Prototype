@@ -88,4 +88,8 @@
 
 #define CHRONOS_SAMPLING_SPACE         (5)
 #define CHRONOS_ALPHA                  (0.4)
+
+#define CHRONOS_MIN_DATA_ITEMS_PER_XACT   50
+#define CHRONOS_MAX_DATA_ITEMS_PER_XACT   100
+
 #endif

@@ -100,6 +100,8 @@ typedef enum {
 #define IS_PORTFOLIOS(_v)   (((_v) & PORTFOLIOS_FLAG) == PORTFOLIOS_FLAG)
 #define IS_ACCOUNTS(_v)     (((_v) & ACCOUNTS_FLAG) == ACCOUNTS_FLAG)
 
+typedef void *benchmark_xact_h;
+
 /* Let's define our Benchmark DB, which translates to
  * multiple berkeley DBs*/
 typedef struct benchmark_dbs {
@@ -259,7 +261,7 @@ int
 show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP);
 
 int
-show_quote(char *symbolP, BENCHMARK_DBS *benchmarkP);
+show_quote(char *symbolP, benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP);
 
 int 
 show_currencies_records(BENCHMARK_DBS *my_benchmarkP);
@@ -273,4 +275,12 @@ show_personal_item(void *vBuf);
 int
 show_portfolio_item(void *vBuf, char **symbolIdPP);
 
+int 
+start_xact(benchmark_xact_h *xact_ret, BENCHMARK_DBS *benchmarkP);
+
+int 
+abort_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP);
+
+int 
+commit_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP);
 #endif

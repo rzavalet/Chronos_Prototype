@@ -1,6 +1,13 @@
 #ifndef _CHRONOS_TRANSACTIONS_H_
 #define _CHRONOS_TRANSACTIONS_H_
 
+#define   ID_SZ           10
+
+typedef struct chronosSymbol_t {
+  int  symbolId;
+  char symbol[ID_SZ];
+} chronosSymbol_t;
+
 /*---------------------------------
  * Important ENUMS
  *-------------------------------*/

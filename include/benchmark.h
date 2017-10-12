@@ -29,7 +29,7 @@ int
 benchmark_view_stock(void *benchmark_handle, int *symbolP);
 
 int
-benchmark_view_stock2(void *benchmark_handle, const char *symbolP);
+benchmark_view_stock2(int num_symbols, const char **symbol_list_P, void *benchmark_handle);
 
 int
 benchmark_view_portfolio(void *benchmark_handle);

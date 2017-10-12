@@ -66,7 +66,9 @@ static int
 populateRequest(chronos_user_transaction_t txnType, chronosRequestPacket_t *reqPacketP, chronosClientThreadInfo_t *infoP)
 {
   int rc = CHRONOS_SUCCESS;
-  int random_symbol = rand() % CHRONOS_CLIENT_NUM_STOCKS;
+  int i;
+  int random_symbol;
+  int random_num_symbols = CHRONOS_MIN_DATA_ITEMS_PER_XACT + rand() % (1 + CHRONOS_MAX_DATA_ITEMS_PER_XACT - CHRONOS_MIN_DATA_ITEMS_PER_XACT);
   char **listP = NULL;
 
   if (reqPacketP == NULL || infoP == NULL || infoP->contextP == NULL) {
@@ -78,8 +80,13 @@ populateRequest(chronos_user_transaction_t txnType, chronosRequestPacket_t *reqP
 
   memset(reqPacketP, 0, sizeof(*reqPacketP));
   reqPacketP->txn_type = txnType;
-  reqPacketP->symbolId = txnType;
-  strncpy(reqPacketP->symbol, listP[random_symbol], sizeof(reqPacketP->symbol));
+
+  reqPacketP->numSymbols = random_num_symbols;
+  for (i=0; i<random_num_symbols; i++) {
+    random_symbol = rand() % CHRONOS_CLIENT_NUM_STOCKS;
+    reqPacketP->symbolInfo[i].symbolId = random_symbol;
+    strncpy(reqPacketP->symbolInfo[i].symbol, listP[random_symbol], sizeof(reqPacketP->symbolInfo[i].symbol));
+  }
 
   goto cleanup;
 
@@ -420,7 +427,7 @@ sendTransactionRequest(chronosRequestPacket_t *reqPacketP, chronosClientThreadIn
     goto failXit;
   }
 
-  chronos_debug(2, "Sending new transaction request: %s: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type), reqPacketP->symbol);
+  chronos_debug(2, "Sending new transaction request: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
 
   buf = (char *)reqPacketP;
   to_write = sizeof(*reqPacketP);

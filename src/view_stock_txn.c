@@ -152,7 +152,7 @@ benchmark_view_stock(void *benchmark_handle, int *symbolP)
 #if 0
   ret = show_stocks_records(random_symbol, benchmarkP);
 #endif
-  ret = show_quote(random_symbol, benchmarkP);
+  ret = show_quote(random_symbol, NULL, benchmarkP);
 
   if (symbolP != NULL) {
     *symbolP = symbol;
@@ -171,9 +171,11 @@ benchmark_view_stock(void *benchmark_handle, int *symbolP)
 }
 
 int
-benchmark_view_stock2(void *benchmark_handle, const char *symbolP)
+benchmark_view_stock2(int num_symbols, const char **symbol_list_P, void *benchmark_handle)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
+  benchmark_xact_h xactH = NULL;
+  int i;
   int ret;
 
   benchmarkP = benchmark_handle;
@@ -183,13 +185,32 @@ benchmark_view_stock2(void *benchmark_handle, const char *symbolP)
   
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
-  benchmark_debug(2, "Showing quote for symbol: %s", symbolP);
-  ret = show_quote((char *)symbolP, benchmarkP);
+  ret = start_xact(&xactH, benchmarkP);
+  if (ret != BENCHMARK_SUCCESS) {
+    goto failXit;
+  }
+
+  for (i=0; i<num_symbols; i++) {
+    benchmark_debug(2, "Showing quote for symbol: %s", symbol_list_P[i]);
+    ret = show_quote((char *)symbol_list_P[i], xactH, benchmarkP);
+    if (ret != BENCHMARK_SUCCESS) {
+      goto failXit;
+    }
+  }
+
+  ret = commit_xact(xactH, benchmarkP);
+  if (ret != BENCHMARK_SUCCESS) {
+    goto failXit;
+  }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
   return ret;
 
  failXit:
+  if (xactH != NULL) {
+    abort_xact(xactH, benchmarkP);
+  }
+
   return BENCHMARK_FAIL;
 }

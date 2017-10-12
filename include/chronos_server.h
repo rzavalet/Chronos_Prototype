@@ -67,7 +67,8 @@ typedef struct
 /* Information required for view_stock transactions */
 typedef struct 
 {
-  const char *pkey;         /* Primary key */
+  int num_keys;
+  chronosSymbol_t symbolInfo[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
 } view_txn_info_t;
 
 /* This is the structure of a transaction request in Chronos */

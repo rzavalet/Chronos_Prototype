@@ -3,11 +3,12 @@
 
 #include "chronos_transactions.h"
 
-#define   ID_SZ           10
 typedef struct chronosRequestPacket_t {
   chronos_user_transaction_t txn_type;
-  int  symbolId;
-  char symbol[ID_SZ];
+
+  /* A transaction can affect up to 100 symbols */
+  int numSymbols;
+  chronosSymbol_t symbolInfo[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
 } chronosRequestPacket_t;
 
 typedef struct chronosResponsePacket_t {

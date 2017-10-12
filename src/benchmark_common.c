@@ -1285,9 +1285,137 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
   return 0;
 }
 
+int 
+start_xact(benchmark_xact_h *xact_ret, BENCHMARK_DBS *benchmarkP)
+{
+  int rc = BENCHMARK_SUCCESS;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
+
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
+    goto failXit; 
+  }
+
+  *xact_ret = txnP;
+
+  goto cleanup;
+
+failXit:
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  if (txnP != NULL) {
+    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    rc = txnP->abort(txnP);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+    }
+  }
+
+  *xact_ret = NULL;
+
+  rc = BENCHMARK_FAIL;
+
+cleanup:
+  return rc;
+}
 
 int 
-show_quote(char *symbolP, BENCHMARK_DBS *benchmarkP)
+commit_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
+{
+  int rc = BENCHMARK_SUCCESS;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
+
+  if (benchmarkP == NULL || xactH == NULL) {
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  txnP = (DB_TXN *)xactH;
+
+  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  rc = txnP->commit(txnP, 0);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
+    goto failXit; 
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  goto cleanup;
+
+failXit:
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  if (txnP != NULL) {
+    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    rc = txnP->abort(txnP);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+    }
+  }
+
+  rc = BENCHMARK_FAIL;
+
+cleanup:
+  return rc;
+}
+
+int 
+abort_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
+{
+  int rc = BENCHMARK_SUCCESS;
+  DB_TXN  *txnP = NULL;
+  DB_ENV  *envP = NULL;
+
+  if (benchmarkP == NULL || xactH == NULL) {
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  txnP = (DB_TXN *)xactH;
+
+  benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+  rc = txnP->abort(txnP);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  goto cleanup;
+
+failXit:
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  rc = BENCHMARK_FAIL;
+
+cleanup:
+  return rc;
+}
+
+int 
+show_quote(char *symbolP, benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
 {
   int rc = BENCHMARK_SUCCESS;
   DB_TXN  *txnP = NULL;
@@ -1310,10 +1438,15 @@ show_quote(char *symbolP, BENCHMARK_DBS *benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
-  if (rc != 0) {
-    envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
-    goto failXit; 
+  if (xactH == NULL) {
+    rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
+      goto failXit; 
+    }
+  }
+  else {
+    txnP = (DB_TXN *)xactH;
   }
 
   benchmark_info("PID: %d, Starting transaction: %p", getpid(), txnP);
@@ -1336,11 +1469,13 @@ show_quote(char *symbolP, BENCHMARK_DBS *benchmarkP)
     cursorp = NULL;
   }
 
-  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
-  rc = txnP->commit(txnP, 0);
-  if (rc != 0) {
-    envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
-    goto failXit; 
+  if (xactH == NULL) {
+    benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+    rc = txnP->commit(txnP, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
+      goto failXit; 
+    }
   }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
@@ -1348,7 +1483,7 @@ show_quote(char *symbolP, BENCHMARK_DBS *benchmarkP)
 
 failXit:
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-  if (txnP != NULL) {
+  if (xactH == NULL && txnP != NULL) {
     if (cursorp != NULL) {
       rc = cursorp->close(cursorp);
       if (rc != 0) {
