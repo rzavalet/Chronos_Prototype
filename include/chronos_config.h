@@ -29,7 +29,7 @@
  * is 350 for their linux settings
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_SERVER_THREADS    1
+#define CHRONOS_NUM_SERVER_THREADS    2
 #else
 #define CHRONOS_NUM_SERVER_THREADS    350
 #endif
@@ -39,6 +39,10 @@
  * by 100 threads
  */
 #define CHRONOS_NUM_UPDATE_THREADS    100
+
+/* Each update thread handles 30 stocks
+ */
+#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  30
 
 /* Chronos server has two ready queues. The default size of them is 1024 */
 #define CHRONOS_READY_QUEUE_SIZE     (1024)
@@ -57,10 +61,6 @@
 #else
 #define CHRONOS_DESIRED_DELAY_BOUND_MS          1000
 #endif
-
-/* Each update thread handles 30 stocks
- */
-#define CHRONOS_NUM_STOCK_UPDATES_PER_UPDATE_THREAD  30
 
 /* Some utility macros to perform conversion of time units */
 #define CHRONOS_MS_TO_S(_ms)            ((_ms) / 1000.0)

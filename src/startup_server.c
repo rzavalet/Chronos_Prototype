@@ -520,18 +520,18 @@ void handler_sampling(void *arg)
     if (IS_CHRONOS_MODE_FULL(contextP) || IS_CHRONOS_MODE_AUP(contextP)) {
       // Data is Cold: Relax the update period
       if (dataItem->accessUpdateRatio[previousSlot] < 1) {
-        chronos_debug(2,"Data Item: %d is cold", i);
+        chronos_warning("### [AUP] Data Item: %d is cold", i);
         if (dataItem->updatePeriodMS[previousSlot] * 1.1 <= contextP->maxUpdatePeriodMS) {
           contextP->dataItemsArray[i].updatePeriodMS[newSlot] = dataItem->updatePeriodMS[previousSlot] * 1.1; 
-          chronos_debug(2,"Data Item: %d, changed update period", i);
+          chronos_warning("### [AUP] Data Item: %d, changed update period", i);
         }
       }
       // Data is hot: Update more frequently
       else if (dataItem->accessUpdateRatio[previousSlot] > 1) {
-        chronos_debug(2,"Data Item: %d is hot", i);
+        chronos_warning("### [AUP] Data Item: %d is hot", i);
         if (dataItem->updatePeriodMS[previousSlot] * 0.9 >= contextP->minUpdatePeriodMS) {
           contextP->dataItemsArray[i].updatePeriodMS[newSlot] = dataItem->updatePeriodMS[previousSlot] * 0.9;
-          chronos_debug(2,"Data Item: %d, changed update period", i);
+          chronos_warning("### [AUP] Data Item: %d, changed update period", i);
         }
       }
     }
@@ -888,8 +888,9 @@ static void *
 daHandler(void *argP) 
 {
   int num_bytes;
-  chronosResponsePacket_t resPacket;
+  int need_admission_control = 0;
   int written, to_write;
+  chronosResponsePacket_t resPacket;
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
   chronosRequestPacket_t reqPacket;
 
@@ -947,15 +948,21 @@ daHandler(void *argP)
 
 
     /*----------- do admission control ---------------*/
+    need_admission_control = infoP->contextP->num_txn_to_wait > 0 ? 1 : 0;
     while (infoP->contextP->num_txn_to_wait > 0)
     {
-      chronos_info("### Doing admission control (%d/%d) ###",
+      chronos_warning("### [AC] Doing admission control (%d/%d) ###",
                    infoP->contextP->num_txn_to_wait,
                    infoP->contextP->total_txns_enqueued);
       if (time_to_die == 1) {
         chronos_info("Requested to die");
         goto cleanup;
       }
+    }
+    if (need_admission_control) {
+      chronos_warning("### [AC] Done with admission control (%d/%d) ###",
+                   infoP->contextP->num_txn_to_wait,
+                   infoP->contextP->total_txns_enqueued);
     }
     /*-----------------------------------------------*/
 
@@ -1249,7 +1256,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     *txn_done = 1;
 
     if (infoP->contextP->num_txn_to_wait > 0) {
-      chronos_info("### Need to wait for: %d/%d transactions to finish ###", 
+      chronos_warning("### [AC] Need to wait for: %d/%d transactions to finish ###", 
                     infoP->contextP->num_txn_to_wait, 
                     infoP->contextP->total_txns_enqueued);
       infoP->contextP->num_txn_to_wait --;
@@ -1337,7 +1344,7 @@ processRefreshTransaction(chronosServerThreadInfo_t *infoP)
 
   chronos_info("(thr: %d) Done processing update...", infoP->thread_num);
   if (infoP->contextP->num_txn_to_wait > 0) {
-    chronos_info("### Need to wait for: %d/%d transactions to finish ###", 
+    chronos_warning("### [AC] Need to wait for: %d/%d transactions to finish ###", 
                  contextP->num_txn_to_wait, 
                  contextP->total_txns_enqueued);
     infoP->contextP->num_txn_to_wait --;
@@ -1506,12 +1513,14 @@ updateThread(void *argP)
     for (i=0; i<num_updates; i++) {
 
       if (dataItemArray[i].nextUpdateTimeMS <= current_time_ms) {
+        int   index = dataItemArray[i].index;
         char *pkey = dataItemArray[i].dataItem;
-        chronos_debug(3, "(thr: %d) (%llu <= %llu) Enqueuing update for key: %d, %s", 
+        chronos_debug(3, "(thr: %d) (%llu <= %llu) [%d] Enqueuing update for key: %d, %s", 
                       infoP->thread_num, 
                       dataItemArray[i].nextUpdateTimeMS,
                       current_time_ms,
                       i,
+                      index,
                       pkey);
         CHRONOS_TIME_GET(txn_enqueue);
         chronos_enqueue_system_transaction(pkey, &txn_enqueue, contextP);

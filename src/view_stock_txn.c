@@ -190,6 +190,8 @@ benchmark_view_stock2(int num_symbols, const char **symbol_list_P, void *benchma
     goto failXit;
   }
 
+  benchmark_debug(2, "Showing quotes for: %d symbols", num_symbols);
+
   for (i=0; i<num_symbols; i++) {
     benchmark_debug(2, "Showing quote for symbol: %s", symbol_list_P[i]);
     ret = show_quote((char *)symbol_list_P[i], xactH, benchmarkP);
