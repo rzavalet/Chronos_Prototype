@@ -29,7 +29,7 @@
  * is 350 for their linux settings
  */
 #ifdef CHRONOS_DEBUG
-#define CHRONOS_NUM_SERVER_THREADS    2
+#define CHRONOS_NUM_SERVER_THREADS    1
 #else
 #define CHRONOS_NUM_SERVER_THREADS    350
 #endif

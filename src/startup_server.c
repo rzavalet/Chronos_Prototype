@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <sched.h>
 
 #include "chronos.h"
 #include "chronos_config.h"
@@ -870,7 +871,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   }
 
   while (!txn_done) {
-    ;
+    (void) sched_yield();
   }
 
   chronos_debug(2, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
@@ -888,6 +889,7 @@ static void *
 daHandler(void *argP) 
 {
   int num_bytes;
+  int cnt_msg = 0;
   int need_admission_control = 0;
   int written, to_write;
   chronosResponsePacket_t resPacket;
@@ -949,15 +951,22 @@ daHandler(void *argP)
 
     /*----------- do admission control ---------------*/
     need_admission_control = infoP->contextP->num_txn_to_wait > 0 ? 1 : 0;
+    cnt_msg = 0;
+#define MSG_FREQ 10
     while (infoP->contextP->num_txn_to_wait > 0)
     {
-      chronos_warning("### [AC] Doing admission control (%d/%d) ###",
-                   infoP->contextP->num_txn_to_wait,
-                   infoP->contextP->total_txns_enqueued);
+      if (cnt_msg >= MSG_FREQ) {
+        chronos_warning("### [AC] Doing admission control (%d/%d) ###",
+                     infoP->contextP->num_txn_to_wait,
+                     infoP->contextP->total_txns_enqueued);
+      }
+      cnt_msg = (cnt_msg + 1) % MSG_FREQ;
       if (time_to_die == 1) {
         chronos_info("Requested to die");
         goto cleanup;
       }
+
+      (void) sched_yield();
     }
     if (need_admission_control) {
       chronos_warning("### [AC] Done with admission control (%d/%d) ###",
