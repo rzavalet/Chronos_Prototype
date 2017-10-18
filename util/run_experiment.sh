@@ -13,11 +13,14 @@ FILEOUT=/tmp/server.out
 FILESAMPLE=/tmp/sample.out
 CLIENTOUT=/tmp/client.out
 
+echo "** Cleaning working directory"
+make -C ../ init
+
 echo "** Starting server"
-../bin/startup_server -c $CLIENTS -s 5 -p $PORT -n -m $MODE > $FILEOUT 2>&1 &
+../bin/startup_server -c $CLIENTS -s 5 -p $PORT -m $MODE > $FILEOUT 2>&1 &
 PID_SERVER=$!
 
-sleep 10
+sleep 20
 
 echo "** Starting client"
 ../bin/startup_client -c $CLIENTS -p $PORT > $CLIENTOUT 2>&1 &
