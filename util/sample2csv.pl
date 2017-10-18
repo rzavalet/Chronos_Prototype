@@ -20,8 +20,19 @@ while (<FILE1>) {
 	print "$accdur, $num, $avgdur, $numfail, $numtimely, $delta, $deltas, $numenq, $numwait\n";
 
   $avg_duration += $avgdur;
-  $avg_success_rate += 100 *($num - $numfail)/$num;
-  $avg_timely_txn_rate += 100 * $numtimely/$num;
+
+  if ($num == 0) {
+    $avg_success_rate += 100 *($num - $numfail)/$num;
+  }
+  else {
+    $avg_success_rate += 0;
+  }
+  if ($num == 0) {
+    $avg_timely_txn_rate += 100 * $numtimely/$num;
+  }
+  else {
+    $avg_timely_txn_rate += 0;
+  }
   $txn_cnt += $num;
   $samplesize ++;
 }

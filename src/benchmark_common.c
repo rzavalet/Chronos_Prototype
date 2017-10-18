@@ -1308,6 +1308,7 @@ start_xact(benchmark_xact_h *xact_ret, BENCHMARK_DBS *benchmarkP)
     envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
     goto failXit; 
   }
+  benchmark_info("PID: %d, Starting transaction: %p", getpid(), txnP);
 
   *xact_ret = txnP;
 
@@ -1422,7 +1423,7 @@ show_quote(char *symbolP, benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
   DB_ENV  *envP = NULL;
   DBT      key, data;
   DBC     *cursorp = NULL; /* To iterate over the porfolios */
-  QUOTE   *quoteP = NULL;
+  //QUOTE   *quoteP = NULL;
 
   if (benchmarkP == NULL) {
     goto failXit;
@@ -1449,15 +1450,14 @@ show_quote(char *symbolP, benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
     txnP = (DB_TXN *)xactH;
   }
 
-  benchmark_info("PID: %d, Starting transaction: %p", getpid(), txnP);
   rc = get_stock(symbolP, txnP, &cursorp, &key, &data, 0, benchmarkP);
   if (rc != BENCHMARK_SUCCESS) {
     benchmark_error("Could not find record.");
     goto failXit; 
   }
   
-  quoteP = data.data;
-  benchmark_info("*** Value of %s is %f", quoteP->symbol, quoteP->current_price);
+  //quoteP = data.data;
+  //benchmark_info("*** Value of %s is %f", quoteP->symbol, quoteP->current_price);
 
   /* Close the record */
   if (cursorp != NULL) {
