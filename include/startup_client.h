@@ -47,6 +47,7 @@ typedef struct chronosClientContext_t {
 typedef struct chronosClientThreadInfo_t {
   pthread_t thread_id;
   int       thread_num;
+  chronosConnHandle connectionH;
   int       socket_fd;
   chronosClientStats_t stats;
   chronosClientContext_t *contextP;
@@ -61,20 +62,11 @@ waitClientThreads(int num_threads, chronosClientThreadInfo_t *infoP, chronosClie
 static int
 spawnClientThreads(int num_threads, chronosClientThreadInfo_t **info_ret, chronosClientContext_t *contextP);
 
-static int
-connectToServer(chronosClientThreadInfo_t *infoP);
-
-static int
-disconnectFromServer(chronosClientThreadInfo_t *infoP);
-
 static void *
 userTransactionThread(void *argP);
 
 static int
 pickTransactionType(chronos_user_transaction_t *txn_type_ret, chronosClientThreadInfo_t *infoP);
-
-static int
-waitTransactionResponse(chronos_user_transaction_t txnType, chronosClientThreadInfo_t *infoP);
 
 static void
 chronos_usage();

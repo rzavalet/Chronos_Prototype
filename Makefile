@@ -53,7 +53,8 @@ all: startup_server startup_client query_stocks update_stocks query_portfolios s
 # Compile and link
 ##################################################
 OBJECTS = benchmark_common.lo benchmark_initial_load.lo benchmark_stocks.lo populate_portfolios.lo refresh_quotes.lo \
-					view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo chronos_queue.lo
+					view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo chronos_queue.lo \
+					chronos_client.lo chronos_packets.lo
 
 benchmark_common.lo: $(SRCDIR)/benchmark_common.c
 	$(CC) $(CFLAGS) $?
@@ -85,6 +86,11 @@ sell_txn.lo:	$(SRCDIR)/sell_txn.c
 chronos_queue.lo:	$(SRCDIR)/chronos_queue.c
 	$(CC) $(CFLAGS) $?
 
+chronos_client.lo:	$(SRCDIR)/chronos_client.c
+	$(CC) $(CFLAGS) $?
+
+chronos_packets.lo: $(SRCDIR)/chronos_packets.c
+	$(CC) $(CFLAGS) $?
 
 ##################################################
 # Build the server

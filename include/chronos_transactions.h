@@ -8,6 +8,34 @@ typedef struct chronosSymbol_t {
   char symbol[ID_SZ];
 } chronosSymbol_t;
 
+typedef struct chronosViewPortfolioInfo_t {
+  char accountId[ID_SZ];
+} chronosViewPortfolioInfo_t;
+
+typedef struct chronosSellInfo_t {
+  char accountId[ID_SZ];
+
+  int  symbolId;
+  char symbol[ID_SZ];
+
+  float price;
+
+  int amount;
+} chronosSellInfo_t;
+
+typedef struct chronosPurchaseInfo_t {
+  char accountId[ID_SZ];
+
+  int  symbolId;
+  char symbol[ID_SZ];
+
+  float price;
+
+  int amount;
+} chronosPurchaseInfo_t;
+
+
+
 /*---------------------------------
  * Important ENUMS
  *-------------------------------*/

@@ -1,4 +1,6 @@
 #include "chronos_config.h"
+#include "chronos_client.h"
+#include "chronos_packets.h"
 #include "startup_client.h"
 #include "chronos_transaction_names.h"
 #include "benchmark_common.h"
@@ -61,6 +63,7 @@ chronos_usage()
 }
 
 #define CHRONOS_CLIENT_NUM_STOCKS     (300)
+#define CHRONOS_CLIENT_NUM_USERS      (50)
 
 static int
 populateRequest(chronos_user_transaction_t txnType, chronosRequestPacket_t *reqPacketP, chronosClientThreadInfo_t *infoP)
@@ -80,12 +83,39 @@ populateRequest(chronos_user_transaction_t txnType, chronosRequestPacket_t *reqP
 
   memset(reqPacketP, 0, sizeof(*reqPacketP));
   reqPacketP->txn_type = txnType;
-
   reqPacketP->numSymbols = random_num_symbols;
-  for (i=0; i<random_num_symbols; i++) {
-    random_symbol = rand() % CHRONOS_CLIENT_NUM_STOCKS;
-    reqPacketP->symbolInfo[i].symbolId = random_symbol;
-    strncpy(reqPacketP->symbolInfo[i].symbol, listP[random_symbol], sizeof(reqPacketP->symbolInfo[i].symbol));
+
+  switch (txnType) {
+    case CHRONOS_USER_TXN_VIEW_STOCK:
+      for (i=0; i<random_num_symbols; i++) {
+        random_symbol = rand() % CHRONOS_CLIENT_NUM_STOCKS;
+        chronosPackViewStock(random_symbol, 
+                             listP[random_symbol], 
+                             &(reqPacketP->request_data.symbolInfo[i]));
+      }
+
+      break;
+
+    case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
+      for (i=0; i<random_num_symbols; i++) {
+        char accountId[ID_SZ];
+
+        random_symbol = rand() % CHRONOS_CLIENT_NUM_USERS;
+        snprintf(accountId, sizeof(accountId),
+                 "%d", random_symbol);
+        chronosPackViewPortfolio(accountId,
+                                 &(reqPacketP->request_data.portfolioInfo[i]));
+      }
+      break;
+
+    case CHRONOS_USER_TXN_PURCHASE:
+      break;
+
+    case CHRONOS_USER_TXN_SALE:
+      break;
+
+    default:
+      assert("Invalid transaction type" == 0);
   }
 
   goto cleanup;
@@ -413,42 +443,6 @@ void handler_sigint(int sig)
   time_to_die = 1;
 }
 
-/*
- * Sends a transaction request to the Chronos Server
- */
-static int
-sendTransactionRequest(chronosRequestPacket_t *reqPacketP, chronosClientThreadInfo_t *infoP) 
-{
-  int written, to_write;
-  char *buf = NULL;
-
-  if (infoP == NULL || infoP->contextP == NULL || reqPacketP == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  chronos_debug(2, "Sending new transaction request: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
-
-  buf = (char *)reqPacketP;
-  to_write = sizeof(*reqPacketP);
- 
-  while(to_write >0) {
-    written = write(infoP->socket_fd, buf, to_write);
-    if (written < 0) {
-      chronos_error("Failed to write to socket");
-      goto failXit;
-    }
-
-    to_write -= written;
-    buf += written;
-  }
-
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL; 
-}
-
 /* 
  * This is the callback function of a client thread. 
  * It receives the following information:
@@ -467,8 +461,10 @@ userTransactionThread(void *argP)
 {
 
   chronosClientThreadInfo_t *infoP = (chronosClientThreadInfo_t *)argP;
+  chronosConnHandle connectionH = NULL;
   chronos_user_transaction_t txnType;
   int cnt_txns = 0;
+  int rc = CHRONOS_SUCCESS;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -477,8 +473,18 @@ userTransactionThread(void *argP)
 
   chronos_debug(3,"This is thread: %d", infoP->thread_num);
 
+  connectionH = chronosConnHandleAlloc();
+  if (connectionH == NULL) {
+    chronos_error("Could not allocate connection handle");
+    goto cleanup;
+  }
+
   /* connect to the chronos server */
-  if (connectToServer(infoP) != CHRONOS_SUCCESS) {
+  rc = chronosClientConnect(infoP->contextP->serverAddress,
+                            infoP->contextP->serverPort,
+                            NULL,
+                            connectionH);
+  if (rc != CHRONOS_SUCCESS) {
     chronos_error("Could not connect to chronos server");
     goto cleanup;
   }
@@ -499,7 +505,8 @@ userTransactionThread(void *argP)
     }
 
     /* Send the request to the server */
-    if (sendTransactionRequest(&reqPacket, infoP) != CHRONOS_SUCCESS) {
+    rc = chronosClientSendRequest(&reqPacket, connectionH);
+    if ( rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to send transaction request");
       goto cleanup;
     }
@@ -507,7 +514,8 @@ userTransactionThread(void *argP)
     cnt_txns ++;
     chronos_debug(3,"[thr: %d] txn count: %d", infoP->thread_num, cnt_txns);
     
-    if (waitTransactionResponse(txnType, infoP) != CHRONOS_SUCCESS) {
+    rc = chronosClientReceiveResponse(connectionH);
+    if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to receive transaction response");
       goto cleanup;
     }
@@ -527,50 +535,17 @@ userTransactionThread(void *argP)
 
 cleanup:
   /* disconnect from the chronos server */
-  if (disconnectFromServer(infoP) != CHRONOS_SUCCESS) {
+  rc = chronosClientDisconnect(connectionH);
+  if (rc != CHRONOS_SUCCESS) {
     chronos_error("Failed to disconnect from server");
   }
+
+  rc = chronosConnHandleFree(connectionH);
+  if (rc != CHRONOS_SUCCESS) {
+    chronos_error("Failed to free connection handle");
+  }
+
   pthread_exit(NULL);
-}
-
-/* 
- * Waits for response from chronos server
- */
-static int
-waitTransactionResponse(chronos_user_transaction_t txnType, chronosClientThreadInfo_t *infoP) 
-{
-  chronosResponsePacket_t resPacket;
-  int num_bytes;
-
-  if (infoP == NULL || infoP->contextP == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  memset(&resPacket, 0, sizeof(resPacket));
-  char *buf = (char *) &resPacket;
-  int   to_read = sizeof(resPacket);
-
-  chronos_debug(3,"[thr: %d] Waiting for transaction response...", infoP->thread_num);
-  while (to_read > 0) {
-    num_bytes = read(infoP->socket_fd, buf, 1);
-    if (num_bytes < 0) {
-      chronos_error("Failed while reading response from server");
-      goto failXit;
-    }
-
-    to_read -= num_bytes;
-    buf += num_bytes;
-  }
-
-  chronos_debug(3,"[thr: %d] Done waiting for transaction response.", infoP->thread_num);
-  assert(resPacket.txn_type == txnType);
-  chronos_debug(1,"Txn: %s, rc: %d", CHRONOS_TXN_NAME(resPacket.txn_type), resPacket.rc);
-
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL; 
 }
 
 /*
@@ -629,109 +604,6 @@ pickTransactionType(chronos_user_transaction_t *txn_type_ret, chronosClientThrea
   return CHRONOS_SUCCESS;
 
 failXit:
-  return CHRONOS_FAIL; 
-}
-
-#if 0
-static void
-printClientStats(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP) {
-  int i;
-#define num_columns  5
-
-  const char title[] = "THREADS STATS";
-  const char filler[] = "====================================================================================================";
-  const char *column_names[num_columns] = {
-                              "Thread Num",
-                              "view_stock",
-                              "view_portfolio",
-                              "purchases",
-                              "sales"};
-
-  int pad_size;
-  const int  width = 80;
-  int spaces = 0;
-
-  pad_size = width / 2;
-  spaces = (width) / (num_columns + 1);
-
-  printf("%.*s\n", width, filler);
-  printf("%*s\n", pad_size, title);
-  printf("%.*s\n", width, filler);
-
-  printf("%*s %*s %*s %*s %*s\n", 
-          spaces,
-          column_names[0], 
-          spaces,
-          column_names[1], 
-          spaces,
-          column_names[2], 
-          spaces,
-          column_names[3], 
-          spaces,
-          column_names[4]); 
-  printf("%.*s\n", width, filler);
-
-  for (i=0; i<num_threads; i++) {
-    printf("%*d %*d %*d %*d %*d\n", 
-            spaces,
-            infoP[i].thread_num,
-            spaces,
-            infoP[i].stats.txnCount[CHRONOS_USER_TXN_VIEW_STOCK],
-            spaces,
-            infoP[i].stats.txnCount[CHRONOS_USER_TXN_VIEW_PORTFOLIO],
-            spaces,
-            infoP[i].stats.txnCount[CHRONOS_USER_TXN_PURCHASE],
-            spaces,
-            infoP[i].stats.txnCount[CHRONOS_USER_TXN_SALE]
-    ); 
-  }
-}
-#endif
-
-static int
-disconnectFromServer(chronosClientThreadInfo_t *infoP) 
-{
-  close(infoP->socket_fd);
-
-  infoP->socket_fd = -1;
-  return CHRONOS_SUCCESS; 
-}
-
-static int
-connectToServer(chronosClientThreadInfo_t *infoP) 
-{
-  int socket_fd;
-  int rc;
-
-  struct sockaddr_in chronos_server_address;
-
-  if (infoP == NULL || infoP->contextP == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (socket_fd == -1) {
-    chronos_error("Could not open socket");
-    goto failXit;
-  }
-
-  chronos_server_address.sin_family = AF_INET;
-  chronos_server_address.sin_addr.s_addr = inet_addr(infoP->contextP->serverAddress);
-  chronos_server_address.sin_port = htons(infoP->contextP->serverPort);
-  
-  rc = connect(socket_fd, (struct sockaddr *)&chronos_server_address, sizeof(chronos_server_address));
-  if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Could not connect to server");
-    goto failXit;
-  }
-
-  infoP->socket_fd = socket_fd;
-
-  return CHRONOS_SUCCESS;
-
-failXit:
-  infoP->socket_fd = -1;
   return CHRONOS_FAIL; 
 }
 
