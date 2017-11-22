@@ -1,19 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <pthread.h>
+#include <time.h>
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include "chronos.h"
+#include "chronos_packets.h"
 #include "chronos_config.h"
 #include "chronos_client.h"
+#include "chronos_cache.h"
 #include "chronos_packets.h"
-#include "startup_client.h"
 #include "chronos_transaction_names.h"
+#include "benchmark.h"
 #include "benchmark_common.h"
 #include <signal.h>
 
+int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
+int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
+
+typedef struct chronosClientStats_t {
+  int txnCount[CHRONOS_USER_TXN_MAX];
+} chronosClientStats_t;
+
+typedef struct chronosClientContext_t {
+  char    serverAddress[256];
+  int     serverPort;
+  int     numTransactions;
+  double  duration_sec;
+  int     percentageViewStockTransactions;
+  int     debugLevel;
+
+  /* We can only create a limited number of 
+   * client threads. */
+  int     numClientsThreads;
+
+  int     minThinkingTime;
+  int     maxThinkingTime;
+  
+  chronosCache  cache;
+  int     (*timeToDieFp)(void);
+
+} chronosClientContext_t;
+
+typedef struct chronosClientThreadInfo_t {
+  pthread_t               thread_id;
+  int                     thread_num;
+  chronosConnHandle       connectionH;
+  int                     socket_fd;
+  chronosClientStats_t    stats;
+  chronosClientContext_t  *contextP;
+} chronosClientThreadInfo_t;
+
+static int
+waitClientThreads(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP);
+
+static int
+spawnClientThreads(int num_threads, chronosClientThreadInfo_t **info_ret, chronosClientContext_t *contextP);
+
+static void *
+userTransactionThread(void *argP);
+
+static int
+pickTransactionType(chronosUserTransaction_t *txn_type_ret, chronosClientThreadInfo_t *infoP);
+
+static void
+chronos_usage();
 int time_to_die = 0;
 
 void handler_sigint(int sig);
-
-#if 0
-static void
-printClientStats(int num_threads, chronosClientThreadInfo_t *infoP, chronosClientContext_t *contextP);
-#endif
 
 int isTimeToDie()
 {
@@ -62,195 +121,6 @@ chronos_usage()
   printf("%s\n", usage);
 }
 
-#define CHRONOS_CLIENT_NUM_STOCKS     (300)
-#define CHRONOS_CLIENT_NUM_USERS      (50)
-
-static int
-populateRequest(chronos_user_transaction_t txnType, chronosRequestPacket_t *reqPacketP, chronosClientThreadInfo_t *infoP)
-{
-  int rc = CHRONOS_SUCCESS;
-  int i;
-  int random_symbol;
-  int random_num_symbols = CHRONOS_MIN_DATA_ITEMS_PER_XACT + rand() % (1 + CHRONOS_MAX_DATA_ITEMS_PER_XACT - CHRONOS_MIN_DATA_ITEMS_PER_XACT);
-  char **listP = NULL;
-
-  if (reqPacketP == NULL || infoP == NULL || infoP->contextP == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  listP = infoP->contextP->stocksListP;
-
-  memset(reqPacketP, 0, sizeof(*reqPacketP));
-  reqPacketP->txn_type = txnType;
-  reqPacketP->numSymbols = random_num_symbols;
-
-  switch (txnType) {
-    case CHRONOS_USER_TXN_VIEW_STOCK:
-      for (i=0; i<random_num_symbols; i++) {
-        random_symbol = rand() % CHRONOS_CLIENT_NUM_STOCKS;
-        chronosPackViewStock(random_symbol, 
-                             listP[random_symbol], 
-                             &(reqPacketP->request_data.symbolInfo[i]));
-      }
-
-      break;
-
-    case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
-      for (i=0; i<random_num_symbols; i++) {
-        char accountId[ID_SZ];
-
-        random_symbol = rand() % CHRONOS_CLIENT_NUM_USERS;
-        snprintf(accountId, sizeof(accountId),
-                 "%d", random_symbol);
-        chronosPackViewPortfolio(accountId,
-                                 &(reqPacketP->request_data.portfolioInfo[i]));
-      }
-      break;
-
-    case CHRONOS_USER_TXN_PURCHASE:
-      break;
-
-    case CHRONOS_USER_TXN_SALE:
-      break;
-
-    default:
-      assert("Invalid transaction type" == 0);
-  }
-
-  goto cleanup;
-
-failXit:
-  rc = CHRONOS_FAIL;
-
-cleanup:
-  return rc;
-}
-
-static int
-stockListFree(chronosClientContext_t *contextP) 
-{
-  int rc = CHRONOS_SUCCESS;
-  int i;
-
-  if (contextP == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  if (contextP->stocksListP != NULL) {
-    for (i=0; i<CHRONOS_CLIENT_NUM_STOCKS; i++) {
-      if (contextP->stocksListP[i] != NULL) {
-        free(contextP->stocksListP[i]);
-        contextP->stocksListP[i] = NULL;
-      }
-    }
-
-    free(contextP->stocksListP);
-    contextP->stocksListP = NULL;
-  }
-
-  goto cleanup;
-
-failXit:
-  rc = CHRONOS_FAIL;
-
-cleanup:
-  return rc;
-}
-
-static int
-stockListFromFile(char *homedir, char *datafilesdir, chronosClientContext_t *contextP)
-{
-  int rc = CHRONOS_SUCCESS;
-  int current_slot = 0;
-  int size;
-  char *stocks_file = NULL;
-  char **listP = NULL;
-  FILE *ifp;
-  char buf[MAXLINE];
-  char ignore_buf[500];
-  STOCK my_stocks;
-
-  assert(homedir != NULL && homedir[0] != '\0');
-  assert(datafilesdir != NULL && datafilesdir[0] != '\0');
-  
-  if (contextP == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  size = strlen(datafilesdir) + strlen(STOCKS_FILE) + 2;
-  stocks_file = malloc(size);
-  if (stocks_file == NULL) {
-    benchmark_error("Failed to allocate memory.");
-    goto failXit;
-  }
-  snprintf(stocks_file, size, "%s/%s", datafilesdir, STOCKS_FILE);
-
-  listP = calloc(CHRONOS_CLIENT_NUM_STOCKS, sizeof (char *));
-  if (listP == NULL) {
-    benchmark_error("Could not allocate storage for stocks list");
-    goto failXit;
-  }
-
-  ifp = fopen(stocks_file, "r");
-  if (ifp == NULL) {
-    benchmark_error("Error opening file '%s'", stocks_file);
-    goto failXit;
-  }
-
-  /* Iterate over the vendor file */
-  while (fgets(buf, MAXLINE, ifp) != NULL && current_slot < CHRONOS_CLIENT_NUM_STOCKS) {
-
-    /* zero out the structure */
-    memset(&my_stocks, 0, sizeof(STOCK));
-
-    /*
-     * Scan the line into the structure.
-     * Convenient, but not particularly safe.
-     * In a real program, there would be a lot more
-     * defensive code here.
-     */
-    sscanf(buf,
-      "%10[^#]#%128[^#]#%500[^\n]",
-      my_stocks.stock_symbol, my_stocks.full_name, ignore_buf);
-
-    listP[current_slot] = strdup(my_stocks.stock_symbol);
-    current_slot ++;
-  }
-
-  fclose(ifp);
-  goto cleanup;
-
-failXit:
-  if (ifp != NULL) {
-    fclose(ifp);
-  }
-
-  if (listP != NULL) {
-    int i;
-    for (i=0; i<CHRONOS_CLIENT_NUM_STOCKS; i++) {
-      if (listP[i] != NULL) {
-        free(listP[i]);
-        listP[i] = NULL;
-      }
-    }
-
-    free(listP);
-    listP = NULL;
-  }
-
-  rc = CHRONOS_FAIL;
-
-cleanup:
-  if (contextP != NULL) {
-    contextP->stocksListP = listP;
-  }
-
-  return rc;
-}
-
 static int
 initProcessArguments(chronosClientContext_t *contextP)
 {
@@ -268,6 +138,7 @@ initProcessArguments(chronosClientContext_t *contextP)
 
   return 0;
 }
+
 /*
  * Process the command line arguments
  */
@@ -462,7 +333,7 @@ userTransactionThread(void *argP)
 
   chronosClientThreadInfo_t *infoP = (chronosClientThreadInfo_t *)argP;
   chronosConnHandle connectionH = NULL;
-  chronos_user_transaction_t txnType;
+  chronosUserTransaction_t txnType;
   int cnt_txns = 0;
   int rc = CHRONOS_SUCCESS;
 
@@ -491,7 +362,7 @@ userTransactionThread(void *argP)
 
   /* Determine how many View_Stock transactions we need to execute */
   while(1) {
-    chronosRequestPacket_t reqPacket;
+    chronosRequest requestH = NULL;
     
     /* Pick a transaction type */
     if (pickTransactionType(&txnType, infoP) != CHRONOS_SUCCESS) {
@@ -499,14 +370,15 @@ userTransactionThread(void *argP)
       goto cleanup;
     }
 
-    if (populateRequest(txnType, &reqPacket, infoP) != CHRONOS_SUCCESS) {
+    requestH = chronosRequestCreate(txnType, infoP->contextP->cache);
+    if (requestH == NULL) {
       chronos_error("Failed to populate request");
       goto cleanup;
     }
 
     /* Send the request to the server */
-    rc = chronosClientSendRequest(&reqPacket, connectionH);
-    if ( rc != CHRONOS_SUCCESS) {
+    rc = chronosClientSendRequest(requestH, connectionH);
+    if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to send transaction request");
       goto cleanup;
     }
@@ -517,6 +389,12 @@ userTransactionThread(void *argP)
     rc = chronosClientReceiveResponse(connectionH);
     if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to receive transaction response");
+      goto cleanup;
+    }
+
+    rc = chronosRequestFree(requestH);
+    if (rc != CHRONOS_SUCCESS) {
+      chronos_error("Failed to release request");
       goto cleanup;
     }
 
@@ -552,7 +430,7 @@ cleanup:
  * Selects a transaction type with a given probability
  */
 static int
-pickTransactionType(chronos_user_transaction_t *txn_type_ret, chronosClientThreadInfo_t *infoP) 
+pickTransactionType(chronosUserTransaction_t *txn_type_ret, chronosClientThreadInfo_t *infoP) 
 {
 #ifdef CHRONOS_ALL_TXN_AVAILABLE
   int random_num;
@@ -647,8 +525,9 @@ int main(int argc, char *argv[])
     goto failXit;    
   }
   
-  if (stockListFromFile(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR, &client_context) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to retrieve stock symbols");
+  client_context.cache = chronosCacheAlloc(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR);
+  if (client_context.cache == NULL) {
+    chronos_error("Failed to create cache");
     goto failXit;    
   }
 
@@ -668,15 +547,12 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-#if 0
-  printClientStats(client_context.numClientsThreads, thread_infoP, &client_context);
-#endif
-  stockListFree(&client_context);
+  chronosCacheFree(client_context.cache);
 
   return CHRONOS_SUCCESS;
 
 failXit:
-  stockListFree(&client_context);
+  chronosCacheFree(client_context.cache);
   return CHRONOS_FAIL;
 }
 

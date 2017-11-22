@@ -3,49 +3,37 @@
 
 #include "chronos_config.h"
 #include "chronos_transactions.h"
+#include "chronos_cache.h"
+#include <stdlib.h>
 
-typedef struct chronosRequestPacket_t {
-  chronos_user_transaction_t txn_type;
+typedef void *chronosRequest;
+typedef void *chronosResponse;
 
-  /* A transaction can affect up to 100 symbols */
-  int numSymbols;
-  union {
-    chronosViewPortfolioInfo_t portfolioInfo[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
-    chronosSymbol_t            symbolInfo[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
-    chronosPurchaseInfo_t      purchaseInfo[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
-    chronosSellInfo_t          sellInfo[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
-  } request_data;
-
-} chronosRequestPacket_t;
-
-typedef struct chronosResponsePacket_t {
-  chronos_user_transaction_t txn_type;
-  int rc;
-} chronosResponsePacket_t;
-
+chronosRequest
+chronosRequestCreate(chronosUserTransaction_t txnType, 
+                     chronosCache chronosCacheH);
 
 int
-chronosPackPurchase(const char *accountId,
-                    int          symbolId, 
-                    const char *symbol, 
-                    float        price,
-                    int          amount,
-                    chronosPurchaseInfo_t *purchaseInfoP);
+chronosRequestFree(chronosRequest requestH);
+
+chronosUserTransaction_t
+chronosRequestTypeGet(chronosRequest requestH);
+
+size_t
+chronosRequestSizeGet(chronosRequest requestH);
+
+chronosResponse
+chronosResponseAlloc();
 
 int
-chronosPackSellStock(const char *accountId,
-                     int          symbolId, 
-                     const char *symbol, 
-                     float        price,
-                     int          amount,
-                     chronosSellInfo_t *sellInfoP);
+chronosResponseFree(chronosResponse responseH);
+
+size_t
+chronosResponseSizeGet(chronosRequest requestH);
+
+chronosUserTransaction_t
+chronosResponseTypeGet(chronosResponse responseH);
 
 int
-chronosPackViewPortfolio(const char *accountId,
-                         chronosViewPortfolioInfo_t *portfolioInfoP);
-
-int
-chronosPackViewStock(int symbolId, 
-                     const char *symbol, 
-                     chronosSymbol_t *symbolInfoP);
+chronosResponseResultGet(chronosResponse responseH);
 #endif

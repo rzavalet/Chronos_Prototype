@@ -54,7 +54,7 @@ all: startup_server startup_client query_stocks update_stocks query_portfolios s
 ##################################################
 OBJECTS = benchmark_common.lo benchmark_initial_load.lo benchmark_stocks.lo populate_portfolios.lo refresh_quotes.lo \
 					view_stock_txn.lo view_portfolio_txn.lo purchase_txn.lo sell_txn.lo chronos_queue.lo \
-					chronos_client.lo chronos_packets.lo
+					chronos_client.lo chronos_packets.lo chronos_cache.lo
 
 benchmark_common.lo: $(SRCDIR)/benchmark_common.c
 	$(CC) $(CFLAGS) $?
@@ -90,6 +90,9 @@ chronos_client.lo:	$(SRCDIR)/chronos_client.c
 	$(CC) $(CFLAGS) $?
 
 chronos_packets.lo: $(SRCDIR)/chronos_packets.c
+	$(CC) $(CFLAGS) $?
+
+chronos_cache.lo: $(SRCDIR)/chronos_cache.c
 	$(CC) $(CFLAGS) $?
 
 ##################################################
