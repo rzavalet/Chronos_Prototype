@@ -858,16 +858,16 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   
   CHRONOS_TIME_GET(txn_enqueue);
   chronos_enqueue_user_transaction(reqPacketP->txn_type, 
-                                   reqPacketP->numSymbols,
-                                   reqPacketP->symbolInfo,
+                                   reqPacketP->numItems,
+                                   reqPacketP->request_data.symbolInfo,
                                    &txn_enqueue, 
                                    &ticket, 
                                    &txn_done, 
                                    infoP->contextP);
 
   current_slot = infoP->contextP->currentSlot;
-  for (i=0; i<reqPacketP->numSymbols; i++) {
-    infoP->contextP->dataItemsArray[reqPacketP->symbolInfo[i].symbolId].updateFrequency[current_slot] ++;
+  for (i=0; i<reqPacketP->numItems; i++) {
+    infoP->contextP->dataItemsArray[reqPacketP->request_data.symbolInfo[i].symbolId].updateFrequency[current_slot] ++;
   }
 
   while (!txn_done) {
@@ -1213,7 +1213,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   volatile int      *txn_done = NULL;
   chronosSymbol_t   accessed_data_items[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
 
-  chronos_user_transaction_t txn_type;
+  chronosUserTransaction_t txn_type;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -1366,7 +1366,7 @@ processRefreshTransaction(chronosServerThreadInfo_t *infoP)
   int               data_item = 0;
   int               current_slot = 0;
   chronos_queue_t  *sysTxnQueueP = NULL;
-  chronos_user_transaction_t txn_type;
+  chronosUserTransaction_t txn_type;
   txn_info_t       *txnInfoP     = NULL;
   sysTxnQueueP = &(infoP->contextP->sysTxnQueue);
 
