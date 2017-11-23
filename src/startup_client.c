@@ -23,10 +23,6 @@
 int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
 int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
 
-typedef struct chronosClientStats_t {
-  int txnCount[CHRONOS_USER_TXN_MAX];
-} chronosClientStats_t;
-
 typedef struct chronosClientContext_t {
   char    serverAddress[256];
   int     serverPort;
@@ -52,7 +48,6 @@ typedef struct chronosClientThreadInfo_t {
   int                     thread_num;
   chronosConnHandle       connectionH;
   int                     socket_fd;
-  chronosClientStats_t    stats;
   chronosClientContext_t  *contextP;
 } chronosClientThreadInfo_t;
 
@@ -476,7 +471,6 @@ pickTransactionType(chronosUserTransaction_t *txn_type_ret, chronosClientThreadI
   *txn_type_ret = CHRONOS_USER_TXN_VIEW_STOCK;
 #endif
 
-  infoP->stats.txnCount[*txn_type_ret] ++;
   chronos_debug(3,"Selected transaction type is: %s", CHRONOS_TXN_NAME(*txn_type_ret));
 
   return CHRONOS_SUCCESS;
@@ -534,11 +528,6 @@ int main(int argc, char *argv[])
   /* Next we need to spawn the client threads */
   if (spawnClientThreads(client_context.numClientsThreads, &thread_infoP, &client_context) != CHRONOS_SUCCESS) {
     chronos_error("Failed spawning threads");
-    goto failXit;
-  }
-
-  if (thread_infoP == NULL) {
-    chronos_error("Invalid thread info");
     goto failXit;
   }
 
