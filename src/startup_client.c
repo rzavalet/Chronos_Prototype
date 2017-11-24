@@ -13,8 +13,6 @@
 #include "chronos_packets.h"
 #include "chronos_config.h"
 #include "chronos_client.h"
-#include "chronos_cache.h"
-#include "chronos_packets.h"
 #include "chronos_transaction_names.h"
 #include "benchmark.h"
 #include "benchmark_common.h"
@@ -38,9 +36,9 @@ typedef struct chronosClientContext_t {
   int     minThinkingTime;
   int     maxThinkingTime;
   
-  chronosCache  cache;
   int     (*timeToDieFp)(void);
 
+  chronosEnv  chronosEnvH;
 } chronosClientContext_t;
 
 typedef struct chronosClientThreadInfo_t {
@@ -64,10 +62,12 @@ static int
 pickTransactionType(chronosUserTransaction_t *txn_type_ret, chronosClientThreadInfo_t *infoP);
 
 static void
-chronos_usage();
-int time_to_die = 0;
+chronosUsage();
 
-void handler_sigint(int sig);
+static void 
+sigintHandler(int sig);
+
+int time_to_die = 0;
 
 int isTimeToDie()
 {
@@ -99,7 +99,7 @@ waitThinkTime(int minThinkTimeMS, int maxThinkTimeMS)
 #define str(a) #a
 
 static void
-chronos_usage() 
+chronosUsage() 
 {
   char usage[] =
     "Usage: startup_client OPTIONS\n"
@@ -180,7 +180,7 @@ processArguments(int argc, char *argv[], chronosClientContext_t *contextP)
         break;
 
       case 'h':
-        chronos_usage();
+        chronosUsage();
         exit(0);
         break;
 
@@ -213,7 +213,7 @@ processArguments(int argc, char *argv[], chronosClientContext_t *contextP)
   return CHRONOS_SUCCESS;
 
 failXit:
-  chronos_usage();
+  chronosUsage();
   return CHRONOS_FAIL;
 }
 
@@ -303,7 +303,7 @@ failXit:
   return CHRONOS_FAIL;
 }
 
-void handler_sigint(int sig)
+void sigintHandler(int sig)
 {
   printf("Received signal: %d\n", sig);
   time_to_die = 1;
@@ -328,6 +328,7 @@ userTransactionThread(void *argP)
 
   chronosClientThreadInfo_t *infoP = (chronosClientThreadInfo_t *)argP;
   chronosConnHandle connectionH = NULL;
+  chronosEnv        envH = NULL;
   chronosUserTransaction_t txnType;
   int cnt_txns = 0;
   int rc = CHRONOS_SUCCESS;
@@ -339,7 +340,14 @@ userTransactionThread(void *argP)
 
   chronos_debug(3,"This is thread: %d", infoP->thread_num);
 
-  connectionH = chronosConnHandleAlloc();
+  envH = infoP->contextP->chronosEnvH;
+  if (envH == NULL) {
+    chronos_error("Null environment handle");
+    goto cleanup;
+  }
+
+
+  connectionH = chronosConnHandleAlloc(envH);
   if (connectionH == NULL) {
     chronos_error("Could not allocate connection handle");
     goto cleanup;
@@ -365,7 +373,7 @@ userTransactionThread(void *argP)
       goto cleanup;
     }
 
-    requestH = chronosRequestCreate(txnType, infoP->contextP->cache);
+    requestH = chronosRequestCreate(txnType, envH);
     if (requestH == NULL) {
       chronos_error("Failed to populate request");
       goto cleanup;
@@ -514,15 +522,15 @@ int main(int argc, char *argv[])
   set_chronos_debug_level(client_context.debugLevel);
 
   /* set the signal hanlder for sigint */
-  if (signal(SIGINT, handler_sigint) == SIG_ERR) {
+  if (signal(SIGINT, sigintHandler) == SIG_ERR) {
     chronos_error("Failed to set signal handler");
     goto failXit;    
   }
   
-  client_context.cache = chronosCacheAlloc(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR);
-  if (client_context.cache == NULL) {
-    chronos_error("Failed to create cache");
-    goto failXit;    
+  client_context.chronosEnvH = chronosEnvAlloc(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR);
+  if (client_context.chronosEnvH == NULL) {
+    chronos_error("Failed to allocate chronos environment handle");
+    goto failXit;
   }
 
   /* Next we need to spawn the client threads */
@@ -536,12 +544,14 @@ int main(int argc, char *argv[])
     goto failXit;
   }
 
-  chronosCacheFree(client_context.cache);
-
   return CHRONOS_SUCCESS;
 
 failXit:
-  chronosCacheFree(client_context.cache);
+  if (client_context.chronosEnvH != NULL) {
+    chronosEnvFree(client_context.chronosEnvH);
+    client_context.chronosEnvH = NULL;
+  }
+
   return CHRONOS_FAIL;
 }
 
