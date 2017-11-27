@@ -10,20 +10,16 @@ int
 chronos_enqueue_system_transaction(const char *pkey, const chronos_time_t *ts, chronosServerContext_t *contextP);
 
 int
-chronos_enqueue_user_transaction(chronosUserTransaction_t txn_type, 
-                                 int num_data_items,
-                                 chronosSymbol_t *data_itemsP,
+chronos_enqueue_user_transaction(void                 *requestP,
                                  const chronos_time_t *ts, 
-                                 unsigned long long *ticket_ret, 
-                                 volatile int *txn_done,
+                                 unsigned long long   *ticket_ret, 
+                                 volatile int         *txn_done,
                                  chronosServerContext_t *contextP);
 
 int
-chronos_dequeue_user_transaction(chronosUserTransaction_t *txn_type_ret, 
-                                 int *num_data_items_ret,
-                                 chronosSymbol_t *data_items_ret,
-                                 chronos_time_t *ts, 
+chronos_dequeue_user_transaction(void               *requestP_ret,
+                                 chronos_time_t     *ts, 
                                  unsigned long long *ticket_ret,
-                                 volatile int **txn_done_ret,
+                                 volatile int       **txn_done_ret,
                                  chronosServerContext_t *contextP);
 #endif

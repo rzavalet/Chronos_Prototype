@@ -9,17 +9,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
 #include "chronos.h"
 #include "chronos_packets.h"
 #include "chronos_config.h"
 #include "chronos_client.h"
-#include "chronos_transaction_names.h"
-#include "benchmark.h"
-#include "benchmark_common.h"
-#include <signal.h>
+#include "chronos_transactions.h"
 
-int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
-int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
+int benchmark_debug_level = 0;
+int chronos_debug_level = 0;
 
 typedef struct chronosClientContext_t {
   char    serverAddress[256];

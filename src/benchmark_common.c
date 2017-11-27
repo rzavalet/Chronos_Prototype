@@ -858,7 +858,10 @@ cleanup:
 }
 
 int 
-show_portfolios(char *account_id, int showOnlyUsers, BENCHMARK_DBS *benchmarkP)
+show_portfolios(char              *account_id, 
+                int               showOnlyUsers, 
+                benchmark_xact_h  xactH,
+                BENCHMARK_DBS     *benchmarkP)
 {
   DBC *personal_cursorP = NULL;
   DB_TXN  *txnP = NULL;
@@ -885,10 +888,15 @@ show_portfolios(char *account_id, int showOnlyUsers, BENCHMARK_DBS *benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  ret = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
-  if (ret != 0) {
-    envP->err(envP, ret, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
-    goto failXit;
+  if (xactH == NULL) {
+    ret = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+    if (ret != 0) {
+      envP->err(envP, ret, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
+      goto failXit;
+    }
+  }
+  else {
+    txnP = (DB_TXN *)xactH;
   }
 
   /* First read the personall account */
@@ -961,13 +969,15 @@ show_portfolios(char *account_id, int showOnlyUsers, BENCHMARK_DBS *benchmarkP)
   }
   personal_cursorP = NULL;
 
-  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
-  ret = txnP->commit(txnP, 0);
-  if (ret != 0) {
-    envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
-    goto failXit; 
+  if (xactH == NULL) {
+    benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+    ret = txnP->commit(txnP, 0);
+    if (ret != 0) {
+      envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
+      goto failXit; 
+    }
+    txnP = NULL;
   }
-  txnP = NULL;
 
 #ifdef CHRONOS_DEBUG
   benchmark_debug(3,"Displayed info about %d clients\n", numClients);
@@ -976,8 +986,8 @@ show_portfolios(char *account_id, int showOnlyUsers, BENCHMARK_DBS *benchmarkP)
   goto cleanup;
 
 failXit:
-  rc = BENCHMARK_FAIL;
-  if (txnP != NULL) {
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  if (xactH == NULL && txnP != NULL) {
     if (personal_cursorP != NULL) {
       ret = personal_cursorP->close(personal_cursorP);
       if (ret != 0) {
@@ -993,6 +1003,7 @@ failXit:
     }
   }
 
+  rc = BENCHMARK_FAIL;
 cleanup:
   return (rc);
 }

@@ -35,6 +35,10 @@ int
 benchmark_view_portfolio(void *benchmark_handle);
 
 int
+benchmark_view_portfolio2(int           num_accounts, 
+                          const char    **account_list_P, 
+                          void          *benchmark_handle);
+int
 benchmark_purchase(int account, int symbol, float price, int amount, int force_apply, void *benchmark_handle, int *symbolP);
 
 int

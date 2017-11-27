@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
   }
 
   if (showAll) {
-    if (show_portfolios(NULL, onlyUsers, benchmarkCtxtP) != BENCHMARK_SUCCESS) {
+    if (show_portfolios(NULL, onlyUsers, NULL, benchmarkCtxtP) != BENCHMARK_SUCCESS) {
       benchmark_error("Failed to retrieve all portfolios");
       goto failXit;
     }
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
     for (i=0; i<num_reps; i++) {
       char user_id[ID_SZ];
       snprintf(user_id, sizeof(user_id), "%d", rand() % BENCHMARK_NUM_ACCOUNTS + 1);
-      if (show_portfolios(user_id, onlyUsers, benchmarkCtxtP) != BENCHMARK_SUCCESS) {
+      if (show_portfolios(user_id, onlyUsers, NULL, benchmarkCtxtP) != BENCHMARK_SUCCESS) {
         benchmark_error("Failed to retrieve all portfolios");
         goto failXit;
       }

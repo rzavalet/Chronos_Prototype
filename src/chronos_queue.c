@@ -4,6 +4,7 @@
 #include <assert.h>
 #include "chronos_queue.h"
 #include "chronos.h"
+#include "chronos_transactions.h"
 
 static int
 chronos_dequeue_transaction(txn_info_t *txnInfoP, 
@@ -35,9 +36,7 @@ chronos_dequeue_transaction(txn_info_t *txnInfoP,
 
   memcpy(txnInfoP, &(txnQueueP->txnInfoArr[txnQueueP->nextout]), sizeof(*txnInfoP));
 
-  chronos_info("Dequeued txn (%d), type: %d",
-               txnQueueP->occupied,
-               txnInfoP->txn_type);
+  chronos_info("Dequeued txn (%d)", txnQueueP->occupied);
 
   txnQueueP->nextout++;
   txnQueueP->nextout %= CHRONOS_READY_QUEUE_SIZE;
@@ -104,9 +103,8 @@ chronos_enqueue_transaction(txn_info_t *txnInfoP,
   txnQueueP->nextin %= CHRONOS_READY_QUEUE_SIZE;
   txnQueueP->occupied++;
 
-  chronos_info("Enqueued txn (%d), type: %d, ticket: %lld",
+  chronos_info("Enqueued txn (%d), ticket: %lld",
                txnQueueP->occupied,
-               txnInfoP->txn_type,
                txnQueueP->ticketReq);
 
   /* now: either b->occupied < CHRONOS_READY_QUEUE_SIZE and b->nextin is the index
@@ -148,7 +146,6 @@ chronos_dequeue_system_transaction(const char **pkey, chronos_time_t *ts, chrono
     goto failXit;
   }
 
-  assert(txn_info.txn_type == CHRONOS_USER_TXN_VIEW_STOCK);
   *pkey = txn_info.txn_specific_info.update_info.pkey;
   *ts = txn_info.txn_enqueue;
 
@@ -197,19 +194,17 @@ cleanup:
 }
 
 int
-chronos_dequeue_user_transaction(chronosUserTransaction_t   *txn_type_ret, 
-                                 int                          *num_data_items_ret,
-                                 chronosSymbol_t              *data_items_ret,
-                                 chronos_time_t               *ts, 
-                                 unsigned long long           *ticket_ret,
-                                 volatile int                **txn_done_ret,
-                                 chronosServerContext_t       *contextP) 
+chronos_dequeue_user_transaction(void                   *requestP_ret, 
+                                 chronos_time_t         *ts, 
+                                 unsigned long long     *ticket_ret,
+                                 volatile int           **txn_done_ret,
+                                 chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
   txn_info_t       txn_info;
   chronos_queue_t *userTxnQueueP = NULL;
 
-  if (contextP == NULL || num_data_items_ret == NULL || data_items_ret == NULL || ts == NULL) {
+  if (contextP == NULL || ts == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -222,11 +217,7 @@ chronos_dequeue_user_transaction(chronosUserTransaction_t   *txn_type_ret,
     goto failXit;
   }
 
-  assert(txn_info.txn_type == CHRONOS_USER_TXN_VIEW_STOCK);
-  *num_data_items_ret = txn_info.txn_specific_info.view_info.num_keys;
-  memcpy(data_items_ret, txn_info.txn_specific_info.view_info.symbolInfo, sizeof(chronosSymbol_t) * CHRONOS_MAX_DATA_ITEMS_PER_XACT);
-
-  *txn_type_ret = txn_info.txn_type;
+  memcpy(requestP_ret, &txn_info.request, sizeof(txn_info.request));
   *ts = txn_info.txn_enqueue;
   *ticket_ret = txn_info.ticket;
   *txn_done_ret = txn_info.txn_done;
@@ -241,9 +232,7 @@ cleanup:
 }
 
 int
-chronos_enqueue_user_transaction(chronosUserTransaction_t txn_type, 
-                                 int num_data_items,
-                                 chronosSymbol_t *data_itemsP,
+chronos_enqueue_user_transaction(void *requestP,
                                  const chronos_time_t *ts, 
                                  unsigned long long *ticket_ret, 
                                  volatile int *txn_done,
@@ -253,7 +242,7 @@ chronos_enqueue_user_transaction(chronosUserTransaction_t txn_type,
   txn_info_t       txn_info;
   chronos_queue_t *userTxnQueueP = NULL;
 
-  if (contextP == NULL || data_itemsP == NULL || ts == NULL || ticket_ret == NULL) {
+  if (contextP == NULL || ts == NULL || ticket_ret == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -262,12 +251,7 @@ chronos_enqueue_user_transaction(chronosUserTransaction_t txn_type,
 
   /* Set the transaction information */
   memset(&txn_info, 0, sizeof(txn_info));
-  txn_info.txn_type = txn_type;
-
-  if (txn_type == CHRONOS_USER_TXN_VIEW_STOCK) {
-    txn_info.txn_specific_info.view_info.num_keys = num_data_items;
-    memcpy(txn_info.txn_specific_info.view_info.symbolInfo, data_itemsP, sizeof(chronosSymbol_t) * CHRONOS_MAX_DATA_ITEMS_PER_XACT);
-  }
+  memcpy(&txn_info.request, requestP, sizeof(txn_info.request));
   txn_info.txn_enqueue = *ts;
   txn_info.txn_done = txn_done;
 

@@ -7,6 +7,7 @@
 #include "chronos.h"
 #include "chronos_config.h"
 #include "chronos_transactions.h"
+#include "chronos_packets.h"
 #include "benchmark.h"
 
 #define CHRONOS_SERVER_CTX_MAGIC      (0xBACA)
@@ -74,18 +75,12 @@ typedef struct
 /* This is the structure of a transaction request in Chronos */
 typedef struct 
 {
-  char txn_type;              /* Which transaction this is */
   chronos_time_t txn_start;
   chronos_time_t txn_enqueue;
   unsigned long long ticket;
   volatile int *txn_done;
 
-  /* We access the following union based on the txn type */
-  union {
-    update_txn_info_t update_info;
-    view_txn_info_t   view_info;
-  } txn_specific_info;
-
+  chronosRequestPacket_t  request;
 } txn_info_t;
   
 /* This is the structure of a ready queue in Chronos. 
