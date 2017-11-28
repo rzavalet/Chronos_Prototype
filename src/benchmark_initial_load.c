@@ -161,13 +161,15 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
     goto failXit;
   }
 
-  benchmark_info("-- Loading Personal database... ");
+  benchmark_info("-- Loading Personal database from: %s... ", personal_file);
 
   ifp = fopen(personal_file, "r");
   if (ifp == NULL) {
     benchmark_error("Error opening file '%s'", personal_file);
     goto failXit;
   }
+
+  fprintf(stderr,"Inserted: %3d rows", 0); 
 
   /* Iterate over the vendor file */
   while (fgets(buf, MAXLINE, ifp) != NULL) {
@@ -211,8 +213,9 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
      * database. 
      */
 
+    cnt ++;
     /* Put the data into the database */
-    benchmark_debug(4,"Inserting into Personal table (%d): %s", cnt++, (char *)key.data);
+    benchmark_debug(4,"Inserting into Personal table (%d): %s", cnt, (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
@@ -235,7 +238,9 @@ load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
       envP->err(envP, rc, "[%d] [%d] Transaction commit failed.", __LINE__, getpid());
       goto failXit; 
     }
+    fprintf(stderr,"\rInserted: %3d rows", cnt); 
   }
+  fprintf(stderr, "\n");
 
   fclose(ifp);
   BENCHMARK_CHECK_MAGIC(benchmarkP);
@@ -273,13 +278,15 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
     goto failXit;
   }
 
-  benchmark_info("-- Loading Stocks database... ");
+  benchmark_info("-- Loading Stocks database from: %s... ", stocks_file);
 
   ifp = fopen(stocks_file, "r");
   if (ifp == NULL) {
     benchmark_error("Error opening file '%s'", stocks_file);
     goto failXit;
   }
+
+  fprintf(stderr,"Inserted: %3d rows", 0); 
 
   /* Iterate over the vendor file */
   while (fgets(buf, MAXLINE, ifp) != NULL) {
@@ -320,7 +327,8 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
      */ 
 
     /* Put the data into the database */
-    benchmark_debug(4,"Inserting into Stocks table (%d): %s", cnt++, (char *)key.data);
+    cnt ++;
+    benchmark_debug(4,"Inserting into Stocks table (%d): %s", cnt, (char *)key.data);
     benchmark_debug(4, "\t(%s, %s)", my_stocks.stock_symbol, my_stocks.full_name);
 
     rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
@@ -342,7 +350,9 @@ load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
       envP->err(envP, rc, "[%d] [%d] Transaction commit failed.", __LINE__, getpid());
       goto failXit; 
     }
+    fprintf(stderr,"\rInserted: %3d rows", cnt); 
   }
+  fprintf(stderr, "\n");
 
   fclose(ifp);
   BENCHMARK_CHECK_MAGIC(benchmarkP);
@@ -379,13 +389,15 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
     goto failXit;
   }
 
-  benchmark_info("-- Loading currencies database... ");
+  benchmark_info("-- Loading Currencies database from: %s... ", currencies_file);
 
   ifp = fopen(currencies_file, "r");
   if (ifp == NULL) {
     benchmark_error("Error opening file '%s'", currencies_file);
     goto failXit;
   }
+
+  fprintf(stderr,"Inserted: %3d rows", 0); 
 
   /* Iterate over the vendor file */
   while (fgets(buf, MAXLINE, ifp) != NULL) {
@@ -426,7 +438,8 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
      */
 
     /* Put the data into the database */
-    benchmark_debug(4,"Inserting into Currencies table (%d): %s", cnt++, (char *)key.data);
+    cnt ++;
+    benchmark_debug(4,"Inserting into Currencies table (%d): %s", cnt, (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
@@ -447,7 +460,10 @@ load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
       envP->err(envP, rc, "[%d] [%d] Transaction commit failed.", __LINE__, getpid());
       goto failXit; 
     }
+
+    fprintf(stderr,"\rInserted: %3d rows", cnt); 
   }
+  fprintf(stderr, "\n");
 
   fclose(ifp);
   BENCHMARK_CHECK_MAGIC(benchmarkP);
@@ -485,13 +501,15 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
     goto failXit;
   }
 
-  benchmark_info("-- Loading quotes database... ");
+  benchmark_info("-- Loading Quotes database from: %s... ", quotes_file);
 
   ifp = fopen(quotes_file, "r");
   if (ifp == NULL) {
     benchmark_error("Error opening file '%s'", quotes_file);
     goto failXit;
   }
+
+  fprintf(stderr,"Inserted: %3d rows", 0); 
 
   /* Iterate over the vendor file */
   while (fgets(buf, MAXLINE, ifp) != NULL) {
@@ -535,7 +553,8 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
      */
 
     /* Put the data into the database */
-    benchmark_debug(6,"Inserting into Quotes table (%d): %s", cnt++, (char *)key.data);
+    cnt ++;
+    benchmark_debug(6,"Inserting into Quotes table (%d): %s", cnt, (char *)key.data);
 
     rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
     if (rc != 0) {
@@ -557,7 +576,9 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
     }
 
     current_slot ++;
+    fprintf(stderr,"\rInserted: %3d rows", cnt); 
   }
+  fprintf(stderr, "\n");
 
   benchmarkP->number_stocks = current_slot;
 

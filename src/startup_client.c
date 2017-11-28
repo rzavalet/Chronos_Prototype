@@ -99,18 +99,22 @@ waitThinkTime(int minThinkTimeMS, int maxThinkTimeMS)
 static void
 chronosUsage() 
 {
-  char usage[] =
+  char usage[1024];
+  char template[] =
     "Usage: startup_client OPTIONS\n"
     "Starts up a number of chronos clients\n"
     "\n"
     "OPTIONS:\n"
-    "-c [num]              number of threads (default: "xstr(CHRONOS_NUM_CLIENT_THREADS)")\n"
-    "-a [address]          server ip address (default: "CHRONOS_SERVER_ADDRESS")\n"
-    "-p [num]              server port (default: "xstr(CHRONOS_SERVER_PORT)")\n"
-    "-v [num]              percentage of user transactions (default: "xstr(CHRONOS_RATE_VIEW_TRANSACTIONS)"%)\n"
+    "-c [num]              number of threads (default: %d)\n"
+    "-a [address]          server ip address (default: %s)\n"
+    "-p [num]              server port (default: %d)\n"
+    "-v [num]              percentage of user transactions (default: %d%)\n"
     "-d [num]              debug level\n"
     "-h                    help";
 
+  snprintf(usage, sizeof(usage), template,
+          CHRONOS_NUM_CLIENT_THREADS, CHRONOS_SERVER_ADDRESS, 
+          CHRONOS_SERVER_PORT, CHRONOS_RATE_VIEW_TRANSACTIONS);
   printf("%s\n", usage);
 }
 

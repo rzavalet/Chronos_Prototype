@@ -69,8 +69,9 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
     goto failXit;
   }
 
-  benchmark_info("Loading Portfolios database... ");
+  benchmark_info("-- Loading Portfolios database... ");
 
+  fprintf(stderr,"Inserted: %3d rows", 0); 
   for (i=0 ; i<CHRONOS_PORTFOLIOS_NUM; i++) {
 
     /* zero out the structure */
@@ -145,7 +146,9 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
       envP->err(envP, rc, "Transaction commit failed.");
       goto failXit; 
     }
+    fprintf(stderr,"\rInserted: %3d rows", i+1); 
   }
+  fprintf(stderr, "\n");
 
   return BENCHMARK_SUCCESS;
 

@@ -127,13 +127,15 @@ cleanup:
 }
 
 int
-chronos_dequeue_system_transaction(const char **pkey, chronos_time_t *ts, chronosServerContext_t *contextP) 
+chronos_dequeue_system_transaction(void *requestP_ret,
+                                   chronos_time_t *ts, 
+                                   chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
   txn_info_t       txn_info;
   chronos_queue_t *systemTxnQueueP = NULL;
 
-  if (contextP == NULL || pkey == NULL || ts == NULL) {
+  if (contextP == NULL || requestP_ret == NULL || ts == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -146,7 +148,7 @@ chronos_dequeue_system_transaction(const char **pkey, chronos_time_t *ts, chrono
     goto failXit;
   }
 
-  *pkey = txn_info.txn_specific_info.update_info.pkey;
+  memcpy(requestP_ret, &txn_info.request, sizeof(txn_info.request));
   *ts = txn_info.txn_enqueue;
 
   goto cleanup;
@@ -159,13 +161,15 @@ cleanup:
 }
 
 int
-chronos_enqueue_system_transaction(const char *pkey, const chronos_time_t *ts, chronosServerContext_t *contextP) 
+chronos_enqueue_system_transaction(void *requestP, 
+                                   const chronos_time_t *ts, 
+                                   chronosServerContext_t *contextP) 
 {
   int              rc = CHRONOS_SUCCESS;
   txn_info_t       txn_info;
   chronos_queue_t *systemTxnQueueP = NULL;
 
-  if (contextP == NULL || pkey == NULL || ts == NULL) {
+  if (contextP == NULL || requestP == NULL || ts == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -174,8 +178,7 @@ chronos_enqueue_system_transaction(const char *pkey, const chronos_time_t *ts, c
 
   /* Set the transaction information */
   memset(&txn_info, 0, sizeof(txn_info));
-  txn_info.txn_type = CHRONOS_SYS_TXN_UPDATE_STOCK;
-  txn_info.txn_specific_info.update_info.pkey = pkey;
+  memcpy(&txn_info.request, requestP, sizeof(txn_info.request));
   txn_info.txn_enqueue = *ts;
 
   rc = chronos_enqueue_transaction(&txn_info, NULL, contextP->timeToDieFp, systemTxnQueueP);

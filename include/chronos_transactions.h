@@ -56,16 +56,8 @@ typedef enum chronosSystemTransaction_t {
   CHRONOS_SYS_TXN_INVAL=CHRONOS_SYS_TXN_MAX
 } chronosSystemTransaction_t;
 
-const char *chronos_user_transaction_str[] = {
-  "CHRONOS_USER_TXN_VIEW_STOCK",
-  "CHRONOS_USER_TXN_VIEW_PORTFOLIO",
-  "CHRONOS_USER_TXN_PURCHASE",
-  "CHRONOS_USER_TXN_SALE"
-};
-
-const char *chronos_system_transaction_str[] = {
-  "CHRONOS_SYS_TXN_UPDATE_STOCK"
-};
+extern const char *chronos_user_transaction_str[];
+extern const char *chronos_system_transaction_str[];
 
 
 #define CHRONOS_TXN_NAME(_txn_type) \

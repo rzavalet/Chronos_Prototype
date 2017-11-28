@@ -1327,6 +1327,7 @@ processRefreshTransaction(chronosServerThreadInfo_t *infoP)
   chronos_time_t    txn_enqueue;
   chronos_time_t    txn_begin;
   chronos_time_t    txn_end;
+  chronosRequestPacket_t request;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -1340,12 +1341,13 @@ processRefreshTransaction(chronosServerThreadInfo_t *infoP)
 
   chronos_info("(thr: %d) Processing update...", infoP->thread_num);
 
-  rc = chronos_dequeue_system_transaction(&pkey, &txn_enqueue, contextP);
+  rc = chronos_dequeue_system_transaction(&request, &txn_enqueue, contextP);
   if (rc != CHRONOS_SUCCESS) {
     chronos_error("Failed to dequeue a system transaction");
     goto failXit;
   }
 
+  pkey = request.request_data.symbolInfo[0].symbol;
   assert(pkey != NULL);
   chronos_debug(3, "Updating value for pkey: %s...", pkey);
 
@@ -1529,6 +1531,10 @@ updateThread(void *argP)
       if (dataItemArray[i].nextUpdateTimeMS <= current_time_ms) {
         int   index = dataItemArray[i].index;
         char *pkey = dataItemArray[i].dataItem;
+        chronosRequestPacket_t request;
+        request.txn_type = CHRONOS_USER_TXN_MAX; /* represents sys xact */
+        request.numItems = 1;
+        strncpy(request.request_data.symbolInfo[0].symbol, pkey, sizeof(request.request_data.symbolInfo[0].symbol));
         chronos_debug(3, "(thr: %d) (%llu <= %llu) [%d] Enqueuing update for key: %d, %s", 
                       infoP->thread_num, 
                       dataItemArray[i].nextUpdateTimeMS,
@@ -1537,7 +1543,7 @@ updateThread(void *argP)
                       index,
                       pkey);
         CHRONOS_TIME_GET(txn_enqueue);
-        chronos_enqueue_system_transaction(pkey, &txn_enqueue, contextP);
+        chronos_enqueue_system_transaction(&request, &txn_enqueue, contextP);
 
         current_slot = infoP->contextP->currentSlot;
         dataItemArray[i].updateFrequency[current_slot]++;
@@ -1682,21 +1688,26 @@ cleanup:
 static void
 chronos_usage() 
 {
-  char usage[] =
+  char usage[1024];
+  char template[] =
     "Usage: startup_server OPTIONS\n"
     "Starts up a chronos server \n"
     "\n"
     "OPTIONS:\n"
     "-m [mode]             running mode: 0: BASE, 1: Admission Control, 2: Adaptive Update, 3: Admission Control + Adaptive Update\n"
-    "-c [num]              number of clients it can accept (default: "xstr(CHRONOS_NUM_CLIENT_THREADS)")\n"
-    "-v [num]              validity interval [in milliseconds] (default: 2*"xstr(CHRONOS_INITIAL_UPDATE_PERIOD_MS)" ms)\n"
-    "-s [num]              sampling period [in seconds] (default: "xstr(CHRONOS_SAMPLING_PERIOD_SEC)" seconds)\n"
-    "-u [num]              number of update threads (default: "xstr(CHRONOS_NUM_UPDATE_THREADS)")\n"
-    "-r [num]              duration of the experiment [in seconds] (default: "xstr(CHRONOS_EXPERIMENT_DURATION_SEC)" seconds)\n"
-    "-p [num]              port to accept new connections (default: "xstr(CHRONOS_SERVER_PORT)")\n"
+    "-c [num]              number of clients it can accept (default: %d)\n"
+    "-v [num]              validity interval [in milliseconds] (default: %d ms)\n"
+    "-s [num]              sampling period [in seconds] (default: %d seconds)\n"
+    "-u [num]              number of update threads (default: %d)\n"
+    "-r [num]              duration of the experiment [in seconds] (default: %d seconds)\n"
+    "-p [num]              port to accept new connections (default: %d)\n"
     "-d [num]              debug level\n"
     "-n                    do not perform initial load\n"
     "-h                    help";
+
+  snprintf(usage, sizeof(usage), template, 
+          CHRONOS_NUM_CLIENT_THREADS, CHRONOS_INITIAL_VALIDITY_INTERVAL_MS, CHRONOS_SAMPLING_PERIOD_SEC,
+          CHRONOS_NUM_UPDATE_THREADS, (int)CHRONOS_EXPERIMENT_DURATION_SEC, CHRONOS_SERVER_PORT);
 
   printf("%s\n", usage);
 }
