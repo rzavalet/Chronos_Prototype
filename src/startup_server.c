@@ -719,9 +719,7 @@ initProcessArguments(chronosServerContext_t *contextP)
 
   contextP->timeToDieFp = isTimeToDie;
 
-#ifdef CHRONOS_DEBUG
-  contextP->debugLevel = CHRONOS_DEBUG_LEVEL_MAX;
-#endif
+  contextP->debugLevel = CHRONOS_DEBUG_LEVEL_MIN;
 
   return 0;
 }

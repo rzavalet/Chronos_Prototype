@@ -26,7 +26,7 @@ chronos_dequeue_transaction(txn_info_t *txnInfoP,
     pthread_cond_timedwait(&txnQueueP->more, &txnQueueP->mutex, &ts);
 
     if (timeToDieFp && timeToDieFp()) {
-      chronos_info("Process asked to die");
+      chronos_warning("Process asked to die");
       pthread_mutex_unlock(&txnQueueP->mutex);
       goto failXit;
     }
@@ -35,8 +35,6 @@ chronos_dequeue_transaction(txn_info_t *txnInfoP,
   assert(txnQueueP->occupied > 0);
 
   memcpy(txnInfoP, &(txnQueueP->txnInfoArr[txnQueueP->nextout]), sizeof(*txnInfoP));
-
-  chronos_info("Dequeued txn (%d)", txnQueueP->occupied);
 
   txnQueueP->nextout++;
   txnQueueP->nextout %= CHRONOS_READY_QUEUE_SIZE;
@@ -81,7 +79,7 @@ chronos_enqueue_transaction(txn_info_t *txnInfoP,
     pthread_cond_timedwait(&txnQueueP->less, &txnQueueP->mutex, &ts);
 
     if (timeToDieFp && timeToDieFp()) {
-      chronos_info("Process asked to die");
+      chronos_warning("Process asked to die");
       pthread_mutex_unlock(&txnQueueP->mutex);
       goto failXit;
     }
@@ -89,8 +87,6 @@ chronos_enqueue_transaction(txn_info_t *txnInfoP,
 
   assert(txnQueueP->occupied < CHRONOS_READY_QUEUE_SIZE);
   
-  chronos_info("Put a new update request in queue");
-
   memcpy(&(txnQueueP->txnInfoArr[txnQueueP->nextin]), txnInfoP, sizeof(*txnInfoP));
 
   txnQueueP->ticketReq ++;
@@ -102,10 +98,6 @@ chronos_enqueue_transaction(txn_info_t *txnInfoP,
   txnQueueP->nextin ++;
   txnQueueP->nextin %= CHRONOS_READY_QUEUE_SIZE;
   txnQueueP->occupied++;
-
-  chronos_info("Enqueued txn (%d), ticket: %lld",
-               txnQueueP->occupied,
-               txnQueueP->ticketReq);
 
   /* now: either b->occupied < CHRONOS_READY_QUEUE_SIZE and b->nextin is the index
        of the next empty slot in the buffer, or

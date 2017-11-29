@@ -85,8 +85,8 @@ show_stock_item(void *vBuf)
   name = buf + buf_pos;
 
   /* Display all this information */
-  benchmark_debug(5,"Symbol: %s", symbol);
-  benchmark_debug(5,"\tName: %s", name);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "Symbol: %s", symbol);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tName: %s", name);
 
   /* Return the vendor's name */
   return 0;
@@ -256,9 +256,6 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
       benchmark_error("Error setting shm key: %s", db_strerror(rc));
       goto failXit;
   } 
-#ifdef CHRONOS_DEBUG
-  printf("shm key set to: %d\n", CHRONOS_SHMKEY); 
-#endif
 
   rc = envP->open(envP, benchmarkP->db_home_dir, env_flags, 0); 
   if (rc != 0) {
@@ -419,9 +416,6 @@ databases_setup(BENCHMARK_DBS *benchmarkP,
     }
   }
 
-#ifdef CHRONOS_DEBUG
-  printf("databases opened successfully\n");
-#endif
   return (0);
 
 failXit:
@@ -437,7 +431,7 @@ benchmark_end(BENCHMARK_DBS *benchmarkP,
   int rc = 0;
 
   if (benchmarkP->envP == NULL) {
-    fprintf(stderr, "%s: Invalid argument\n", __func__);
+    benchmark_error("Invalid argument");
     goto failXit;
   } 
 
@@ -504,9 +498,6 @@ benchmark_end(BENCHMARK_DBS *benchmarkP,
     }
   }
 
-#ifdef CHRONOS_DEBUG
-  benchmark_debug(2,"databases opened successfully\n");
-#endif
   return (0);
 
 failXit:
@@ -567,7 +558,7 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   DB_ENV  *envP = NULL;
 
   if (benchmarkP == NULL) {
-    fprintf(stderr, "%s:%d Invalid argument\n", __func__, __LINE__);
+    benchmark_error("Invalid argument");
     goto failXit;
   }
 
@@ -635,9 +626,6 @@ databases_close(BENCHMARK_DBS *benchmarkP)
   }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-#ifdef CHRONOS_DEBUG
-  benchmark_debug(2,"databases closed.\n");
-#endif
   return (0);
 
 failXit:
@@ -690,21 +678,6 @@ show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
     goto failXit;
   }
 
-#if 0
-  while ((ret = cursorP->get(cursorP, &key, &data, DB_NEXT)) == 0)
-  {
-    /*Uhhh, this is ugly.... */
-    if (symbolId != NULL) {
-      if (strcmp(symbolId, (char *)key.data) == 0) {
-        (void) show_stock_item(data.data);
-      }
-    }
-    else {
-      (void) show_stock_item(data.data);
-    }
-  }
-#endif
-  
   /* Position the cursor */
   ret = cursorP->get(cursorP, &key, &data, DB_SET | DB_READ_COMMITTED | DB_RMW );
   if (ret != 0) {
@@ -727,7 +700,7 @@ show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP)
   }
   cursorP = NULL;
 
-  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
   ret = txnP->commit(txnP, 0);
   if (ret != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
@@ -748,7 +721,7 @@ failXit:
       cursorP = NULL;
     }
 
-    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     ret = txnP->abort(txnP);
     if (ret != 0) {
       envP->err(envP, ret, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -772,7 +745,6 @@ show_all_portfolios(BENCHMARK_DBS *benchmarkP)
   int ret;
   int rc = BENCHMARK_SUCCESS;
   int curRc = 0;
-  int numClients = 0;
 
   if (benchmarkP == NULL || benchmarkP->personal_dbp == NULL) {
     benchmark_error("Invalid argument");
@@ -806,13 +778,7 @@ show_all_portfolios(BENCHMARK_DBS *benchmarkP)
 
   while ((curRc=cursorP->get(cursorP, &key, &data, DB_READ_COMMITTED | DB_NEXT)) == 0)
   {
-#ifdef CHRONOS_DEBUG
-     benchmark_debug(4,"================= SHOWING PORTFOLIO ==============\n");
-#endif
     (void) show_portfolio_item(data.data, &symbolIdP);
-#ifdef CHRONOS_DEBUG
-     benchmark_debug(4,"==================================================\n");
-#endif
   }
 
   ret = cursorP->close(cursorP);
@@ -821,17 +787,13 @@ show_all_portfolios(BENCHMARK_DBS *benchmarkP)
   }
   cursorP = NULL;
 
-  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
   ret = txnP->commit(txnP, 0);
   if (ret != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
     goto failXit; 
   }
   txnP = NULL;
-
-#ifdef CHRONOS_DEBUG
-  benchmark_debug(3,"Displayed info about %d clients\n", numClients);
-#endif
 
   goto cleanup;
 
@@ -846,7 +808,7 @@ failXit:
       cursorP = NULL;
     }
 
-    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     ret = txnP->abort(txnP);
     if (ret != 0) {
       envP->err(envP, ret, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -917,7 +879,6 @@ show_portfolios(char              *account_id,
     key.size = (u_int32_t) strlen(account_id) + 1;
     curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_SET | DB_READ_COMMITTED);
     if (curRc == 0) {
-      benchmark_debug(4,"================= SHOWING PORTFOLIO ==============");
 
       /* Show user's information */
       (void) show_personal_item(data.data);   
@@ -932,15 +893,12 @@ show_portfolios(char              *account_id,
       }
       numClients ++;
 
-      benchmark_debug(4,"==================================================\n");
       
     }
   }
   else {
     while ((curRc=personal_cursorP->get(personal_cursorP, &key, &data, DB_READ_COMMITTED | DB_NEXT)) == 0)
     {
-       benchmark_debug(4,"================= SHOWING PORTFOLIO ==============");
-
       /* Show user's information */
       (void) show_personal_item(data.data);   
 
@@ -953,8 +911,6 @@ show_portfolios(char              *account_id,
         }
       }
       numClients ++;
-
-      benchmark_debug(4,"==================================================\n");
     }
 
     if (curRc != DB_NOTFOUND) {
@@ -970,7 +926,7 @@ show_portfolios(char              *account_id,
   personal_cursorP = NULL;
 
   if (xactH == NULL) {
-    benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+    benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
     ret = txnP->commit(txnP, 0);
     if (ret != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
@@ -978,10 +934,6 @@ show_portfolios(char              *account_id,
     }
     txnP = NULL;
   }
-
-#ifdef CHRONOS_DEBUG
-  benchmark_debug(3,"Displayed info about %d clients\n", numClients);
-#endif
 
   goto cleanup;
 
@@ -996,7 +948,7 @@ failXit:
       personal_cursorP = NULL;
     }
 
-    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     ret = txnP->abort(txnP);
     if (ret != 0) {
       envP->err(envP, ret, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -1071,7 +1023,7 @@ show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP
     goto failXit;
   }
 
-  benchmark_info("PID: %d, %p : searching for account id: %s", getpid(), txnP, account_id);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, %p : searching for account id: %s", getpid(), txnP, account_id);
 
 #if 1
   /* Iterate over all portfolios in order to find those belonging to the user_id */
@@ -1083,11 +1035,6 @@ show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP
        * portfolio */
       (void) show_portfolio_item(pdata.data, &symbolIdP);
 
-#if 0
-      if (symbolIdP != NULL && symbolIdP[0] != '\0') {
-        (void) show_stocks_records(symbolIdP, benchmarkP);
-      }
-#endif
       numPortfolios ++;
     }
   }
@@ -1113,7 +1060,7 @@ show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP
 
   /* This means this function created its own txn */
   if (txn_inP == NULL) {
-    benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+    benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
     ret = txnP->commit(txnP, 0);
     if (ret != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
@@ -1122,9 +1069,6 @@ show_one_portfolio(char *account_id, DB_TXN  *txn_inP, BENCHMARK_DBS *benchmarkP
     txnP = NULL;
   }
 
-#ifdef CHRONOS_DEBUG
-  benchmark_debug(3,"Displayed info about %d portfolios\n", numPortfolios);
-#endif
   goto cleanup;
 
 failXit:
@@ -1140,7 +1084,7 @@ failXit:
 
     /* This means this function created its own txn */
     if (txn_inP == NULL) {
-      benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+      benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
       ret = txnP->abort(txnP);
       if (ret != 0) {
         envP->err(envP, ret, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -1199,16 +1143,18 @@ show_personal_item(void *vBuf)
   email = buf + buf_pos;
  
   /* Display all this information */
-  benchmark_debug(5,"AccountId: %s", account_id);
-  benchmark_debug(5,"\tLast Name: %s", last_name);
-  benchmark_debug(5,"\tFirst Name: %s", first_name);
-  benchmark_debug(5,"\tAddress: %s", address);
-  benchmark_debug(5,"\tAdress 2: %s", address_2);
-  benchmark_debug(5,"\tCity: %s", city);
-  benchmark_debug(5,"\tState: %s", state);
-  benchmark_debug(5,"\tCountry: %s", country);
-  benchmark_debug(5,"\tPhone: %s", phone);
-  benchmark_debug(5,"\tEmail: %s", email);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "================= SHOWING PERSON ==============");
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "AccountId: %s", account_id);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tLast Name: %s", last_name);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tFirst Name: %s", first_name);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tAddress: %s", address);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tAdress 2: %s", address_2);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tCity: %s", city);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tState: %s", state);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tCountry: %s", country);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tPhone: %s", phone);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tEmail: %s", email);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "==================================================\n");
 
   return 0;
 }
@@ -1224,7 +1170,7 @@ show_currencies_records(BENCHMARK_DBS *my_benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  benchmark_debug(4,"================= SHOWING CURRENCIES DATABASE ==============\n");
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "================= SHOWING CURRENCIES DATABASE ==============\n");
 
   my_benchmarkP->currencies_dbp->cursor(my_benchmarkP->currencies_dbp, NULL,
                                     &currencies_cursorp, 0);
@@ -1263,10 +1209,10 @@ show_currencies_item(void *vBuf)
   exchange_rate_usd = *((int *)(buf + buf_pos));
 
   /* Display all this information */
-  benchmark_debug(5,"Currency Symbol: %s", currency_symbol);
-  benchmark_debug(5,"\tExchange Rate: %d", exchange_rate_usd);
-  benchmark_debug(5,"\tCountry: %s", country);
-  benchmark_debug(5,"\tName: %s", currency_name);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "Currency Symbol: %s", currency_symbol);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tExchange Rate: %d", exchange_rate_usd);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tCountry: %s", country);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tName: %s", currency_name);
 
   return 0;
 }
@@ -1278,16 +1224,18 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
 
   portfolioP = (PORTFOLIOS *)vBuf;
   /* Display all this information */
-  benchmark_debug(5,"Portfolio ID: %s", portfolioP->portfolio_id);
-  benchmark_debug(5,"\tAccount ID: %s", portfolioP->account_id);
-  benchmark_debug(5,"\tSymbol ID: %s", portfolioP->symbol);
-  benchmark_debug(5,"\t# Stocks Hold: %d", portfolioP->hold_stocks);
-  benchmark_debug(5,"\tSell?: %d", portfolioP->to_sell);
-  benchmark_debug(5,"\t# Stocks to sell: %d", portfolioP->number_sell);
-  benchmark_debug(5,"\tPrice to sell: %d", portfolioP->price_sell);
-  benchmark_debug(5,"\tBuy?: %d", portfolioP->to_buy);
-  benchmark_debug(5,"\t# Stocks to buy: %d", portfolioP->number_buy);
-  benchmark_debug(5,"\tPrice to buy: %d", portfolioP->price_buy);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "================= SHOWING PORTFOLIO ==============");
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "Portfolio ID: %s", portfolioP->portfolio_id);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tAccount ID: %s", portfolioP->account_id);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tSymbol ID: %s", portfolioP->symbol);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\t# Stocks Hold: %d", portfolioP->hold_stocks);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tSell?: %d", portfolioP->to_sell);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\t# Stocks to sell: %d", portfolioP->number_sell);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tPrice to sell: %d", portfolioP->price_sell);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tBuy?: %d", portfolioP->to_buy);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\t# Stocks to buy: %d", portfolioP->number_buy);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "\tPrice to buy: %d", portfolioP->price_buy);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_OP, "==================================================\n");
 
   if (symbolIdPP) {
     *symbolIdPP = portfolioP->symbol; 
@@ -1319,7 +1267,7 @@ start_xact(benchmark_xact_h *xact_ret, BENCHMARK_DBS *benchmarkP)
     envP->err(envP, rc, "[%s:%d] [%d] Transaction begin failed.", __FILE__, __LINE__, getpid());
     goto failXit; 
   }
-  benchmark_info("PID: %d, Starting transaction: %p", getpid(), txnP);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Starting transaction: %p", getpid(), txnP);
 
   *xact_ret = txnP;
 
@@ -1328,7 +1276,7 @@ start_xact(benchmark_xact_h *xact_ret, BENCHMARK_DBS *benchmarkP)
 failXit:
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   if (txnP != NULL) {
-    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     rc = txnP->abort(txnP);
     if (rc != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -1363,7 +1311,7 @@ commit_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
 
   txnP = (DB_TXN *)xactH;
 
-  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
   rc = txnP->commit(txnP, 0);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
@@ -1376,7 +1324,7 @@ commit_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
 failXit:
   BENCHMARK_CHECK_MAGIC(benchmarkP);
   if (txnP != NULL) {
-    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     rc = txnP->abort(txnP);
     if (rc != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -1409,7 +1357,7 @@ abort_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
 
   txnP = (DB_TXN *)xactH;
 
-  benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+  benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
   rc = txnP->abort(txnP);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -1481,7 +1429,7 @@ show_quote(char *symbolP, benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP)
   }
 
   if (xactH == NULL) {
-    benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+    benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
     rc = txnP->commit(txnP, 0);
     if (rc != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
@@ -1503,7 +1451,7 @@ failXit:
       cursorp = NULL;
     }
 
-    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     rc = txnP->abort(txnP);
     if (rc != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -1546,7 +1494,7 @@ update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
     goto failXit; 
   }
 
-  benchmark_info("PID: %d, Starting transaction: %p", getpid(), txnP);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT,"PID: %d, Starting transaction: %p", getpid(), txnP);
   rc = get_stock(symbolP, txnP, &cursorp, &key, &data, DB_RMW, benchmarkP);
   if (rc != BENCHMARK_SUCCESS) {
     benchmark_error("Could not find record.");
@@ -1581,7 +1529,7 @@ update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
     cursorp = NULL;
   }
 
-  benchmark_info("PID: %d, Committing transaction: %p", getpid(), txnP);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
   rc = txnP->commit(txnP, 0);
   if (rc != 0) {
     envP->err(envP, rc, "[%s:%d] [%d] Transaction commit failed. txnP: %p", __FILE__, __LINE__, getpid(), txnP);
@@ -1602,7 +1550,7 @@ failXit:
       cursorp = NULL;
     }
 
-    benchmark_info("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     rc = txnP->abort(txnP);
     if (rc != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -1671,7 +1619,7 @@ sell_stocks(int account, char *symbol, float price, int amount, int force_apply,
     goto failXit; 
   }
 
-  benchmark_info("Looking up portfolio for account: %s and symbol: %s", account_id, symbol);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "Looking up portfolio for account: %s and symbol: %s", account_id, symbol);
 
   /* get a cursor to the portfolio */
   rc = get_portfolio(account_id, symbol, txnP, &cursor_portfolioP, &key_portfolio, &data_portfolio, benchmarkP);
@@ -1682,7 +1630,7 @@ sell_stocks(int account, char *symbol, float price, int amount, int force_apply,
 
   /* Update whatever we need to update */
   portfolioP = data_portfolio.data;
-  benchmark_info("Found portfolio for account: %s and symbol: %s -> %s", account_id, symbol, portfolioP->portfolio_id);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "Found portfolio for account: %s and symbol: %s -> %s", account_id, symbol, portfolioP->portfolio_id);
   if (portfolioP->hold_stocks < amount) {
     benchmark_error("Not enough stocks for this symbol. Have: %d, wanted: %d", portfolioP->hold_stocks, amount);
     goto failXit; 
@@ -1712,7 +1660,7 @@ sell_stocks(int account, char *symbol, float price, int amount, int force_apply,
       goto failXit; 
     }
     quoteP = data_quote.data;
-    benchmark_info("Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
+    benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
     if (quoteP->current_price >= price) {
       benchmark_info("Selling %d stocks", amount);
       portfolioP->hold_stocks -= amount;
@@ -1821,7 +1769,7 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
 
   envP = benchmarkP->envP;
   if (envP == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("Invalid arguments");
     goto failXit;
   }
 
@@ -1850,7 +1798,7 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
     goto failXit; 
   }
 
-  benchmark_info("Looking up portfolio for account: %s and symbol: %s", account_id, symbol);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "Looking up portfolio for account: %s and symbol: %s", account_id, symbol);
 
   /* 3) exists portfolio */
   rc = get_portfolio(account_id, symbol, txnP, &cursor_portfolioP, &key_portfolio, &data_portfolio, benchmarkP);
@@ -1880,7 +1828,7 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
         goto failXit; 
       }
       quoteP = data_quote.data;
-      benchmark_info("Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
+      benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
       if (quoteP->current_price <= price) {
         benchmark_info("Purchasing %d stocks", amount);
         portfolioP->hold_stocks += amount;
@@ -1916,7 +1864,7 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
         goto failXit; 
       }
       quoteP = data_quote.data;
-      benchmark_info("Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
+      benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
       if (quoteP->current_price <= price) {
         benchmark_info("Purchasing %d stocks", amount);
       }
@@ -2162,7 +2110,7 @@ done:
   }
 
   quoteP = data.data;
-  benchmark_info("PID: %d, retrieved: %s $%f", getpid(), quoteP->symbol, quoteP->current_price);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, retrieved: %s $%f", getpid(), quoteP->symbol, quoteP->current_price);
   if (data_ret != NULL) {
     *data_ret = data;
   }
@@ -2295,7 +2243,7 @@ create_portfolio(char *account_id, char *symbol, float price, int amount, int fo
 
   envP = benchmarkP->envP;
   if (envP == NULL) {
-    fprintf(stderr, "%s: Invalid arguments\n", __func__);
+    benchmark_error("Invalid arguments");
     goto failXit;
   }
 
@@ -2330,14 +2278,12 @@ create_portfolio(char *account_id, char *symbol, float price, int amount, int fo
   data.data = &portfolio;
   data.size = sizeof(PORTFOLIOS);
 
-#ifdef CHRONOS_DEBUG
   /* Put the data into the database */
-  benchmark_debug(3,"Inserting: %s\n", (char *)key.data);
-#endif
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "Inserting: %s", (char *)key.data);
 
   rc = benchmarkP->portfolios_dbp->put(benchmarkP->portfolios_dbp, txnP, &key, &data, DB_NOOVERWRITE);
   if (rc != 0) {
-    fprintf(stderr, "%s: Database put failed\n", __func__);
+    benchmark_error("Database put failed");
     goto failXit; 
   }
 

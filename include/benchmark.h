@@ -54,6 +54,9 @@ benchmark_stock_list_get(void *benchmark_handle,
  *-------------------------------*/
 #define BENCHMARK_DEBUG_LEVEL_MIN   (0)
 #define BENCHMARK_DEBUG_LEVEL_MAX   (10)
+#define BENCHMARK_DEBUG_LEVEL_OP    (6)
+#define BENCHMARK_DEBUG_LEVEL_XACT  (5)
+#define BENCHMARK_DEBUG_LEVEL_API   (4)
 
 extern int benchmark_debug_level;
 

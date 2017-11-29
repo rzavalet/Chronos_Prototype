@@ -41,7 +41,7 @@ benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue)
   }
   random_symbol = symbolsArr[symbol];
 
-  benchmark_info("PID: %d, Attempting to update %s to %f", getpid(), random_symbol, newValue);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_API, "PID: %d, Attempting to update %s to %f", getpid(), random_symbol, newValue);
   ret = update_stock(random_symbol, newValue, benchmarkP);
   if (ret != 0) {
     benchmark_error("Could not update quote");
@@ -53,7 +53,7 @@ benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue)
   }
     
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-  benchmark_debug(2, "Done refreshing price for %s.", random_symbol);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_API, "Done refreshing price for %s.", random_symbol);
   return ret;
   
  failXit:
@@ -81,7 +81,7 @@ benchmark_refresh_quotes2(void *benchmark_handle, const char *symbolP, float new
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
-  benchmark_info("PID: %d, Attempting to update %s to %f", getpid(), symbolP, newValue);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_API,"PID: %d, Attempting to update %s to %f", getpid(), symbolP, newValue);
   ret = update_stock((char *)symbolP, newValue, benchmarkP);
   if (ret != 0) {
     benchmark_error("Could not update quote");
@@ -89,7 +89,7 @@ benchmark_refresh_quotes2(void *benchmark_handle, const char *symbolP, float new
   }
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
-  benchmark_debug(2, "Done refreshing price for %s.", symbolP);
+  benchmark_debug(BENCHMARK_DEBUG_LEVEL_API, "Done refreshing price for %s.", symbolP);
   return ret;
   
  failXit:
