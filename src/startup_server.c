@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
   }
 
   /* set the signal handler for sigint */
-  if (signal(SIGUSR1, handler_sigint) == SIG_ERR) {
+  if (signal(SIGINT, handler_sigint) == SIG_ERR) {
     chronos_error("Failed to set signal handler");
     goto failXit;    
   }  
