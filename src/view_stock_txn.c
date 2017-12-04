@@ -21,7 +21,7 @@
 #include "benchmark_stocks.h"
 
 int 
-benchmark_handle_alloc(void **benchmark_handle, int create, char *homedir, char *datafilesdir)
+benchmark_handle_alloc(void **benchmark_handle, int create, const char *homedir, const char *datafilesdir)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   int ret = BENCHMARK_FAIL;
@@ -148,7 +148,7 @@ benchmark_view_stock(void *benchmark_handle, int *symbolP)
     symbol = rand() % benchmarkP->number_stocks;
   } 
 
-  random_symbol = symbolsArr[symbol];
+  random_symbol = benchmarkP->stocks[symbol];
 #if 0
   ret = show_stocks_records(random_symbol, benchmarkP);
 #endif

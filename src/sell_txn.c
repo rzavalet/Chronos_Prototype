@@ -45,11 +45,11 @@ benchmark_sell(int account, int symbol, float price, int amount, int force_apply
   }
 
   if (symbol < 0) {
-    symbol_idx = rand() % BENCHMARK_NUM_SYMBOLS;
-    random_symbol = symbolsArr[symbol_idx];
+    symbol_idx = rand() % benchmarkP->number_stocks;
+    random_symbol = benchmarkP->stocks[symbol_idx];
   }
   else {
-    random_symbol = symbolsArr[symbol];
+    random_symbol = benchmarkP->stocks[symbol];
   }
 
   if (price < 0) {
@@ -66,7 +66,8 @@ benchmark_sell(int account, int symbol, float price, int amount, int force_apply
     random_amount = amount;
   }
  
-  ret = sell_stocks(random_account, random_symbol, random_price, random_amount, force_apply, benchmarkP);
+  assert("Need to pass a valid account" == NULL);
+  ret = sell_stocks(NULL, random_symbol, random_price, random_amount, force_apply, NULL, benchmarkP);
   if (ret != 0) {
     benchmark_error("Could not place order");
     goto failXit;
@@ -84,5 +85,54 @@ benchmark_sell(int account, int symbol, float price, int amount, int force_apply
     *symbol_ret = -1;
   }
       
+  return BENCHMARK_FAIL;
+}
+
+int
+benchmark_sell2(int           num_data,
+                benchmark_xact_data_t *data,
+                void *benchmark_handle)
+{
+  BENCHMARK_DBS *benchmarkP = NULL;
+  benchmark_xact_h xactH = NULL;
+  int i;
+  int ret;
+
+  benchmarkP = benchmark_handle;
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  ret = start_xact(&xactH, benchmarkP);
+  if (ret != BENCHMARK_SUCCESS) {
+    goto failXit;
+  }
+
+  benchmark_debug(2, "Sell for: %d symbols", num_data);
+
+  for (i=0; i<num_data; i++) {
+    benchmark_debug(2, "Placing order for user: %s", data[i].accountId);
+    ret = sell_stocks(data[i].accountId, data[i].symbol, data[i].price, data[i].amount, 1, xactH, benchmarkP);
+    if (ret != BENCHMARK_SUCCESS) {
+      benchmark_error("Could not place order");
+      goto failXit;
+    }
+  }
+
+  ret = commit_xact(xactH, benchmarkP);
+  if (ret != BENCHMARK_SUCCESS) {
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  return ret;
+  
+ failXit:
+  if (xactH != NULL) {
+    abort_xact(xactH, benchmarkP);
+  }
+
   return BENCHMARK_FAIL;
 }

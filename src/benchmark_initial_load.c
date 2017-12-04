@@ -22,19 +22,19 @@
  *                          PROTOTYPES
  *============================================================================*/
 static int
-load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file);
+load_currencies_database(BENCHMARK_DBS *benchmarkP, const char *currencies_file);
 
 static int
-load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file);
+load_stocks_database(BENCHMARK_DBS *benchmarkP, const char *stocks_file);
 
 static int
-load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file);
+load_personal_database(BENCHMARK_DBS *benchmarkP, const char *personal_file);
 
 static int
-load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file);
+load_quotes_database(BENCHMARK_DBS *benchmarkP, const char *quotes_file);
 
 int 
-benchmark_initial_load(char *homedir, char *datafilesdir) 
+benchmark_initial_load(const char *homedir, const char *datafilesdir) 
 {
   void *benchmarkP = NULL;
   char *personal_file = NULL;
@@ -139,7 +139,7 @@ cleanup:
 
 
 static int
-load_personal_database(BENCHMARK_DBS *benchmarkP, char *personal_file)
+load_personal_database(BENCHMARK_DBS *benchmarkP, const char *personal_file)
 {
   int     rc = 0;
   int     cnt = 0;
@@ -255,7 +255,7 @@ failXit:
 }
 
 static int
-load_stocks_database(BENCHMARK_DBS *benchmarkP, char *stocks_file)
+load_stocks_database(BENCHMARK_DBS *benchmarkP, const char *stocks_file)
 {
   int     rc = 0;
   int     cnt = 0;
@@ -367,7 +367,7 @@ failXit:
 }
 
 static int
-load_currencies_database(BENCHMARK_DBS *benchmarkP, char *currencies_file)
+load_currencies_database(BENCHMARK_DBS *benchmarkP, const char *currencies_file)
 {
   int     rc = 0;
   int     cnt = 0;
@@ -478,7 +478,7 @@ failXit:
 }
 
 static int
-load_quotes_database(BENCHMARK_DBS *benchmarkP, char *quotes_file)
+load_quotes_database(BENCHMARK_DBS *benchmarkP, const char *quotes_file)
 {
   int     rc = 0;
   int     current_slot = 0;

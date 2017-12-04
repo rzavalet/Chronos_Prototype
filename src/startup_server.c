@@ -858,7 +858,6 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
   chronos_debug(2, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
   
   CHRONOS_TIME_GET(txn_enqueue);
-  assert(reqPacketP->txn_type == CHRONOS_USER_TXN_VIEW_STOCK);
   chronos_enqueue_user_transaction(reqPacketP,
                                    &txn_enqueue, 
                                    &ticket, 
@@ -1247,7 +1246,6 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
 {
   int               rc = CHRONOS_SUCCESS;
   int               i;
-  int               data_item = 0;
   int               num_data_items = 0;
   int               txn_rc = CHRONOS_SUCCESS;
 #ifdef CHRONOS_SAMPLING_ENABLED
@@ -1262,6 +1260,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   chronos_time_t    txn_begin;
   chronos_time_t    txn_end;
   const char        *pkey_list[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
+  benchmark_xact_data_t data[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
   volatile int      *txn_done = NULL;
   chronosRequestPacket_t request;
   chronosUserTransaction_t txn_type;
@@ -1284,7 +1283,6 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
 
     txn_type = request.txn_type;
     num_data_items = request.numItems;
-    data_item = -1;
     
     CHRONOS_TIME_GET(txn_begin);
 
@@ -1306,11 +1304,23 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
       break;
 
     case CHRONOS_USER_TXN_PURCHASE:
-      txn_rc = benchmark_purchase(-1, -1, -1, -1, 0, infoP->contextP->benchmarkCtxtP, &data_item);
+      for (i=0; i<num_data_items; i++) {
+        memcpy(&(data[i]), &(request.request_data.purchaseInfo[i]), sizeof(data[i]));
+      }
+    
+      txn_rc = benchmark_purchase2(num_data_items, 
+                                   data,
+                                   infoP->contextP->benchmarkCtxtP);
       break;
 
     case CHRONOS_USER_TXN_SALE:
-      txn_rc = benchmark_sell(-1, -1, -1, -1, 0, infoP->contextP->benchmarkCtxtP, &data_item);
+      for (i=0; i<num_data_items; i++) {
+        memcpy(&(data[i]), &(request.request_data.sellInfo[i]), sizeof(data[i]));
+      }
+    
+      txn_rc = benchmark_sell2(num_data_items, 
+                               data, 
+                               infoP->contextP->benchmarkCtxtP);
       break;
 
     default:

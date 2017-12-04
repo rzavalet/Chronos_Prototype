@@ -19,13 +19,11 @@
 
 #include "benchmark_common.h"
 
-char *symbolsArr[] = {"YHOO", "AAPL", "GOOG", "MSFT", "PIH", "FLWS", "SRCE", "VNET", "TWOU", "JOBS"};
+static int
+symbol_exists(const char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
 
 static int
-symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
-
-static int
-account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
+account_exists(const char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
 
 static int 
 show_stock_item(void *);
@@ -40,13 +38,25 @@ get_account_id(DB *sdbp,          /* secondary db handle */
               DBT *skey);         /* secondary db record's key */
 
 static int 
-create_portfolio(char *account_id, char *symbol, float price, int amount, int force_apply, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP);
+create_portfolio(const char *account_id, 
+                 const char *symbol, 
+                 float price, 
+                 int amount, 
+                 int force_apply, 
+                 DB_TXN *txnP, 
+                 BENCHMARK_DBS *benchmarkP);
 
 int
-get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP);
+get_portfolio(const char *account_id, 
+              const char *symbol, 
+              DB_TXN *txnP, 
+              DBC **cursorPP, 
+              DBT *key_ret, 
+              DBT *data_ret, 
+              BENCHMARK_DBS *benchmarkP);
 
 int
-get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, int flags, BENCHMARK_DBS *benchmarkP);
+get_stock(const char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, int flags, BENCHMARK_DBS *benchmarkP);
 
 /*=============== STATIC FUNCTIONS =======================*/
 static int
@@ -1565,7 +1575,13 @@ cleanup:
 
 
 int 
-sell_stocks(int account, char *symbol, float price, int amount, int force_apply, BENCHMARK_DBS *benchmarkP)
+sell_stocks(const char *account_id, 
+            const char *symbol, 
+            float price, 
+            int amount, 
+            int force_apply, 
+            benchmark_xact_h  xactH,
+            BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
   DB_TXN  *txnP = NULL;
@@ -1575,7 +1591,6 @@ sell_stocks(int account, char *symbol, float price, int amount, int force_apply,
   DBC     *cursor_portfolioP = NULL; /* To iterate over the porfolios */
   DBC     *cursor_primary_portfolioP = NULL; /* To iterate over the porfolios */
   DBC     *cursor_quoteP = NULL; /* To iterate over the quotes */
-  char     account_id[ID_SZ];
   int      exists = 0;
   PORTFOLIOS *portfolioP = NULL;
   QUOTE      *quoteP = NULL;
@@ -1597,12 +1612,15 @@ sell_stocks(int account, char *symbol, float price, int amount, int force_apply,
   memset(&key_quote, 0, sizeof(DBT));
   memset(&data_quote, 0, sizeof(DBT));
 
-  sprintf(account_id, "%d", account);
-
-  rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
-  if (rc != 0) {
-    envP->err(envP, rc, "Transaction begin failed.");
-    goto failXit; 
+  if (xactH == NULL) {
+    rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction begin failed.");
+      goto failXit; 
+    }
+  }
+  else {
+    txnP = (DB_TXN *)xactH;
   }
 
   /* 1) search the account */
@@ -1707,17 +1725,22 @@ sell_stocks(int account, char *symbol, float price, int amount, int force_apply,
     cursor_primary_portfolioP = NULL;
   }
 
-  rc = txnP->commit(txnP, 0);
-  if (rc != 0) {
-    envP->err(envP, rc, "%s:%d Transaction commit failed.", __func__, __LINE__);
-    goto failXit; 
+  if (xactH == NULL) {
+    benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
+    rc = txnP->commit(txnP, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "%s:%d Transaction commit failed.", __func__, __LINE__);
+      goto failXit; 
+    }
+    txnP = NULL;
   }
 
   rc = BENCHMARK_SUCCESS;
   goto cleanup;
 
 failXit:
-  if (txnP != NULL) {
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  if (xactH == NULL && txnP != NULL) {
     if (cursor_portfolioP != NULL) {
       rc = cursor_portfolioP->close(cursor_portfolioP);
       if (rc != 0) {
@@ -1736,6 +1759,7 @@ failXit:
       cursor_primary_portfolioP = NULL;
     }
 
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     rc = txnP->abort(txnP);
     if (rc != 0) {
       envP->err(envP, rc, "[%s:%d] [%d] Transaction abort failed.", __FILE__, __LINE__, getpid());
@@ -1751,7 +1775,13 @@ cleanup:
 }
 
 int 
-place_order(int account, char *symbol, float price, int amount, int force_apply, BENCHMARK_DBS *benchmarkP)
+place_order(const char *account_id, 
+            const char *symbol, 
+            float price, 
+            int amount, 
+            int force_apply, 
+            benchmark_xact_h  xactH,
+            BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
   int exists = 0;
@@ -1763,7 +1793,6 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
   DBT key, data;
-  char    account_id[ID_SZ];
   PORTFOLIOS *portfolioP = NULL;
   QUOTE      *quoteP = NULL;
 
@@ -1776,12 +1805,15 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  sprintf(account_id, "%d", account);
-
-  rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
-  if (rc != 0) {
-    envP->err(envP, rc, "Transaction begin failed.");
-    goto failXit; 
+  if (xactH == NULL) {
+    rc = envP->txn_begin(envP, NULL, &txnP, DB_READ_COMMITTED | DB_TXN_WAIT);
+    if (rc != 0) {
+      envP->err(envP, rc, "Transaction begin failed.");
+      goto failXit; 
+    }
+  }
+  else {
+    txnP = (DB_TXN *)xactH;
   }
 
   /* 1) search the account */
@@ -1904,16 +1936,21 @@ place_order(int account, char *symbol, float price, int amount, int force_apply,
     cursor_primary_portfolioP = NULL;
   }
 
-  rc = txnP->commit(txnP, 0);
-  if (rc != 0) {
-    envP->err(envP, rc, "%s:%d Transaction commit failed.", __func__, __LINE__);
-    goto failXit; 
+  if (xactH == NULL) {
+    benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Committing transaction: %p", getpid(), txnP);
+    rc = txnP->commit(txnP, 0);
+    if (rc != 0) {
+      envP->err(envP, rc, "%s:%d Transaction commit failed.", __func__, __LINE__);
+      goto failXit; 
+    }
+    txnP = NULL;
   }
 
   goto cleanup;
 
 failXit:
-  if (txnP != NULL) {
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  if (xactH == NULL && txnP != NULL) {
     if (cursor_portfolioP != NULL) {
       rc = cursor_portfolioP->close(cursor_portfolioP);
       if (rc != 0) {
@@ -1932,6 +1969,7 @@ failXit:
       cursor_primary_portfolioP = NULL;
     }
 
+    benchmark_warning("PID: %d About to abort transaction. txnP: %p", getpid(), txnP);
     rc = txnP->abort(txnP);
     if (rc != 0) {
       envP->err(envP, rc, "Transaction abort failed.");
@@ -1946,7 +1984,13 @@ cleanup:
 }
 
 int
-get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, BENCHMARK_DBS *benchmarkP) 
+get_portfolio(const char *account_id, 
+              const char *symbol, 
+              DB_TXN *txnP, 
+              DBC **cursorPP, 
+              DBT *key_ret, 
+              DBT *data_ret, 
+              BENCHMARK_DBS *benchmarkP) 
 {
   DBC *cursorp = NULL;
   DB  *portfoliosdbP= NULL;
@@ -1988,7 +2032,7 @@ get_portfolio(char *account_id, char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT 
   memset(&pkey, 0, sizeof(DBT));
   memset(&pdata, 0, sizeof(DBT));
 
-  key.data = account_id;
+  key.data = (char *)account_id;
   key.size = ID_SZ;
 
   rc = portfoliossdbP->cursor(portfoliossdbP, txnP,
@@ -2037,7 +2081,7 @@ cleanup:
 }
 
 int
-get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, int flags, BENCHMARK_DBS *benchmarkP) 
+get_stock(const char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_ret, int flags, BENCHMARK_DBS *benchmarkP) 
 {
   DBC *cursorp = NULL;
   DB  *quotesdbP= NULL;
@@ -2069,7 +2113,7 @@ get_stock(char *symbol, DB_TXN *txnP, DBC **cursorPP, DBT *key_ret, DBT *data_re
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  key.data = symbol;
+  key.data = (char *)symbol;
   key.size = (u_int32_t) strlen(symbol) + 1;
   rc = quotesdbP->cursor(quotesdbP, txnP, &cursorp, DB_READ_COMMITTED);
   if (rc != 0) {
@@ -2120,7 +2164,7 @@ done:
 }
 
 static int
-symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP) 
+symbol_exists(const char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP) 
 {
   DBC *cursorp = NULL;
   DB  *stocksdbP = NULL;
@@ -2151,7 +2195,7 @@ symbol_exists(char *symbol, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  key.data = symbol;
+  key.data = (char *)symbol;
   key.size = (u_int32_t) strlen(symbol) + 1;
   ret = stocksdbP->cursor(stocksdbP, txnP, &cursorp, DB_READ_COMMITTED);
   if (ret != 0) {
@@ -2177,7 +2221,7 @@ cleanup:
 }
 
 static int
-account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP) 
+account_exists(const char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP) 
 {
   DBC *cursorp = NULL;
   DB  *personaldbP = NULL;
@@ -2208,7 +2252,7 @@ account_exists(char *account_id, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
-  key.data = account_id;
+  key.data = (char *)account_id;
   key.size = (u_int32_t) strlen(account_id) + 1;
   ret = personaldbP->cursor(personaldbP, txnP, &cursorp, DB_READ_COMMITTED);
   if (ret != 0) {
@@ -2234,7 +2278,13 @@ cleanup:
 }
 
 static int 
-create_portfolio(char *account_id, char *symbol, float price, int amount, int force_apply, DB_TXN *txnP, BENCHMARK_DBS *benchmarkP)
+create_portfolio(const char *account_id, 
+                 const char *symbol, 
+                 float price, 
+                 int amount, 
+                 int force_apply, 
+                 DB_TXN *txnP, 
+                 BENCHMARK_DBS *benchmarkP)
 {
   int rc = 0;
   PORTFOLIOS portfolio;

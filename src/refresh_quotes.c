@@ -37,9 +37,9 @@ benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue)
     symbol = *symbolP;
   }
   else {
-    symbol = rand() % BENCHMARK_NUM_SYMBOLS;
+    symbol = rand() % benchmarkP->number_stocks;
   }
-  random_symbol = symbolsArr[symbol];
+  random_symbol = benchmarkP->stocks[symbol];
 
   benchmark_debug(BENCHMARK_DEBUG_LEVEL_API, "PID: %d, Attempting to update %s to %f", getpid(), random_symbol, newValue);
   ret = update_stock(random_symbol, newValue, benchmarkP);

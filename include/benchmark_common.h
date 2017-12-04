@@ -24,42 +24,32 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 
-#include "benchmark.h"
+#define BENCHMARK_NUM_SYMBOLS  (10)
+#define BENCHMARK_NUM_ACCOUNTS (50)
+
+#define BENCHMARK_SUCCESS   (0)
+#define BENCHMARK_FAIL      (1)
 
 #define BENCHMARK_MAGIC_WORD   (0xCAFE)
 #define CHRONOS_SHMKEY 35
-#define CHRONOS_PORTFOLIOS_NUM	100
 
 #define BENCHMARK_CHECK_MAGIC(_benchmarkP)   assert((_benchmarkP)->magic == BENCHMARK_MAGIC_WORD)
 
-#ifdef _WIN32
-extern int getopt(int, char * const *, const char *);
-extern char *optarg;
-#define snprintf _snprintf
-#else
-#include <unistd.h>
-#endif
+/* TODO: Are these constants useful? */
+#define   ID_SZ           10
+#define   NAME_SZ         128
+#define   PWD_SZ          32
+#define   USR_SZ          32
+#define   LONG_NAME_SZ    200
+#define   PHONE_SZ        16
+
 
 #define MAXLINE   1024
 
 #define PRIMARY_DB	0
 #define SECONDARY_DB	1
-
-extern char *symbolsArr[];
-
-typedef enum {
-  BENCHMARK_SYMBOL_YHOO,
-  BENCHMARK_SYMBOL_AAPL,
-  BENCHMARK_SYMBOL_GOOG,
-  BENCHMARK_SYMBOL_MSFT,
-  BENCHMARK_SYMBOL_PIH,
-  BENCHMARK_SYMBOL_FLWS,
-  BENCHMARK_SYMBOL_SRCE,
-  BENCHMARK_SYMBOL_VNET,
-  BENCHMARK_SYMBOL_TWOU,
-  BENCHMARK_SYMBOL_JOBS
-} symbols_enum_t;
 
 /*
  * This benchmark is based on Kyoung-Don Kang et al. 
@@ -100,6 +90,14 @@ typedef enum {
 #define IS_PORTFOLIOS(_v)   (((_v) & PORTFOLIOS_FLAG) == PORTFOLIOS_FLAG)
 #define IS_ACCOUNTS(_v)     (((_v) & ACCOUNTS_FLAG) == ACCOUNTS_FLAG)
 
+typedef struct benchmark_xact_data_t {
+  char      accountId[ID_SZ];
+  int       symbolId;
+  char      symbol[ID_SZ];
+  float     price;
+  int       amount;
+} benchmark_xact_data_t;
+
 typedef void *benchmark_xact_h;
 
 /* Let's define our Benchmark DB, which translates to
@@ -125,8 +123,8 @@ typedef struct benchmark_dbs {
   DB  *portfolios_sdbp;
 
   /* Some other useful information */
-  char *db_home_dir;
-  char *datafilesdir;
+  const char *db_home_dir;
+  const char *datafilesdir;
   
   /* Primary databases */
   char *stocks_db_name;
@@ -150,14 +148,6 @@ typedef struct benchmark_dbs {
 #define BENCHMARK_NUM_STOCKS(_benchmarkP)    (((BENCHMARK_DBS *)_benchmarkP)->number_stocks)
 #define BENCHMARK_SET_CREATE_DB(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->createDBs = 1)
 #define BENCHMARK_CLEAR_CREATE_DB(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->createDBs = 0)
-
-/* TODO: Are these constants useful? */
-#define   ID_SZ           10
-#define   NAME_SZ         128
-#define   PWD_SZ          32
-#define   USR_SZ          32
-#define   LONG_NAME_SZ    200
-#define   PHONE_SZ        16
 
 /* Now let's define the structures for our tables */
 /* TODO: Can we improve cache usage by modifying sizes? */
@@ -252,13 +242,25 @@ int
 show_all_portfolios(BENCHMARK_DBS *benchmarkP);
 
 int 
-place_order(int account, char *symbol, float price, int amount, int force_apply, BENCHMARK_DBS *benchmarkP);
+place_order(const char *account_id, 
+            const char *symbol, 
+            float price, 
+            int amount, 
+            int force_apply, 
+            benchmark_xact_h  xactH,
+            BENCHMARK_DBS *benchmarkP);
 
 int 
 update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP);
 
 int 
-sell_stocks(int account, char *symbol, float price, int amount, int force_apply, BENCHMARK_DBS *benchmarkP);
+sell_stocks(const char *account_id, 
+            const char *symbol, 
+            float price, 
+            int amount, 
+            int force_apply, 
+            benchmark_xact_h  xactH,
+            BENCHMARK_DBS *benchmarkP);
 
 int 
 show_stocks_records(char *symbolId, BENCHMARK_DBS *benchmarkP);
@@ -286,4 +288,54 @@ abort_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP);
 
 int 
 commit_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP);
+
+/*---------------------------------
+ * Debugging routines
+ *-------------------------------*/
+#define BENCHMARK_DEBUG_LEVEL_MIN   (0)
+#define BENCHMARK_DEBUG_LEVEL_MAX   (10)
+#define BENCHMARK_DEBUG_LEVEL_OP    (6)
+#define BENCHMARK_DEBUG_LEVEL_XACT  (5)
+#define BENCHMARK_DEBUG_LEVEL_API   (4)
+
+extern int benchmark_debug_level;
+
+#define set_benchmark_debug_level(_level)  \
+  (benchmark_debug_level = (_level))
+
+#define benchmark_debug(level,...) \
+  do {                                                         \
+    if (benchmark_debug_level >= level) {                        \
+      char _local_buf_[256];                                   \
+      snprintf(_local_buf_, sizeof(_local_buf_), __VA_ARGS__); \
+      fprintf(stderr, "DEBUG: %s:%d: %s", __FILE__, __LINE__, _local_buf_);    \
+      fprintf(stderr, "\n");	   \
+    } \
+  } while(0)
+
+
+
+/*---------------------------------
+ * Error routines
+ *-------------------------------*/
+#define benchmark_msg(_prefix, _fp, ...) \
+  do {                     \
+    char _local_buf_[256];				     \
+    snprintf(_local_buf_, sizeof(_local_buf_), __VA_ARGS__); \
+    fprintf(_fp, "%s: %s: at %s:%d", _prefix,_local_buf_, __FILE__, __LINE__);   \
+    fprintf(_fp,"\n");					     \
+  } while(0)
+
+#if BENCHMARK_DEBUG
+#define benchmark_info(...) \
+  benchmark_msg("INFO", stderr, __VA_ARGS__)
+#else
+#define benchmark_info(...)
+#endif
+
+#define benchmark_error(...) \
+  benchmark_msg("ERROR", stderr, __VA_ARGS__)
+
+#define benchmark_warning(...) \
+  benchmark_msg("WARN", stderr, __VA_ARGS__)
 #endif

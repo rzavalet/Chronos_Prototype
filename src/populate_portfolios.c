@@ -60,6 +60,7 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
   DBT key, data;
   DB_TXN *txnP = NULL;
   DB_ENV  *envP = NULL;
+#define CHRONOS_PORTFOLIOS_NUM	100
   PORTFOLIOS portfolio;
   int i;
 
@@ -83,7 +84,7 @@ load_portfolio_database(BENCHMARK_DBS *benchmarkP)
 
     sprintf(portfolio.portfolio_id, "%d", i);
     sprintf(portfolio.account_id, "%d", (rand() % 50)+1);
-    sprintf(portfolio.symbol, "%s", symbolsArr[(rand() % 10)]);
+    sprintf(portfolio.symbol, "%s", benchmarkP->stocks[rand() % benchmarkP->number_stocks]);
     portfolio.hold_stocks = (rand() % 100) + 1;
 
 #if 0

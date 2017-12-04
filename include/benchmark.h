@@ -1,102 +1,83 @@
 #ifndef _BENCHMARK_H_
 #define _BENCHMARK_H_
 
-#define BENCHMARK_NUM_SYMBOLS  (10)
-#define BENCHMARK_NUM_ACCOUNTS (50)
+#include "benchmark_common.h"
 
-#define BENCHMARK_SUCCESS   (0)
-#define BENCHMARK_FAIL      (1)
+typedef void *BENCHMARK_H;
 
 int 
-benchmark_handle_alloc(void **benchmark_handle, int create, char *homedir, char *datafilesdir);
+benchmark_handle_alloc(BENCHMARK_H *benchmark_handle, 
+                       int create, 
+                       const char *homedir, 
+                       const char *datafilesdir);
 
 int 
-benchmark_handle_free(void *benchmark_handle);
+benchmark_handle_free(BENCHMARK_H benchmark_handle);
 
 int 
-benchmark_initial_load(char *homedir, char *datafilesdir);
+benchmark_initial_load(const char *homedir, 
+                       const char *datafilesdir);
 
 int
-benchmark_load_portfolio(void *benchmark_handle);
+benchmark_load_portfolio(BENCHMARK_H benchmark_handle);
 
 int
-benchmark_refresh_quotes(void *benchmark_handle, int *symbolP, float newValue);
+benchmark_refresh_quotes(BENCHMARK_H benchmark_handle, 
+                         int *symbolP, 
+                         float newValue);
 
 int
-benchmark_refresh_quotes2(void *benchmark_handle, const char *symbolP, float newValue);
+benchmark_refresh_quotes2(BENCHMARK_H benchmark_handle, 
+                          const char *symbolP, 
+                          float newValue);
 
 int
-benchmark_view_stock(void *benchmark_handle, int *symbolP);
+benchmark_view_stock(BENCHMARK_H benchmark_handle, 
+                     int *symbolP);
 
 int
-benchmark_view_stock2(int num_symbols, const char **symbol_list_P, void *benchmark_handle);
+benchmark_view_stock2(int num_symbols, 
+                      const char **symbol_list_P, 
+                      BENCHMARK_H benchmark_handle);
 
 int
-benchmark_view_portfolio(void *benchmark_handle);
+benchmark_view_portfolio(BENCHMARK_H  benchmark_handle);
 
+int
+benchmark_purchase2(int                   num_data,
+                    benchmark_xact_data_t *data,
+                    BENCHMARK_H           benchmark_handle);
 int
 benchmark_view_portfolio2(int           num_accounts, 
                           const char    **account_list_P, 
-                          void          *benchmark_handle);
+                          BENCHMARK_H   benchmark_handle);
 int
-benchmark_purchase(int account, int symbol, float price, int amount, int force_apply, void *benchmark_handle, int *symbolP);
+benchmark_purchase(int      account, 
+                   int      symbol, 
+                   float    price, 
+                   int      amount, 
+                   int      force_apply, 
+                   BENCHMARK_H  benchmark_handle, 
+                   int      *symbolP);
 
 int
-benchmark_sell(int account, int symbol, float price, int amount, int force_apply, void *benchmark_handle, int *symbol_ret);
+benchmark_sell(int    account, 
+               int    symbol, 
+               float  price, 
+               int    amount, 
+               int    force_apply, 
+               BENCHMARK_H benchmark_handle, 
+               int    *symbol_ret);
 
 int
-benchmark_stock_list_get(void *benchmark_handle, 
+benchmark_sell2(int           num_data,
+                benchmark_xact_data_t *data,
+                void *benchmark_handle);
+
+int
+benchmark_stock_list_get(BENCHMARK_H benchmark_handle, 
                          char ***stocks_list, 
                          int *num_stocks);
 
-/*---------------------------------
- * Debugging routines
- *-------------------------------*/
-#define BENCHMARK_DEBUG_LEVEL_MIN   (0)
-#define BENCHMARK_DEBUG_LEVEL_MAX   (10)
-#define BENCHMARK_DEBUG_LEVEL_OP    (6)
-#define BENCHMARK_DEBUG_LEVEL_XACT  (5)
-#define BENCHMARK_DEBUG_LEVEL_API   (4)
-
-extern int benchmark_debug_level;
-
-#define set_benchmark_debug_level(_level)  \
-  (benchmark_debug_level = (_level))
-
-#define benchmark_debug(level,...) \
-  do {                                                         \
-    if (benchmark_debug_level >= level) {                        \
-      char _local_buf_[256];                                   \
-      snprintf(_local_buf_, sizeof(_local_buf_), __VA_ARGS__); \
-      fprintf(stderr, "DEBUG: %s:%d: %s", __FILE__, __LINE__, _local_buf_);    \
-      fprintf(stderr, "\n");	   \
-    } \
-  } while(0)
-
-
-
-/*---------------------------------
- * Error routines
- *-------------------------------*/
-#define benchmark_msg(_prefix, _fp, ...) \
-  do {                     \
-    char _local_buf_[256];				     \
-    snprintf(_local_buf_, sizeof(_local_buf_), __VA_ARGS__); \
-    fprintf(_fp, "%s: %s: at %s:%d", _prefix,_local_buf_, __FILE__, __LINE__);   \
-    fprintf(_fp,"\n");					     \
-  } while(0)
-
-#if BENCHMARK_DEBUG
-#define benchmark_info(...) \
-  benchmark_msg("INFO", stderr, __VA_ARGS__)
-#else
-#define benchmark_info(...)
-#endif
-
-#define benchmark_error(...) \
-  benchmark_msg("ERROR", stderr, __VA_ARGS__)
-
-#define benchmark_warning(...) \
-  benchmark_msg("WARN", stderr, __VA_ARGS__)
 
 #endif
