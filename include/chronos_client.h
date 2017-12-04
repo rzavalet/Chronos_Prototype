@@ -35,6 +35,7 @@ chronosClientSendRequest(chronosRequest    requestH,
                          chronosConnHandle connH);
 
 int
-chronosClientReceiveResponse(chronosConnHandle connH);
+chronosClientReceiveResponse(chronosConnHandle connH,
+                             int (*isTimeToDieFp) (void));
 
 #endif

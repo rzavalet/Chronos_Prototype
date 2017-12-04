@@ -1,10 +1,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/poll.h>
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#include <errno.h>
 #include "chronos.h"
 #include "chronos_environment.h"
 #include "chronos_client.h"
@@ -55,13 +59,12 @@ chronosClientDisconnect(chronosConnHandle connH)
 
   connectionP = (chronosClientConnection_t *) connH;
 
-  if (connectionP->state != CHRONOS_CONNECTION_CONNECTED) {
-    chronos_error("Invalid state");
-    goto failXit;
+  if (connectionP->state == CHRONOS_CONNECTION_CONNECTED) {
+    close(connectionP->socket_fd);
+    connectionP->socket_fd = -1;
   }
 
-  close(connectionP->socket_fd);
-  connectionP->socket_fd = -1;
+  connectionP->state = CHRONOS_CONNECTION_DISCONNECTED;
 
   return CHRONOS_SUCCESS;
 
@@ -75,10 +78,12 @@ chronosClientConnect(const char *serverAddress,
                      const char *connName,
                      chronosConnHandle connH) 
 {
+  int on = 1;
   int socket_fd;
   int rc = CHRONOS_SUCCESS;
-  struct sockaddr_in chronos_server_address;
   chronosClientConnection_t *connectionP = NULL;
+  struct sockaddr_in chronos_server_address;
+  struct pollfd fds[1];
 
   if (connH == NULL) {
     chronos_error("Invalid connection handle");
@@ -117,9 +122,26 @@ chronosClientConnect(const char *serverAddress,
 
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_fd == -1) {
-    chronos_error("Could not open socket");
+    perror("socket() failed");
     goto failXit;
   }
+
+  /* Make socket reusable */
+  rc = setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
+  if (rc == -1) {
+    perror("setsockopt() failed");
+    goto failXit;
+  }
+
+  /* Make non-blocking socket */
+  rc = ioctl(socket_fd, FIONBIO, (char *)&on);
+  if (rc < 0) {
+    perror("ioctl() failed");
+    goto failXit;
+  }
+
+  fds[0].fd = socket_fd;
+  fds[0].events = POLLOUT;
 
   chronos_server_address.sin_family = AF_INET;
   chronos_server_address.sin_addr.s_addr = inet_addr(serverAddress);
@@ -128,9 +150,45 @@ chronosClientConnect(const char *serverAddress,
   rc = connect(socket_fd, 
                 (struct sockaddr *)&chronos_server_address, 
                 sizeof(chronos_server_address));
-  if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Could not connect to server");
+  if (rc < 0 && errno != EINPROGRESS) {
+    perror("connect() failed");
     goto failXit;
+  }
+  else if (rc == 0) {
+    /* connected successfully */
+  }
+  else {
+    /* wait for connect to complete */
+    while (fds[0].events) {
+      int result;
+      socklen_t result_len = sizeof(result);
+
+      rc = poll(fds, 1, 1000 /* one second */);
+      if (rc < 0) {
+        perror("poll() failed");
+        goto failXit;
+      }
+
+      /* poll timed out */
+      if (rc == 0) {
+        continue;
+      }
+
+      rc = getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, &result, &result_len);
+      if (rc < 0) {
+        perror("getsockopt() failed");
+        goto failXit; 
+      }
+
+      if (result != 0) {
+        char errMsg[256];
+        (void)strerror_r(result, errMsg, sizeof(errMsg));
+        chronos_error("connect() failed: %s", errMsg);
+        goto failXit;
+      }
+    
+      break;
+    }
   }
 
   connectionP->socket_fd = socket_fd;
@@ -271,11 +329,14 @@ failXit:
  * Waits for response from chronos server
  */
 int
-chronosClientReceiveResponse(chronosConnHandle connH)
+chronosClientReceiveResponse(chronosConnHandle connH, 
+                             int (*isTimeToDieFp) (void))
 {
-  chronosResponse responseH = NULL; 
+  int rc;
   int num_bytes;
+  chronosResponse responseH = NULL; 
   chronosClientConnection_t *connectionP = NULL;
+  struct pollfd fds[1];
 
   if (connH == NULL) {
     chronos_error("Invalid handle");
@@ -295,23 +356,54 @@ chronosClientReceiveResponse(chronosConnHandle connH)
     goto failXit;
   }
 
-  char *buf = (char *) responseH;
-  int   to_read = chronosResponseSizeGet(responseH);
+  fds[0].fd = connectionP->socket_fd;
+  fds[0].events = POLLIN;
 
-  while (to_read > 0) {
-    num_bytes = read(connectionP->socket_fd, buf, 1);
-    if (num_bytes < 0) {
-      chronos_error("Failed while reading response from server");
+  /* While we are interested in reading from this 
+   * socket 
+   */
+  while(fds[0].events) {
+    char *buf = (char *) responseH;
+    int   to_read = chronosResponseSizeGet(responseH);
+
+    if (isTimeToDieFp()) {
+      chronos_error("requested to die");
       goto failXit;
     }
 
-    to_read -= num_bytes;
-    buf += num_bytes;
-  }
+    rc = poll(fds, 1, 1000 /* one second */);
+    if (rc < 0) {
+      perror("poll() failed");
+      goto failXit;
+    }
+    else if (rc == 0) {
+      chronos_error("poll() timed out");
+      continue;
+    }
 
-  chronos_info("Txn: %d, rc: %d", 
-                chronosResponseTypeGet(responseH),
-                chronosResponseResultGet(responseH));
+    assert(fds[0].revents);
+
+    while (to_read > 0) {
+      num_bytes = read(connectionP->socket_fd, buf, 1);
+      if (num_bytes < 0) {
+        perror("read() failed");
+        goto failXit;
+      }
+      else if (num_bytes == 0) {
+        chronos_error("socket closed");
+        fds[0].events = 0;
+        goto failXit;
+      }
+
+      to_read -= num_bytes;
+      buf += num_bytes;
+    }
+
+    chronos_info("Txn: %d, rc: %d", 
+                  chronosResponseTypeGet(responseH),
+                  chronosResponseResultGet(responseH));
+    break;
+  }
 
   return CHRONOS_SUCCESS;
 

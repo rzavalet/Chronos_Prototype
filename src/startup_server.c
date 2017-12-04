@@ -6,10 +6,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sched.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <poll.h>
 
 #include "chronos.h"
 #include "chronos_config.h"
@@ -1041,8 +1045,10 @@ daListener(void *argP)
   int done_creating = 0;
   struct sockaddr_in server_address;
   struct sockaddr_in client_address;
+  struct pollfd fds[1];
   int socket_fd;
   int accepted_socket_fd;
+  int on = 1;
 
   socklen_t client_address_len;
   pthread_attr_t attr;
@@ -1060,25 +1066,40 @@ daListener(void *argP)
 
   rc = pthread_attr_init(&attr);
   if (rc != 0) {
-    chronos_error("failed to init thread attributes");
+    perror("failed to init thread attributes");
     goto cleanup;
   }
   
   rc = pthread_attr_setstacksize(&attr, stack_size);
   if (rc != 0) {
-    chronos_error("failed to set stack size");
+    perror("failed to set stack size");
     goto cleanup;
   }
 
   rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
   if (rc != 0) {
-    chronos_error("failed to set detachable attribute");
+    perror("failed to set detachable attribute");
     goto cleanup;
   }
 
+  /* Create socket to receive incoming connections */
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_fd == -1) {
-    chronos_error("Failed to create socket");
+    perror("Failed to create socket");
+    goto cleanup;
+  }
+
+  /* Make socket reusable */
+  rc = setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
+  if (rc == -1) {
+    perror("setsockopt() failed");
+    goto cleanup;
+  }
+
+  /* Make non-blocking socket */
+  rc = ioctl(socket_fd, FIONBIO, (char *)&on);
+  if (rc < 0) {
+    perror("ioctl() failed");
     goto cleanup;
   }
 
@@ -1088,16 +1109,19 @@ daListener(void *argP)
   server_address.sin_port = htons(infoP->contextP->serverPort);
 
   rc = bind(socket_fd, (struct sockaddr *)&server_address, sizeof(server_address));
-  if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Failed to bind socket");
+  if (rc < 0) {
+    perror("bind() failed");
     goto cleanup;
   }
 
   rc = listen(socket_fd, infoP->contextP->numClientsThreads);
-  if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Failed to set listen queue");
+  if (rc < 0) {
+    perror("listen() failed");
     goto cleanup;
   }
+
+  fds[0].events = POLLIN;
+  fds[0].fd = socket_fd;
 
   chronos_debug(4, "Waiting for incoming connections...");
 
@@ -1109,51 +1133,80 @@ daListener(void *argP)
     chronos_debug(4, "Polling for new connection");
     
     /* wait for a new connection */
-    /* TODO: make the call abort-able */
-    client_address_len = sizeof(client_address); 
-    accepted_socket_fd = accept(socket_fd, (struct sockaddr *)&client_address, &client_address_len);
-    if (accepted_socket_fd == -1) {
-      chronos_error("Failed to accept connection");
+    rc = poll(fds, 1, 1000 /* one second */);
+    if (rc < 0) {
+      perror("poll() failed");
       goto cleanup;
     }
-
-    handlerInfoP  = NULL;
-    handlerInfoP = calloc(1, sizeof(chronosServerThreadInfo_t));
-    if (handlerInfoP == NULL) {
-      chronos_error("Failed to allocate space for thread info");
-      goto cleanup;
+    else if (rc == 0) {
+      chronos_debug(4, "poll() timed out");
+      continue;
+    }
+    else {
+      chronos_debug(4, "%d descriptors are ready", rc);
     }
 
-    // TODO: What would be needed to use a thread pool instead?
-    handlerInfoP->socket_fd = accepted_socket_fd;
-    handlerInfoP->contextP = infoP->contextP;
-    handlerInfoP->state = CHRONOS_SERVER_THREAD_STATE_RUN;
-    handlerInfoP->magic = CHRONOS_SERVER_THREAD_MAGIC;
+    /* We were only interested on the socket fd */
+    assert(fds[0].revents);
 
-    rc = pthread_create(&handlerInfoP->thread_id,
-                        &attr,
-                        &daHandler,
-                        handlerInfoP);
-    if (rc != 0) {
-      chronos_error("failed to spawn thread");
-      goto cleanup;
-    }
+    /* Accept all incoming connections that are queued up 
+     * on the listening socket before we loop back and
+     * call select again
+     */
+    do {
+      client_address_len = sizeof(client_address); 
+      accepted_socket_fd = accept(socket_fd, (struct sockaddr *)&client_address, &client_address_len);
 
-    chronos_debug(2,"Spawed handler thread");
+      if (accepted_socket_fd == -1) {
+        if (errno != EWOULDBLOCK) {
+          perror("accept() failed");
+          goto cleanup;
+        }
+        break;
+      }
 
-    /*===========================================================
-     * Signal the threads for the fact that all of them have
-     * been created and that they can start creating transactions
-     *==========================================================*/
-    pthread_mutex_lock(&infoP->contextP->startThreadsMutex);
-    infoP->contextP->currentNumClients += 1;
-    if (infoP->contextP->currentNumClients == infoP->contextP->numClientsThreads) {
-      done_creating = 1;
-      chronos_info("daListener created all requested threads");
-    }
-    pthread_cond_broadcast(&infoP->contextP->startThreadsWait);
-    pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
+      handlerInfoP  = NULL;
+      handlerInfoP = calloc(1, sizeof(chronosServerThreadInfo_t));
+      if (handlerInfoP == NULL) {
+        chronos_error("Failed to allocate space for thread info");
+        goto cleanup;
+      }
 
+      // TODO: What would be needed to use a thread pool instead?
+      handlerInfoP->socket_fd = accepted_socket_fd;
+      handlerInfoP->contextP = infoP->contextP;
+      handlerInfoP->state = CHRONOS_SERVER_THREAD_STATE_RUN;
+      handlerInfoP->magic = CHRONOS_SERVER_THREAD_MAGIC;
+
+      rc = pthread_create(&handlerInfoP->thread_id,
+                          &attr,
+                          &daHandler,
+                          handlerInfoP);
+      if (rc != 0) {
+        chronos_error("failed to spawn thread");
+        goto cleanup;
+      }
+
+      chronos_debug(2,"Spawed handler thread");
+
+      /*===========================================================
+       * Signal the threads for the fact that all of them have
+       * been created and that they can start creating transactions
+       *==========================================================*/
+      pthread_mutex_lock(&infoP->contextP->startThreadsMutex);
+      infoP->contextP->currentNumClients += 1;
+      if (infoP->contextP->currentNumClients == infoP->contextP->numClientsThreads) {
+        done_creating = 1;
+        chronos_info("daListener created all requested threads");
+      }
+      pthread_cond_broadcast(&infoP->contextP->startThreadsWait);
+      pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
+    } while (accepted_socket_fd != -1);
+  }
+
+  if (time_to_die == 1) {
+    chronos_info("Requested to die");
+    goto cleanup;
   }
 
 #ifdef CHRONOS_SAMPLING_ENABLED

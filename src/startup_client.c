@@ -391,7 +391,7 @@ userTransactionThread(void *argP)
     cnt_txns ++;
     chronos_debug(3,"[thr: %d] txn count: %d", infoP->thread_num, cnt_txns);
     
-    rc = chronosClientReceiveResponse(connectionH);
+    rc = chronosClientReceiveResponse(connectionH, infoP->contextP->timeToDieFp);
     if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to receive transaction response");
       goto cleanup;
