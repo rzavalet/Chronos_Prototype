@@ -79,6 +79,7 @@ typedef struct
   chronos_time_t txn_enqueue;
   unsigned long long ticket;
   volatile int *txn_done;
+  volatile int *txn_rc;
 
   chronosRequestPacket_t  request;
 } txn_info_t;

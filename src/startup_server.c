@@ -49,7 +49,7 @@ static void *
 processThread(void *argP);
 
 static int
-dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP);
+dispatchTableFn (chronosRequestPacket_t *reqPacketP, int *txn_rc, chronosServerThreadInfo_t *infoP);
 
 static int
 waitPeriod(double updatePeriodMS);
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
     }
 
     if (benchmark_handle_alloc(&serverContextP->benchmarkCtxtP, 
-                               1, 
+                               0, 
                                CHRONOS_SERVER_HOME_DIR, 
                                CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
       chronos_error("Failed to allocate handle");
@@ -836,10 +836,11 @@ failXit:
 }
 
 static int
-dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *infoP)
+dispatchTableFn (chronosRequestPacket_t *reqPacketP, int *txn_rc_ret, chronosServerThreadInfo_t *infoP)
 {
   int i;
   volatile int txn_done = 0;
+  volatile int txn_rc = 0;
   volatile int current_slot;
   unsigned long long ticket = 0;
   chronos_time_t   txn_enqueue;
@@ -862,6 +863,7 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
                                    &txn_enqueue, 
                                    &ticket, 
                                    &txn_done, 
+                                   &txn_rc,
                                    infoP->contextP);
 
   if (reqPacketP->txn_type == CHRONOS_USER_TXN_VIEW_STOCK) {
@@ -875,7 +877,9 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, chronosServerThreadInfo_t *
     (void) sched_yield();
   }
 
-  chronos_debug(2, "Done processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
+  *txn_rc_ret = txn_rc;
+
+  chronos_debug(2, "Done processing transaction: %s, rc: %d", CHRONOS_TXN_NAME(reqPacketP->txn_type), txn_rc);
 
   return CHRONOS_SUCCESS;
 
@@ -894,6 +898,7 @@ daHandler(void *argP)
   int cnt_msg = 0;
   int need_admission_control = 0;
   int written, to_write;
+  int txn_rc = 0;
   chronosResponsePacket_t resPacket;
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
   chronosRequestPacket_t reqPacket;
@@ -980,7 +985,7 @@ daHandler(void *argP)
 
 
     /*----------- Process the request ----------------*/
-    if (dispatchTableFn(&reqPacket, infoP) != CHRONOS_SUCCESS) {
+    if (dispatchTableFn(&reqPacket, &txn_rc, infoP) != CHRONOS_SUCCESS) {
       chronos_error("Failed to handle request");
       goto cleanup;
     }
@@ -992,7 +997,7 @@ daHandler(void *argP)
 
     memset(&resPacket, 0, sizeof(resPacket));
     resPacket.txn_type = reqPacket.txn_type;
-    resPacket.rc = CHRONOS_SUCCESS;
+    resPacket.rc = txn_rc;
 
     buf = (char *)&resPacket;
     to_write = sizeof(resPacket);
@@ -1262,6 +1267,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   const char        *pkey_list[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
   benchmark_xact_data_t data[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
   volatile int      *txn_done = NULL;
+  volatile int      *txn_rcP = NULL;
   chronosRequestPacket_t request;
   chronosUserTransaction_t txn_type;
 
@@ -1275,7 +1281,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
   if (userTxnQueueP->occupied > 0) {
     chronos_info("Processing user txn...");
 
-    rc = chronos_dequeue_user_transaction(&request, &txn_enqueue, &ticket, &txn_done, infoP->contextP);
+    rc = chronos_dequeue_user_transaction(&request, &txn_enqueue, &ticket, &txn_done, &txn_rcP, infoP->contextP);
     if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to dequeue a user transaction");
       goto failXit;
@@ -1329,6 +1335,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
 
     /* Notify waiter thread that this txn is done */
     *txn_done = 1;
+    *txn_rcP = txn_rc;
 
     if (infoP->contextP->num_txn_to_wait > 0) {
       chronos_warning("### [AC] Need to wait for: %d/%d transactions to finish ###", 

@@ -68,7 +68,6 @@ benchmark_handle_alloc(void **benchmark_handle, int create, const char *homedir,
       goto failXit;
     }
 #endif
-
   }
 
   if (create) benchmarkP->createDBs = 0;
@@ -78,7 +77,7 @@ benchmark_handle_alloc(void **benchmark_handle, int create, const char *homedir,
   
   return BENCHMARK_SUCCESS;
   
- failXit:
+failXit:
   *benchmark_handle = NULL;
   return BENCHMARK_FAIL;
 }
