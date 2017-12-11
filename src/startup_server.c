@@ -22,7 +22,9 @@
 #include "chronos_server.h"
 #include "chronos_transactions.h"
 
-int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_MIN;
+static const char *program_name = "startup_server";
+
+int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_XACT;
 int chronos_debug_level = CHRONOS_DEBUG_LEVEL_MIN;
 
 const char *chronosServerThreadNames[] ={
@@ -229,13 +231,15 @@ int main(int argc, char *argv[])
 
   if (serverContextP->initialLoad) {
     /* Create the system tables */
-    if (benchmark_initial_load(CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
+    if (benchmark_initial_load(program_name, CHRONOS_SERVER_HOME_DIR, CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
       chronos_error("Failed to perform initial load");
       goto failXit;
     }
 
+#if 0
     if (benchmark_handle_alloc(&serverContextP->benchmarkCtxtP, 
                                0, 
+                               program_name,
                                CHRONOS_SERVER_HOME_DIR, 
                                CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
       chronos_error("Failed to allocate handle");
@@ -252,6 +256,7 @@ int main(int argc, char *argv[])
       chronos_error("Failed to free handle");
       goto failXit;
     }
+#endif
   }
   else {
     chronos_info("*** Skipping initial load");
@@ -263,6 +268,7 @@ int main(int argc, char *argv[])
   /* Obtain a benchmark handle */
   if (benchmark_handle_alloc(&serverContextP->benchmarkCtxtP, 
                              0, 
+                             program_name,
                              CHRONOS_SERVER_HOME_DIR, 
                              CHRONOS_SERVER_DATAFILES_DIR) != CHRONOS_SUCCESS) {
     chronos_error("Failed to allocate handle");
@@ -1336,6 +1342,7 @@ processUserTransaction(chronosServerThreadInfo_t *infoP)
     /* Notify waiter thread that this txn is done */
     *txn_done = 1;
     *txn_rcP = txn_rc;
+    chronos_info("Txn rc: %d", txn_rc);
 
     if (infoP->contextP->num_txn_to_wait > 0) {
       chronos_warning("### [AC] Need to wait for: %d/%d transactions to finish ###", 

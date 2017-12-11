@@ -1819,14 +1819,14 @@ place_order(const char *account_id,
   /* 1) search the account */
   exists = account_exists(account_id, txnP, benchmarkP);
   if (!exists) {
-    benchmark_error("This user account does not exist.");
+    benchmark_error("This user account (%s) does not exist.", account_id);
     goto failXit; 
   }
 
   /* 2) search the symbol */
   exists = symbol_exists(symbol, txnP, benchmarkP);
   if (!exists) {
-    benchmark_error("This user account does not exist.");
+    benchmark_error("This symbol (%s) does not exist.", symbol);
     goto failXit; 
   }
 
@@ -1898,15 +1898,17 @@ place_order(const char *account_id,
       quoteP = data_quote.data;
       benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "Current price for stock: %s is %f, requested is: %f", symbol, quoteP->current_price, price);
       if (quoteP->current_price <= price) {
-        benchmark_info("Purchasing %d stocks", amount);
+        benchmark_info("Purchasing %d stocks of symbol: %s at %f USD since %s wanted a price <= %f USD", 
+                       amount, symbol, quoteP->current_price, account_id, price);
       }
       else {
-        benchmark_info("Price is to high to process request");
+        benchmark_info("Price is to high to process request. Price is: %f USD for symbol: %s, but %s wanted a price <= %f USD ",
+                        quoteP->current_price, symbol, account_id, price);
         goto failXit;
       }
     }
 
-    benchmark_info("User: %s doesn't hold stocks of symbol: %s. Placing order....", account_id, symbol);
+    benchmark_info("User: %s currently doesn't hold stocks of symbol: %s, so updating its portfolio....", account_id, symbol);
     rc = create_portfolio(account_id, symbol, price, amount, force_apply, txnP, benchmarkP);
     if (rc != BENCHMARK_SUCCESS) {
       benchmark_error("Could not create new entry in portfolio");
@@ -2056,7 +2058,7 @@ get_portfolio(const char *account_id,
   }
 
 failXit:
-  benchmark_error("Could not find symbol %s for account_id: %s", symbol, account_id);
+  benchmark_warning("Could not find symbol %s for account_id: %s", symbol, account_id);
 
   rc = cursorp->close(cursorp);
   if (rc != 0) {
@@ -2291,6 +2293,8 @@ create_portfolio(const char *account_id,
   DB_ENV  *envP = NULL;
   DBT key, data;
 
+  static int portfolio_id = 0;
+
   envP = benchmarkP->envP;
   if (envP == NULL) {
     benchmark_error("Invalid arguments");
@@ -2301,7 +2305,7 @@ create_portfolio(const char *account_id,
   memset(&data, 0, sizeof(DBT));
 
   memset(&portfolio, 0, sizeof(PORTFOLIOS));
-  sprintf(portfolio.portfolio_id, "%d", (rand()%500) + 100);
+  sprintf(portfolio.portfolio_id, "%d", portfolio_id ++);
   sprintf(portfolio.account_id, "%s", account_id);
   sprintf(portfolio.symbol, "%s", symbol);
   portfolio.to_sell = 0;
@@ -2333,7 +2337,7 @@ create_portfolio(const char *account_id,
 
   rc = benchmarkP->portfolios_dbp->put(benchmarkP->portfolios_dbp, txnP, &key, &data, DB_NOOVERWRITE);
   if (rc != 0) {
-    benchmark_error("Database put failed");
+    envP->err(envP, rc, "[%s:%d] [%d] Database put failed (id: %s).", __FILE__, __LINE__, getpid(), (char *)key.data);
     goto failXit; 
   }
 

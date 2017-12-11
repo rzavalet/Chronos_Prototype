@@ -34,7 +34,9 @@ static int
 load_quotes_database(BENCHMARK_DBS *benchmarkP, const char *quotes_file);
 
 int 
-benchmark_initial_load(const char *homedir, const char *datafilesdir) 
+benchmark_initial_load(const char *program,
+                       const char *homedir, 
+                       const char *datafilesdir) 
 {
   void *benchmarkP = NULL;
   char *personal_file = NULL;
@@ -80,7 +82,7 @@ benchmark_initial_load(const char *homedir, const char *datafilesdir)
   }
   snprintf(quotes_file, size, "%s/%s", datafilesdir, QUOTES_FILE);
  
-  if (benchmark_handle_alloc(&benchmarkP, 1, homedir, datafilesdir) != BENCHMARK_SUCCESS) {
+  if (benchmark_handle_alloc(&benchmarkP, 1, program, homedir, datafilesdir) != BENCHMARK_SUCCESS) {
     benchmark_error("Failed to allocate handle");
     goto failXit;
   }

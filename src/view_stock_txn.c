@@ -21,7 +21,11 @@
 #include "benchmark_stocks.h"
 
 int 
-benchmark_handle_alloc(void **benchmark_handle, int create, const char *homedir, const char *datafilesdir)
+benchmark_handle_alloc(void **benchmark_handle, 
+                       int create, 
+                       const char *program, 
+                       const char *homedir, 
+                       const char *datafilesdir)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
   int ret = BENCHMARK_FAIL;
@@ -40,7 +44,7 @@ benchmark_handle_alloc(void **benchmark_handle, int create, const char *homedir,
   /* Identify the files that hold our databases */
   set_db_filenames(benchmarkP);
 
-  ret = databases_setup(benchmarkP, ALL_DBS_FLAG, __FILE__, stderr);
+  ret = databases_setup(benchmarkP, ALL_DBS_FLAG, program, stderr);
   if (ret != 0) {
     benchmark_error("Error opening databases.");
     databases_close(benchmarkP);

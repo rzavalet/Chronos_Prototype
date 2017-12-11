@@ -146,7 +146,10 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
                      chronosEnv envH)
 {
   int i;
+#if 0
   int random_num_data_items = CHRONOS_MIN_DATA_ITEMS_PER_XACT + rand() % (1 + CHRONOS_MAX_DATA_ITEMS_PER_XACT - CHRONOS_MIN_DATA_ITEMS_PER_XACT);
+#endif
+  int random_num_data_items = 3;
   int rc = CHRONOS_SUCCESS;
   int random_symbol;
   int random_user;
