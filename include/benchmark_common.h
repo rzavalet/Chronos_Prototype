@@ -142,6 +142,8 @@ typedef struct benchmark_dbs {
   int   number_stocks;
   char **stocks;
 
+  int   number_portfolios;
+
 } BENCHMARK_DBS;
 
 #define BENCHMARK_STOCKS_LIST(_benchmarkP)  (((BENCHMARK_DBS *)_benchmarkP)->stocks)

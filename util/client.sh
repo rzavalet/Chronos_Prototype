@@ -1,11 +1,16 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
   echo "Invalid number of parameters"
   exit 255
 fi
 
 CLIENTS=$1
-PORT=$2
+#PORT=$2
 
-../bin/startup_client -c $CLIENTS -p $PORT
+FILEOUT=/tmp/client.out
+
+echo "** Starting client"
+
+#../bin/startup_client -c $CLIENTS -p $PORT
+../bin/startup_client -c $CLIENTS 2>&1 | tee $FILEOUT

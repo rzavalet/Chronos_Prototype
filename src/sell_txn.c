@@ -96,6 +96,7 @@ benchmark_sell2(int           num_data,
   BENCHMARK_DBS *benchmarkP = NULL;
   benchmark_xact_h xactH = NULL;
   int i;
+  int num_failed = 0;
   int ret;
 
   benchmarkP = benchmark_handle;
@@ -116,9 +117,15 @@ benchmark_sell2(int           num_data,
     benchmark_debug(2, "Placing order for user: %s", data[i].accountId);
     ret = sell_stocks(data[i].accountId, data[i].symbol, data[i].price, data[i].amount, 1, xactH, benchmarkP);
     if (ret != BENCHMARK_SUCCESS) {
-      benchmark_error("Could not place order");
-      goto failXit;
+      benchmark_error("Could not place order for user: %s and symbol: %s", data[i].accountId, data[i].symbol);
+      num_failed ++;
+      //goto failXit;
     }
+  }
+
+  if (num_failed >= num_data) {
+    benchmark_error("Too many failures (%d) for these %d sell attempts", num_failed, num_data);
+    goto failXit;
   }
 
   ret = commit_xact(xactH, benchmarkP);

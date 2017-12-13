@@ -43,6 +43,9 @@ benchmark_view_stock2(int num_symbols,
                       BENCHMARK_H benchmark_handle);
 
 int
+benchmark_portfolios_stats_get(BENCHMARK_DBS *benchmarkP);
+
+int
 benchmark_view_portfolio(BENCHMARK_H  benchmark_handle);
 
 int

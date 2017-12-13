@@ -65,6 +65,12 @@ benchmark_handle_alloc(void **benchmark_handle,
       goto failXit;
     }
 
+    if (benchmark_portfolios_stats_get(benchmarkP) != BENCHMARK_SUCCESS) {
+      benchmark_error("Could not obtain list of portfolios.");
+      databases_close(benchmarkP);
+      goto failXit;
+    }
+
 #ifdef BENCHMARK_DEBUG
     if (benchmark_stocks_symbols_print(benchmarkP) != BENCHMARK_SUCCESS) {
       benchmark_error("Could not print stock symbols.");

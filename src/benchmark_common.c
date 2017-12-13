@@ -1626,14 +1626,14 @@ sell_stocks(const char *account_id,
   /* 1) search the account */
   exists = account_exists(account_id, txnP, benchmarkP);
   if (!exists) {
-    benchmark_error("This user account does not exist.");
+    benchmark_error("This user account (%s) does not exist.", account_id);
     goto failXit; 
   }
 
   /* 2) search the symbol */
   exists = symbol_exists(symbol, txnP, benchmarkP);
   if (!exists) {
-    benchmark_error("This symbol does not exist.");
+    benchmark_error("This symbol (%s) does not exist.", symbol);
     goto failXit; 
   }
 
@@ -1642,7 +1642,7 @@ sell_stocks(const char *account_id,
   /* get a cursor to the portfolio */
   rc = get_portfolio(account_id, symbol, txnP, &cursor_portfolioP, &key_portfolio, &data_portfolio, benchmarkP);
   if (rc != BENCHMARK_SUCCESS) {
-    benchmark_error("Failed to obtain portfolio.");
+    benchmark_error("Failed to obtain portfolio for account: %s and symbol: %s.", account_id, symbol);
     goto failXit; 
   }
 
@@ -2292,8 +2292,7 @@ create_portfolio(const char *account_id,
   PORTFOLIOS portfolio;
   DB_ENV  *envP = NULL;
   DBT key, data;
-
-  static int portfolio_id = 0;
+  int use_portfolio_id;
 
   envP = benchmarkP->envP;
   if (envP == NULL) {
@@ -2304,8 +2303,10 @@ create_portfolio(const char *account_id,
   memset(&key, 0, sizeof(DBT));
   memset(&data, 0, sizeof(DBT));
 
+  use_portfolio_id = __sync_fetch_and_add(&benchmarkP->number_portfolios, 1);
+
   memset(&portfolio, 0, sizeof(PORTFOLIOS));
-  sprintf(portfolio.portfolio_id, "%d", portfolio_id ++);
+  sprintf(portfolio.portfolio_id, "%d", use_portfolio_id);
   sprintf(portfolio.account_id, "%s", account_id);
   sprintf(portfolio.symbol, "%s", symbol);
   portfolio.to_sell = 0;

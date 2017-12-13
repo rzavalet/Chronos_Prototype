@@ -20,6 +20,56 @@
 #include "benchmark_common.h"
 
 int
+benchmark_portfolios_stats_get(BENCHMARK_DBS *benchmarkP)
+{
+  int             rc = BENCHMARK_SUCCESS;
+  DB             *portfolios_dbp = NULL;
+  DB_BTREE_STAT  *portfolios_statsP = NULL;
+  DB_ENV         *envP = NULL;
+
+  if (benchmarkP == NULL) {
+    goto failXit;
+  }
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+
+  envP = benchmarkP->envP;
+  if (envP == NULL) {
+    benchmark_error("Invalid arguments");
+    goto failXit;
+  }
+
+  portfolios_dbp = benchmarkP->portfolios_dbp;
+  if (portfolios_dbp == NULL) {
+    benchmark_error("Portfolios table is uninitialized");
+    goto failXit;
+  }
+
+  rc = portfolios_dbp->stat(portfolios_dbp, NULL, (void *)&portfolios_statsP, 0 /* no FAST_STAT */);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Failed to obtain stats from Portfolios table.", __FILE__, __LINE__, getpid());
+    goto failXit; 
+  }
+
+  benchmarkP->number_portfolios = portfolios_statsP->bt_nkeys;
+  benchmark_debug(5, "Number of keys in Portfolios table is: %d", benchmarkP->number_portfolios);
+
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  goto cleanup;
+
+failXit:
+  BENCHMARK_CHECK_MAGIC(benchmarkP);
+  rc = BENCHMARK_FAIL;
+
+cleanup:
+  if (portfolios_statsP) {
+    free(portfolios_statsP);
+  }
+
+  return rc;
+}
+
+int
 benchmark_view_portfolio(void *benchmark_handle)
 {
   BENCHMARK_DBS *benchmarkP = NULL;
