@@ -8,15 +8,143 @@
 #define CHRONOS_CLIENT_NUM_USERS      (50)
 #define MAXLINE   1024
 
+typedef struct chronosPortfolioCache_t {
+  char    *symbol;
+  int     random_amount;
+  float   random_price;
+} chronosPortfolioCache_t;
+
+typedef struct chronosClientCache_t {
+  char                    *user;
+  int                     numPortfolios;
+  chronosPortfolioCache_t portfolio[100];
+} chronosClientCache_t;
+
 typedef struct chronosCache_t {
   char                **stocksListP;
   char                users[CHRONOS_CLIENT_NUM_USERS][256];
 
   int                 numStocks;
   int                 numUsers;
+
+  chronosClientCache_t    clientCache[100];
 } chronosCache_t;
 
+#define MIN(a,b)        (a < b ? a : b)
 
+static int
+createPortfolios(int numClients, chronosCache_t *cacheP)
+{
+  int i, j;
+  int numSymbols = 0;
+  int numUsers =  0;
+  int numClients = 0;
+  int usersPerClient = 0;
+  int symbolsPerUser = 0;
+  int random_symbol;
+  int random_user;
+  int random_amount;
+  float random_price;
+  chronosClientCache_t  *clientCacheP = NULL;
+
+  if (cacheP == NULL) {
+    chronos_error("Invalid cache pointer");
+    goto failXit;
+  }
+
+  clientCacheP = &cacheP->clientCache;
+  numSymbols = chronosCacheNumSymbolsGet(chronosCacheH);
+  numUsers = chronosCacheNumUsersGet(chronosCacheH);
+
+  usersPerClient = MIN(numUsers / numClients, 100);
+  symbolsPerUser = MIN(numSymbols / numUsers, 100);
+
+  cacheP->numCachedClients = usersPerClient;
+  for (i=0; i<usersPerClient; i++) {
+    random_user = i + (usersPerClient * (clientCacheP->thread_num -1));
+    clientCacheP[i].user = chronosCacheUserGet(random_user, chronosCacheH);
+    clientCacheP[i].numPortfolios = symbolsPerUser;
+
+    for (j=0; j<symbolsPerUser; j++) {
+      random_symbol = rand() % chronosCacheNumSymbolsGet(chronosCacheH);
+      random_amount = rand() % 100;
+      random_price = rand() % 1000;
+
+      clientCacheP[i]->portfolio[j].symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
+      clientCacheP[i]->portfolio[j].random_amount = random_amount;
+      clientCacheP[i]->portfolio[j].random_price = random_price;
+    }
+  }
+
+  return CHRONOS_SUCCESS;
+
+failXit:
+  return CHRONOS_FAIL;
+}
+
+chronosClientCache
+chronosClientCacheAlloc(int numThreads, int numClients, chronosCache chronosCacheH)
+{
+  int i;
+  chronosCache_t *cacheP = NULL;
+  chronosClientCache_t *clientCacheP = NULL;
+  int rc = CHRONOS_SUCCESS;
+
+  if (chronosCacheH == NULL) {
+    chronos_error("Invalid handle");
+    goto failXit;
+  }
+
+  cacheP = (chronosCache_t *) chronosCacheH;
+
+  clientCacheP = malloc(sizeof(chronosClientCache_t));
+  if (clientCacheP == NULL) {
+    chronos_error("Could not allocate cache structure");
+    goto failXit;
+  }
+
+  memset(clientCacheP, 0, sizeof(*clientCacheP));
+
+  rc = createPortfolios(numClients, cacheP);
+  if (rc != CHRONOS_SUCCESS) {
+    chronos_error("Could not populate client cache");
+    goto failXit;
+  }
+
+  goto cleanup;
+
+failXit:
+  if (clientCacheP != NULL) {
+    free(clientCacheP);
+    clientCacheP = NULL;
+  }
+  
+cleanup:
+  return  (void *) clientCacheP;
+}
+
+int
+chronosClientCacheFree(chronosClientCache chronosClientCacheH)
+{
+  int rc = CHRONOS_SUCCESS;
+  chronosClientCache_t *cacheP = NULL;
+
+  if (chronosClientCacheH == NULL) {
+    chronos_error("Invalid handle");
+    goto failXit;
+  }
+
+  cacheP = (chronosClientCache_t *) chronosClientCacheH;
+  memset(cacheP, 0, sizeof(*cacheP));
+
+  goto cleanup;
+
+failXit:
+  rc = CHRONOS_FAIL;
+
+cleanup:
+  return rc;
+}
 
 static int
 stockListFree(chronosCache_t *cacheP) 

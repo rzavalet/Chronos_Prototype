@@ -39,25 +39,12 @@ typedef struct chronosClientContext_t {
   chronosEnv  chronosEnvH;
 } chronosClientContext_t;
 
-typedef struct chronosPortfolioCache_t {
-  char    *symbol;
-  int     random_amount;
-  float   random_price;
-} chronosPortfolioCache_t;
-
-typedef struct chronosClientCache_t {
-  char                    *user;
-  int                     numPortfolios;
-  chronosPortfolioCache_t portfolio[100];
-} chronosClientCache_t;
-
 typedef struct chronosClientThreadInfo_t {
   pthread_t               thread_id;
   int                     thread_num;
   chronosConnHandle       connectionH;
   int                     socket_fd;
   int                     numUsers;
-  chronosClientCache_t    clientCache[100];
   chronosClientContext_t  *contextP;
 } chronosClientThreadInfo_t;
 
@@ -325,70 +312,7 @@ void sigintHandler(int sig)
   time_to_die = 1;
 }
 
-#define MIN(a,b)        (a < b ? a : b)
 
-static int
-createPortfolios(chronosClientThreadInfo_t *infoP)
-{
-  int i, j;
-  int numSymbols = 0;
-  int numUsers =  0;
-  int numClients = 0;
-  int usersPerClient = 0;
-  int symbolsPerUser = 0;
-  int random_symbol;
-  int random_user;
-  int random_amount;
-  float random_price;
-  chronosClientCache_t  *clientCacheP = NULL;
-  chronosCache chronosCacheH = NULL;
-
-  if (infoP == NULL || infoP->contextP == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  if (infoP->contextP->chronosEnvH == NULL) {
-    chronos_error("Invalid argument");
-    goto failXit;
-  }
-
-  chronosCacheH = chronosEnvCacheGet(infoP->contextP->chronosEnvH);
-  if (chronosCacheH == NULL) {
-    chronos_error("Invalid cache handle");
-    goto failXit;
-  }
-
-  clientCacheP = &infoP->clientCache;
-  numClients = infoP->contextP->numClientsThreads;
-  numSymbols = chronosCacheNumSymbolsGet(chronosCacheH);
-  numUsers = chronosCacheNumUsersGet(chronosCacheH);
-
-  usersPerClient = MIN(numUsers / numClients, 100);
-  symbolsPerUser = MIN(numSymbols / numUsers, 100);
-
-  infoP->numUsers = usersPerClient;
-  for (i=0; i<usersPerClient; i++) {
-    random_user = i + (usersPerClient * (infoP->thread_num -1));
-    clientCacheP[i].user = chronosCacheUserGet(random_user, chronosCacheH);
-    clientCacheP[i].numPortfolios = symbolsPerUser;
-
-    for (j=0; j<symbolsPerUser; j++) {
-      random_symbol = rand() % chronosCacheNumSymbolsGet(chronosCacheH);
-      random_amount = rand() % 100;
-      random_price = rand() % 1000;
-
-      clientCacheP[i]->portfolio[j].symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
-      clientCacheP[i]->portfolio[j].random_amount = random_amount;
-      clientCacheP[i]->portfolio[j].random_price = random_price;
-    }
-  }
-
-  return CHRONOS_SUCCESS;
-
-failXit:
-  return CHRONOS_FAIL;
-}
 
 /* 
  * This is the callback function of a client thread. 
