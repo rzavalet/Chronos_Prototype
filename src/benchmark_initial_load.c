@@ -536,6 +536,9 @@ load_quotes_database(BENCHMARK_DBS *benchmarkP, const char *quotes_file)
       &quote.high_price_day, &quote.perc_price_change, &quote.bidding_price,
       &quote.asking_price, &quote.trade_volume, quote.market_cap);
 
+    /* Set all quotes to 500 to start with */
+    quote.current_price = 500.0;
+
     /* Now that we have our structure we can load it into the database. */
 
     /* Set up the database record's key */

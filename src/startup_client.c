@@ -385,7 +385,7 @@ userTransactionThread(void *argP)
       goto cleanup;
     }
 
-    requestH = chronosRequestCreate(txnType, envH);
+    requestH = chronosRequestCreate(txnType, clientCacheH, envH);
     if (requestH == NULL) {
       chronos_error("Failed to populate request");
       goto cleanup;

@@ -30,6 +30,7 @@ typedef void *chronosResponse;
 
 chronosRequest
 chronosRequestCreate(chronosUserTransaction_t txnType, 
+                     chronosClientCache  clientCacheH,
                      chronosCache chronosCacheH);
 
 int

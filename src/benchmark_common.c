@@ -1517,7 +1517,13 @@ update_stock(char *symbolP, float newValue, BENCHMARK_DBS *benchmarkP)
     quoteP->current_price = newValue;
   }
   else {
-    quoteP->current_price += (((rand() % 20) - 10) / 10.0);
+    int direction = rand() % 2;
+    if (direction == 0 || quoteP->current_price <= 0) {
+      quoteP->current_price += 0.1;
+    }
+    else {
+      quoteP->current_price -= 0.1;
+    }
   }
 
   benchmark_info("PID: %d, txnP: %p Updating %s to %f", getpid(), txnP, quoteP->symbol, quoteP->current_price);

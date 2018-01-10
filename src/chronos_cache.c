@@ -13,6 +13,7 @@
  */
 typedef struct chronosClientStockInfo_t
 {
+  int     symbolId;
   const char    *symbol;
   int     random_amount;
   float   random_price;
@@ -24,6 +25,8 @@ typedef struct chronosClientStockInfo_t
  */
 typedef struct chronosClientPortfolios_t 
 {
+  int         userId;
+
   /* Which user is this? */
   const char *user;
 
@@ -54,6 +57,7 @@ typedef struct chronosCache_t {
 
 
 #define MIN(a,b)        (a < b ? a : b)
+#define MAX(a,b)        (a > b ? a : b)
 
 /* This client process will handle n users.
  * So, for each user, we need to create its portfolio.
@@ -64,7 +68,7 @@ createPortfolios(int numClient, int numClients, chronosClientCache_t *clientCach
   int i, j;
   int numSymbols = 0;
   int numUsers =  0;
-  int usersPerClient = 0;
+  int numPortfolios = 0;
   int symbolsPerUser = 0;
   int random_symbol;
   int random_user;
@@ -79,26 +83,38 @@ createPortfolios(int numClient, int numClients, chronosClientCache_t *clientCach
   numSymbols = chronosCacheNumSymbolsGet(chronosCacheH);
   numUsers = chronosCacheNumUsersGet(chronosCacheH);
 
-  usersPerClient = MIN(numUsers / numClients, 100);
-  symbolsPerUser = MIN(numSymbols / numUsers, 100);
+  numPortfolios = MAX(MIN(numUsers / numClients, 100), 10);
+  symbolsPerUser = MAX(MIN(numSymbols / numUsers, 100), 10);
 
-  clientCacheP->numPortfolios = usersPerClient;
+  fprintf(stderr, "DEBUG: numSymbols: %d, numUsers: %d, numPortfolios: %d, symbolsPerClient: %d\n",
+                  numSymbols,
+                  numUsers,
+                  numPortfolios,
+                  symbolsPerUser);
 
-  for (i=0; i<usersPerClient; i++) {
+  clientCacheP->numPortfolios = numPortfolios;
+
+  for (i=0; i<numPortfolios; i++) {
     /* TODO: does it matter which client we choose? */
-    random_user = i + (usersPerClient * (numClient -1));
+    random_user = (i + (numPortfolios * (numClient -1))) % numUsers;
 
+    clientCacheP->portfoliosArr[i].userId = random_user;
     clientCacheP->portfoliosArr[i].user = chronosCacheUserGet(random_user, chronosCacheH);
     clientCacheP->portfoliosArr[i].numSymbols = symbolsPerUser;
 
     for (j=0; j<symbolsPerUser; j++) {
       random_symbol = rand() % chronosCacheNumSymbolsGet(chronosCacheH);
       random_amount = rand() % 100;
-      random_price = rand() % 1000;
+      random_price = 500.0;
 
+      clientCacheP->portfoliosArr[i].stockInfoArr[j].symbolId = random_symbol;
       clientCacheP->portfoliosArr[i].stockInfoArr[j].symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
       clientCacheP->portfoliosArr[i].stockInfoArr[j].random_amount = random_amount;
       clientCacheP->portfoliosArr[i].stockInfoArr[j].random_price = random_price;
+      fprintf(stderr, "DEBUG: Client %d Handling user: %s symbol: %s\n",
+                      numClient,
+                      clientCacheP->portfoliosArr[i].user,
+                      clientCacheP->portfoliosArr[i].stockInfoArr[j].symbol);
     }
   }
 
@@ -166,6 +182,81 @@ failXit:
 
 cleanup:
   return rc;
+}
+
+int
+chronosClientCacheNumPortfoliosGet(chronosClientCache  clientCacheH)
+{
+  chronosClientCache_t *clientCacheP = NULL;
+
+  if (clientCacheH == NULL) {
+    return 0;
+  }
+
+  clientCacheP = (chronosClientCache_t *) clientCacheH;
+  return clientCacheP->numPortfolios;
+}
+
+int
+chronosClientCacheUserIdGet(int numUser, chronosClientCache  clientCacheH)
+{
+  chronosClientCache_t *clientCacheP = NULL;
+
+  if (clientCacheH == NULL) {
+    return 0;
+  }
+
+  clientCacheP = (chronosClientCache_t *) clientCacheH;
+  assert(0 <= numUser && numUser < clientCacheP->numPortfolios);
+
+  return clientCacheP->portfoliosArr[numUser].userId;
+}
+
+int
+chronosClientCacheNumSymbolFromUserGet(int numUser, chronosClientCache  clientCacheH)
+{
+  chronosClientCache_t *clientCacheP = NULL;
+
+  if (clientCacheH == NULL) {
+    return 0;
+  }
+
+  clientCacheP = (chronosClientCache_t *) clientCacheH;
+  assert(0 <= numUser && numUser < clientCacheP->numPortfolios);
+
+  return clientCacheP->portfoliosArr[numUser].numSymbols;
+}
+
+int
+chronosClientCacheSymbolFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH)
+{
+  chronosClientCache_t *clientCacheP = NULL;
+
+  if (clientCacheH == NULL) {
+    return 0;
+  }
+
+  clientCacheP = (chronosClientCache_t *) clientCacheH;
+  assert(0 <= numUser && numUser < clientCacheP->numPortfolios);
+  assert(0 <= numSymbol && numSymbol < clientCacheP->portfoliosArr[numUser].numSymbols);
+
+  return clientCacheP->portfoliosArr[numUser].stockInfoArr[numSymbol].symbolId;
+}
+
+float
+chronosClientCacheSymbolPriceFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH)
+{
+  chronosClientCache_t *clientCacheP = NULL;
+
+  if (clientCacheH == NULL) {
+    return 0;
+  }
+
+  clientCacheP = (chronosClientCache_t *) clientCacheH;
+  assert(0 <= numUser && numUser < clientCacheP->numPortfolios);
+  assert(0 <= numSymbol && numSymbol < clientCacheP->portfoliosArr[numUser].numSymbols);
+
+  return clientCacheP->portfoliosArr[numUser].stockInfoArr[numSymbol].random_price;
 }
 
 static int

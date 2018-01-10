@@ -31,4 +31,19 @@ chronosClientCacheAlloc(int numClient, int numClients, chronosCache chronosCache
 
 int
 chronosClientCacheFree(chronosClientCache chronosClientCacheH);
+
+int
+chronosClientCacheNumPortfoliosGet(chronosClientCache  clientCacheH);
+
+int
+chronosClientCacheUserIdGet(int numUser, chronosClientCache  clientCacheH);
+
+int
+chronosClientCacheNumSymbolFromUserGet(int numUser, chronosClientCache  clientCacheH);
+
+int
+chronosClientCacheSymbolFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH);
+
+float
+chronosClientCacheSymbolPriceFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH);
 #endif
