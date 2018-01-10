@@ -337,6 +337,9 @@ userTransactionThread(void *argP)
   chronosCache      cacheH = NULL;
   chronosUserTransaction_t txnType;
   chronosClientCache  clientCacheH = NULL;
+  int inLoadPhase = 1;
+#define CHRONOS_CLIENT_LOAD_ITERATIONS  10
+  int loadIterations = 0;
   int cnt_txns = 0;
   int rc = CHRONOS_SUCCESS;
 
@@ -379,10 +382,22 @@ userTransactionThread(void *argP)
   while(1) {
     chronosRequest requestH = NULL;
     
-    /* Pick a transaction type */
-    if (pickTransactionType(&txnType, infoP) != CHRONOS_SUCCESS) {
-      chronos_error("Failed to pick transaction type");
-      goto cleanup;
+    /* First we run a few purchases to warm up the system */
+    loadIterations ++;
+    if (loadIterations >= CHRONOS_CLIENT_LOAD_ITERATIONS) {
+      inLoadPhase = 0;
+    }
+
+    if (inLoadPhase) {
+        chronos_info("Loading portfolios: %d", loadIterations);
+        txnType = CHRONOS_USER_TXN_PURCHASE;
+    }
+    else {
+      /* Pick a transaction type */
+      if (pickTransactionType(&txnType, infoP) != CHRONOS_SUCCESS) {
+        chronos_error("Failed to pick transaction type");
+        goto cleanup;
+      }
     }
 
     requestH = chronosRequestCreate(txnType, clientCacheH, envH);

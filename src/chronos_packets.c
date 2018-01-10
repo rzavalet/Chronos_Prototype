@@ -191,7 +191,7 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
         random_number = rand() % chronosClientCacheNumSymbolFromUserGet(random_user, clientCacheH);
 
         // Now get the symbol
-        random_symbol = chronosClientCacheSymbolFromUserGet(random_number, random_user, clientCacheH);
+        random_symbol = chronosClientCacheSymbolFromUserGet(random_user, random_number, clientCacheH);
         symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
         rc = chronosPackViewStock(random_symbol, 
                                    symbol,
@@ -234,7 +234,8 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
         symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
 
         random_amount = rand() % 100;
-        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user, random_number, clientCacheH) - 0.1;
+        // Allow a high price
+        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user, random_number, clientCacheH) + 10;
 
         rc = chronosPackPurchase(user,
                                  random_symbol, symbol,
@@ -264,7 +265,8 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
         symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
 
         random_amount = rand() % 100;
-        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user, random_number, clientCacheH) + 0.1;
+        // Allow a low price
+        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user, random_number, clientCacheH) + 10;
 
         rc = chronosPackSellStock(user,
                                   random_symbol, symbol,
