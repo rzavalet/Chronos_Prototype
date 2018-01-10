@@ -489,7 +489,7 @@ pickTransactionType(chronosUserTransaction_t *txn_type_ret, chronosClientThreadI
   }
 #else
   //*txn_type_ret = CHRONOS_USER_TXN_VIEW_STOCK;
-  *txn_type_ret = CHRONOS_USER_TXN_SALE;
+  *txn_type_ret = CHRONOS_USER_TXN_PURCHASE;
 #endif
 
   chronos_debug(3,"Selected transaction type is: %s", CHRONOS_TXN_NAME(*txn_type_ret));

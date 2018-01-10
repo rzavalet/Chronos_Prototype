@@ -230,11 +230,11 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
         random_number = rand() % chronosClientCacheNumSymbolFromUserGet(random_user, clientCacheH);
 
         // Now get the symbol
-        random_symbol = chronosClientCacheSymbolFromUserGet(random_number, random_user, clientCacheH);
+        random_symbol = chronosClientCacheSymbolFromUserGet(random_user, random_number, clientCacheH);
         symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
 
         random_amount = rand() % 100;
-        random_price = chronosClientCacheSymbolPriceFromUserGet(random_number, random_user, clientCacheH) - 0.1;
+        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user, random_number, clientCacheH) - 0.1;
 
         rc = chronosPackPurchase(user,
                                  random_symbol, symbol,
@@ -248,7 +248,6 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
       break;
 
     case CHRONOS_USER_TXN_SALE:
-      random_user = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
       for (i=0; i<random_num_data_items; i++) {
         // Choose a random user
         random_number = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
@@ -261,11 +260,11 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
         random_number = rand() % chronosClientCacheNumSymbolFromUserGet(random_user, clientCacheH);
 
         // Now get the symbol
-        random_symbol = chronosClientCacheSymbolFromUserGet(random_number, random_user, clientCacheH);
+        random_symbol = chronosClientCacheSymbolFromUserGet(random_user, random_number, clientCacheH);
         symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
 
         random_amount = rand() % 100;
-        random_price = chronosClientCacheSymbolPriceFromUserGet(random_number, random_user, clientCacheH) + 0.1;
+        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user, random_number, clientCacheH) + 0.1;
 
         rc = chronosPackSellStock(user,
                                   random_symbol, symbol,

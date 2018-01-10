@@ -13,4 +13,5 @@ FILEOUT=/tmp/client.out
 echo "** Starting client"
 
 #../bin/startup_client -c $CLIENTS -p $PORT
-../bin/startup_client -c $CLIENTS 2>&1 | tee $FILEOUT
+#../bin/startup_client -c $CLIENTS 2>&1 | tee $FILEOUT
+gdb --args ../bin/startup_client -c $CLIENTS 
