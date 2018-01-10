@@ -45,6 +45,7 @@ typedef struct chronosClientThreadInfo_t {
   chronosConnHandle       connectionH;
   int                     socket_fd;
   int                     numUsers;
+
   chronosClientContext_t  *contextP;
 } chronosClientThreadInfo_t;
 
@@ -313,7 +314,6 @@ void sigintHandler(int sig)
 }
 
 
-
 /* 
  * This is the callback function of a client thread. 
  * It receives the following information:
@@ -334,7 +334,9 @@ userTransactionThread(void *argP)
   chronosClientThreadInfo_t *infoP = (chronosClientThreadInfo_t *)argP;
   chronosConnHandle connectionH = NULL;
   chronosEnv        envH = NULL;
+  chronosCache      cacheH = NULL;
   chronosUserTransaction_t txnType;
+  chronosClientCache  clientCacheH = NULL;
   int cnt_txns = 0;
   int rc = CHRONOS_SUCCESS;
 
@@ -357,11 +359,11 @@ userTransactionThread(void *argP)
     goto cleanup;
   }
 
-  rc = createPortfolios(infoP);
-  if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Could not create client cache");
-    goto cleanup;
-  }
+  cacheH = chronosEnvCacheGet(envH);
+
+  clientCacheH = chronosClientCacheAlloc(infoP->thread_num,
+                                         infoP->contextP->numClientsThreads, 
+                                         cacheH);
 
   /* connect to the chronos server */
   rc = chronosClientConnect(infoP->contextP->serverAddress,

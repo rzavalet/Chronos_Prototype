@@ -8,71 +8,97 @@
 #define CHRONOS_CLIENT_NUM_USERS      (50)
 #define MAXLINE   1024
 
-typedef struct chronosPortfolioCache_t {
-  char    *symbol;
+/*
+ * Information for each symbol a user is interested in.
+ */
+typedef struct chronosClientStockInfo_t
+{
+  const char    *symbol;
   int     random_amount;
   float   random_price;
-} chronosPortfolioCache_t;
+} chronosClientStockInfo_t;
 
-typedef struct chronosClientCache_t {
-  char                    *user;
+/*
+ * A user's portfolio information.
+ * A user is interested in k stock symbols.
+ */
+typedef struct chronosClientPortfolios_t 
+{
+  /* Which user is this? */
+  const char *user;
+
+  /* How many symbols the user is interested in */
+  int   numSymbols;
+
+  /* Information for each of the k stocks managed by a user */
+  chronosClientStockInfo_t  stockInfoArr[100];
+} chronosClientPortfolios_t;
+
+typedef struct chronosClientCache_t 
+{
   int                     numPortfolios;
-  chronosPortfolioCache_t portfolio[100];
+
+  /*List of portfolios handled by this client thread:
+   * we have one entry in the array per each managed user
+   */
+  chronosClientPortfolios_t portfoliosArr[100];
 } chronosClientCache_t;
 
 typedef struct chronosCache_t {
-  char                **stocksListP;
-  char                users[CHRONOS_CLIENT_NUM_USERS][256];
-
   int                 numStocks;
-  int                 numUsers;
+  char                **stocksListP;
 
-  chronosClientCache_t    clientCache[100];
+  int                 numUsers;
+  char                users[CHRONOS_CLIENT_NUM_USERS][256];
 } chronosCache_t;
+
 
 #define MIN(a,b)        (a < b ? a : b)
 
+/* This client process will handle n users.
+ * So, for each user, we need to create its portfolio.
+ */
 static int
-createPortfolios(int numClients, chronosCache_t *cacheP)
+createPortfolios(int numClient, int numClients, chronosClientCache_t *clientCacheP, chronosCache chronosCacheH)
 {
   int i, j;
   int numSymbols = 0;
   int numUsers =  0;
-  int numClients = 0;
   int usersPerClient = 0;
   int symbolsPerUser = 0;
   int random_symbol;
   int random_user;
   int random_amount;
   float random_price;
-  chronosClientCache_t  *clientCacheP = NULL;
 
-  if (cacheP == NULL) {
+  if (chronosCacheH == NULL || clientCacheP == NULL) {
     chronos_error("Invalid cache pointer");
     goto failXit;
   }
 
-  clientCacheP = &cacheP->clientCache;
   numSymbols = chronosCacheNumSymbolsGet(chronosCacheH);
   numUsers = chronosCacheNumUsersGet(chronosCacheH);
 
   usersPerClient = MIN(numUsers / numClients, 100);
   symbolsPerUser = MIN(numSymbols / numUsers, 100);
 
-  cacheP->numCachedClients = usersPerClient;
+  clientCacheP->numPortfolios = usersPerClient;
+
   for (i=0; i<usersPerClient; i++) {
-    random_user = i + (usersPerClient * (clientCacheP->thread_num -1));
-    clientCacheP[i].user = chronosCacheUserGet(random_user, chronosCacheH);
-    clientCacheP[i].numPortfolios = symbolsPerUser;
+    /* TODO: does it matter which client we choose? */
+    random_user = i + (usersPerClient * (numClient -1));
+
+    clientCacheP->portfoliosArr[i].user = chronosCacheUserGet(random_user, chronosCacheH);
+    clientCacheP->portfoliosArr[i].numSymbols = symbolsPerUser;
 
     for (j=0; j<symbolsPerUser; j++) {
       random_symbol = rand() % chronosCacheNumSymbolsGet(chronosCacheH);
       random_amount = rand() % 100;
       random_price = rand() % 1000;
 
-      clientCacheP[i]->portfolio[j].symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
-      clientCacheP[i]->portfolio[j].random_amount = random_amount;
-      clientCacheP[i]->portfolio[j].random_price = random_price;
+      clientCacheP->portfoliosArr[i].stockInfoArr[j].symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
+      clientCacheP->portfoliosArr[i].stockInfoArr[j].random_amount = random_amount;
+      clientCacheP->portfoliosArr[i].stockInfoArr[j].random_price = random_price;
     }
   }
 
@@ -83,10 +109,8 @@ failXit:
 }
 
 chronosClientCache
-chronosClientCacheAlloc(int numThreads, int numClients, chronosCache chronosCacheH)
+chronosClientCacheAlloc(int numClient, int numClients, chronosCache chronosCacheH)
 {
-  int i;
-  chronosCache_t *cacheP = NULL;
   chronosClientCache_t *clientCacheP = NULL;
   int rc = CHRONOS_SUCCESS;
 
@@ -94,8 +118,6 @@ chronosClientCacheAlloc(int numThreads, int numClients, chronosCache chronosCach
     chronos_error("Invalid handle");
     goto failXit;
   }
-
-  cacheP = (chronosCache_t *) chronosCacheH;
 
   clientCacheP = malloc(sizeof(chronosClientCache_t));
   if (clientCacheP == NULL) {
@@ -105,9 +127,9 @@ chronosClientCacheAlloc(int numThreads, int numClients, chronosCache chronosCach
 
   memset(clientCacheP, 0, sizeof(*clientCacheP));
 
-  rc = createPortfolios(numClients, cacheP);
+  rc = createPortfolios(numClient, numClients, clientCacheP, chronosCacheH);
   if (rc != CHRONOS_SUCCESS) {
-    chronos_error("Could not populate client cache");
+    chronos_error("Failed to create porfolios cache");
     goto failXit;
   }
 

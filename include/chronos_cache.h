@@ -24,4 +24,11 @@ const char *
 chronosCacheUserGet(int userNum,
                     chronosCache chronosCacheH);
 
+typedef void* chronosClientCache;
+
+chronosClientCache
+chronosClientCacheAlloc(int numClient, int numClients, chronosCache chronosCacheH);
+
+int
+chronosClientCacheFree(chronosClientCache chronosClientCacheH);
 #endif
