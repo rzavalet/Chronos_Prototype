@@ -338,6 +338,7 @@ userTransactionThread(void *argP)
   chronosClientCache  clientCacheH = NULL;
   int inLoadPhase = 1;
 #define CHRONOS_CLIENT_LOAD_ITERATIONS  10
+#define CHRONOS_CLIENT_SAMPLING_INTERVAL  10
   int loadIterations = 0;
   int cnt_txns = 0;
   int cnt_view_stock = 0;
@@ -347,6 +348,9 @@ userTransactionThread(void *argP)
   int cnt_success = 0;
   int cnt_fail = 0;
   int txn_rc = 0;
+  time_t current_time;
+  time_t next_sample_time;
+  int sample_period = 0;
 
   int rc = CHRONOS_SUCCESS;
 
@@ -385,9 +389,9 @@ userTransactionThread(void *argP)
     goto cleanup;
   }
 
-  fprintf(stderr,"STATS: thr: %d\t txn_count: %d\t txn_success: %d\t txn_fail: %d"
-                 "\t cnt_view_stock: %d\t cnt_view_portfolio: %d\t cnt_view_purchase: %d\t cnt_view_sale: %d"
-                 , 0, 0, 0, 0, 0, 0, 0, 0); 
+  current_time = time(NULL);
+  next_sample_time = current_time + CHRONOS_CLIENT_SAMPLING_INTERVAL;
+
   /* Determine how many View_Stock transactions we need to execute */
   while(1) {
     chronosRequest requestH = NULL;
@@ -457,10 +461,20 @@ userTransactionThread(void *argP)
       goto cleanup;
     }
 
-    fprintf(stderr,"\rSTATS: thr: %d\t txn_count: %d\t txn_success: %d\t txn_fail: %d"
-                   "\t cnt_view_stock: %d\t cnt_view_portfolio: %d\t cnt_view_purchase: %d\t cnt_view_sale: %d"
-                   , infoP->thread_num, cnt_txns, cnt_success, cnt_fail
-                   , cnt_view_stock, cnt_view_portfolio, cnt_view_purchase, cnt_view_sale); 
+    current_time = time(NULL);
+    if (current_time >= next_sample_time) {
+      sample_period ++;
+      fprintf(stderr,"STATS: thr: %d\t sample: %d\t count: %d\t success: %d (%.2f%%)\t fail: %d (%.2f%%)"
+                     "\t view_stock: %d (%.2f%%)\t view_portfolio: %d (%.2f%%)\t view_purchase: %d (%.2f%%)\t view_sale: %d (%.2f%%)\n"
+                     , infoP->thread_num, sample_period, cnt_txns
+                     , cnt_success, cnt_txns > 0 ? 100 * (float)cnt_success/cnt_txns : 0
+                     , cnt_fail, cnt_txns > 0 ? 100 * (float)cnt_fail/cnt_txns : 0
+                     , cnt_view_stock, cnt_txns > 0 ? 100 * (float)cnt_view_stock/cnt_txns : 0
+                     , cnt_view_portfolio, cnt_txns > 0 ? 100 * (float)cnt_view_portfolio/cnt_txns : 0
+                     , cnt_view_purchase, cnt_txns > 0 ? 100 * (float)cnt_view_purchase/cnt_txns : 0
+                     , cnt_view_sale, cnt_txns > 0 ? 100 * (float)cnt_view_sale/cnt_txns : 0); 
+      next_sample_time = current_time + CHRONOS_CLIENT_SAMPLING_INTERVAL;
+    }
 
     /* Wait some time before issuing next request */
     if (waitThinkTime(infoP->contextP->minThinkingTime,
