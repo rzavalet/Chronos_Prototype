@@ -129,10 +129,12 @@ typedef struct chronosServerContext_t
   /* The duration of one chronos experiment */
   double duration_sec;
 
+#if 0
   /* Variables for the experiment timer */
   timer_t experiment_timer_id;
   struct itimerspec experiment_timer_et;
   struct sigevent experiment_timer_ev;
+#endif
 
   int (*timeToDieFp)(void);
 

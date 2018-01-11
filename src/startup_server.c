@@ -56,11 +56,13 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, int *txn_rc, chronosServerT
 static int
 waitPeriod(double updatePeriodMS);
 
+#if 0
 static int
 startExperimentTimer(chronosServerContext_t *serverContextP);
 
 static int 
 createExperimentTimer(chronosServerContext_t *serverContextP);
+#endif
 
 #ifdef CHRONOS_SAMPLING_ENABLED
 static int
@@ -177,11 +179,13 @@ int main(int argc, char *argv[])
   }
 #endif
 
+#if 0
   /* Init the timer to check for experiment end */
   if (createExperimentTimer(serverContextP) != CHRONOS_SUCCESS) {
     chronos_error("Failed to create timer");
     goto failXit;    
   }
+#endif
 
   userTxnQueueP = &(serverContextP->userTxnQueue);
   sysTxnQueueP = &(serverContextP->sysTxnQueue);
@@ -1059,6 +1063,8 @@ daListener(void *argP)
   int socket_fd;
   int accepted_socket_fd;
   int on = 1;
+  time_t current_time;
+  time_t next_sample_time;
 
   socklen_t client_address_len;
   pthread_attr_t attr;
@@ -1225,8 +1231,24 @@ daListener(void *argP)
   }
 #endif
 
+#if 0
   if (startExperimentTimer(infoP->contextP) != CHRONOS_SUCCESS) {
     goto cleanup;
+  }
+#endif
+
+  current_time = time(NULL);
+  next_sample_time = current_time + infoP->contextP->duration_sec;
+
+  while (!time_to_die) {
+    current_time = time(NULL);
+    if (current_time >= next_sample_time) {
+      time_to_die = 1;
+      chronos_info("**** CHRONOS EXPERIMENT FINISHING ****");
+    }
+    else {
+      sleep(0);
+    }
   }
 
 cleanup:
@@ -1706,6 +1728,7 @@ cleanup:
 }
 #endif
 
+#if 0
 static int
 startExperimentTimer(chronosServerContext_t *serverContextP)
 {
@@ -1756,6 +1779,7 @@ failXit:
 cleanup:
   return rc;
 }
+#endif
 
 #define xstr(a) str(a)
 #define str(a) #a
