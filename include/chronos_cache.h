@@ -38,10 +38,16 @@ chronosClientCacheNumPortfoliosGet(chronosClientCache  clientCacheH);
 int
 chronosClientCacheUserIdGet(int numUser, chronosClientCache  clientCacheH);
 
+const char *
+chronosClientCacheUserGet(int numUser, chronosClientCache  clientCacheH);
+
 int
 chronosClientCacheNumSymbolFromUserGet(int numUser, chronosClientCache  clientCacheH);
 
 int
+chronosClientCacheSymbolIdFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH);
+
+const char *
 chronosClientCacheSymbolFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH);
 
 float

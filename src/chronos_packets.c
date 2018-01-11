@@ -152,9 +152,9 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
 #endif
   int random_num_data_items = 3;
   int rc = CHRONOS_SUCCESS;
-  int random_number = 0;
+  int random_user_idx = 0;
+  int random_symbol_idx = 0;
   int random_symbol;
-  int random_user;
   int random_amount;
   float random_price;
   const char *symbol;
@@ -185,14 +185,14 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
 
   switch (txnType) {
     case CHRONOS_USER_TXN_VIEW_STOCK:
-      random_user = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
+      random_user_idx = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
       for (i=0; i<random_num_data_items; i++) {
         // Choose a random symbol for this user
-        random_number = rand() % chronosClientCacheNumSymbolFromUserGet(random_user, clientCacheH);
+        random_symbol_idx = rand() % chronosClientCacheNumSymbolFromUserGet(random_user_idx, clientCacheH);
 
         // Now get the symbol
-        random_symbol = chronosClientCacheSymbolFromUserGet(random_user, random_number, clientCacheH);
-        symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
+        random_symbol = chronosClientCacheSymbolIdFromUserGet(random_user_idx, random_symbol_idx, clientCacheH);
+        symbol = chronosClientCacheSymbolFromUserGet(random_user_idx, random_symbol_idx, clientCacheH);
         rc = chronosPackViewStock(random_symbol, 
                                    symbol,
                                    &(reqPacketP->request_data.symbolInfo[i]));
@@ -206,8 +206,8 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
 
     case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
       for (i=0; i<random_num_data_items; i++) {
-        random_user = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
-        user = chronosCacheUserGet(random_user, chronosCacheH);
+        random_user_idx = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
+        user = chronosClientCacheUserGet(random_user_idx, clientCacheH);
         rc = chronosPackViewPortfolio(user,
                                      &(reqPacketP->request_data.portfolioInfo[i]));
         if (rc != CHRONOS_SUCCESS) {
@@ -220,22 +220,21 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
     case CHRONOS_USER_TXN_PURCHASE:
       for (i=0; i<random_num_data_items; i++) {
         // Choose a random user
-        random_number = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
+        random_user_idx = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
 
         // Get user details
-        random_user = chronosClientCacheUserIdGet(random_number, clientCacheH);
-        user = chronosCacheUserGet(random_user, chronosCacheH);
+        user = chronosClientCacheUserGet(random_user_idx, clientCacheH);
 
         // Choose a random symbol for this user
-        random_number = rand() % chronosClientCacheNumSymbolFromUserGet(random_user, clientCacheH);
+        random_symbol_idx = rand() % chronosClientCacheNumSymbolFromUserGet(random_user_idx, clientCacheH);
 
         // Now get the symbol
-        random_symbol = chronosClientCacheSymbolFromUserGet(random_user, random_number, clientCacheH);
-        symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
+        random_symbol = chronosClientCacheSymbolIdFromUserGet(random_user_idx, random_symbol_idx, clientCacheH);
+        symbol = chronosClientCacheSymbolFromUserGet(random_user_idx, random_symbol_idx, clientCacheH);
 
         random_amount = rand() % 100;
         // Allow a high price
-        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user, random_number, clientCacheH) + 10;
+        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user_idx, random_symbol_idx, clientCacheH) + 10;
 
         rc = chronosPackPurchase(user,
                                  random_symbol, symbol,
@@ -251,22 +250,21 @@ chronosRequestCreate(chronosUserTransaction_t txnType,
     case CHRONOS_USER_TXN_SALE:
       for (i=0; i<random_num_data_items; i++) {
         // Choose a random user
-        random_number = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
+        random_user_idx = rand() % chronosClientCacheNumPortfoliosGet(clientCacheH);
 
         // Get user details
-        random_user = chronosClientCacheUserIdGet(random_number, clientCacheH);
-        user = chronosCacheUserGet(random_user, chronosCacheH);
+        user = chronosClientCacheUserGet(random_user_idx, clientCacheH);
 
         // Choose a random symbol for this user
-        random_number = rand() % chronosClientCacheNumSymbolFromUserGet(random_user, clientCacheH);
+        random_symbol_idx = rand() % chronosClientCacheNumSymbolFromUserGet(random_user_idx, clientCacheH);
 
         // Now get the symbol
-        random_symbol = chronosClientCacheSymbolFromUserGet(random_user, random_number, clientCacheH);
-        symbol = chronosCacheSymbolGet(random_symbol, chronosCacheH);
+        random_symbol = chronosClientCacheSymbolIdFromUserGet(random_user_idx, random_symbol_idx, clientCacheH);
+        symbol = chronosClientCacheSymbolFromUserGet(random_user_idx, random_symbol_idx, clientCacheH);
 
         random_amount = rand() % 100;
         // Allow a low price
-        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user, random_number, clientCacheH) + 10;
+        random_price = chronosClientCacheSymbolPriceFromUserGet(random_user_idx, random_symbol_idx, clientCacheH) - 10;
 
         rc = chronosPackSellStock(user,
                                   random_symbol, symbol,
@@ -441,6 +439,6 @@ chronosResponseResultGet(chronosResponse responseH)
   return responseP->rc;
 
 failXit:
-  return CHRONOS_USER_TXN_INVAL;
+  return -1;
 }
 

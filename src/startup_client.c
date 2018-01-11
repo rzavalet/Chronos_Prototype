@@ -89,7 +89,6 @@ waitThinkTime(int minThinkTimeMS, int maxThinkTimeMS)
   waitPeriod.tv_nsec = ((int)randomWaitTimeMS % 1000) * 1000000;
 
   /* TODO: do I need to check the second argument? */
-  chronos_info("Waiting for %d ms", randomWaitTimeMS);
   nanosleep(&waitPeriod, NULL);
   
   return CHRONOS_SUCCESS; 
@@ -341,6 +340,14 @@ userTransactionThread(void *argP)
 #define CHRONOS_CLIENT_LOAD_ITERATIONS  10
   int loadIterations = 0;
   int cnt_txns = 0;
+  int cnt_view_stock = 0;
+  int cnt_view_portfolio = 0;
+  int cnt_view_purchase = 0;
+  int cnt_view_sale = 0;
+  int cnt_success = 0;
+  int cnt_fail = 0;
+  int txn_rc = 0;
+
   int rc = CHRONOS_SUCCESS;
 
   if (infoP == NULL || infoP->contextP == NULL) {
@@ -378,6 +385,9 @@ userTransactionThread(void *argP)
     goto cleanup;
   }
 
+  fprintf(stderr,"STATS: thr: %d\t txn_count: %d\t txn_success: %d\t txn_fail: %d"
+                 "\t cnt_view_stock: %d\t cnt_view_portfolio: %d\t cnt_view_purchase: %d\t cnt_view_sale: %d"
+                 , 0, 0, 0, 0, 0, 0, 0, 0); 
   /* Determine how many View_Stock transactions we need to execute */
   while(1) {
     chronosRequest requestH = NULL;
@@ -389,14 +399,26 @@ userTransactionThread(void *argP)
     }
 
     if (inLoadPhase) {
-        chronos_info("Loading portfolios: %d", loadIterations);
-        txnType = CHRONOS_USER_TXN_PURCHASE;
+      txnType = CHRONOS_USER_TXN_PURCHASE;
+      cnt_view_purchase ++;  
     }
     else {
       /* Pick a transaction type */
       if (pickTransactionType(&txnType, infoP) != CHRONOS_SUCCESS) {
         chronos_error("Failed to pick transaction type");
         goto cleanup;
+      }
+      if (txnType == CHRONOS_USER_TXN_VIEW_STOCK) {
+        cnt_view_stock ++;
+      }
+      else if (txnType == CHRONOS_USER_TXN_VIEW_PORTFOLIO) {
+        cnt_view_portfolio ++;
+      }
+      else if (txnType == CHRONOS_USER_TXN_PURCHASE) {
+        cnt_view_purchase ++;
+      }
+      else if (txnType == CHRONOS_USER_TXN_SALE) {
+        cnt_view_sale ++;
       }
     }
 
@@ -416,10 +438,17 @@ userTransactionThread(void *argP)
     cnt_txns ++;
     chronos_debug(3,"[thr: %d] txn count: %d", infoP->thread_num, cnt_txns);
     
-    rc = chronosClientReceiveResponse(connectionH, infoP->contextP->timeToDieFp);
+    rc = chronosClientReceiveResponse(&txn_rc, connectionH, infoP->contextP->timeToDieFp);
     if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to receive transaction response");
       goto cleanup;
+    }
+
+    if (txn_rc == 0) {
+      cnt_success ++;
+    }
+    else {
+      cnt_fail ++;
     }
 
     rc = chronosRequestFree(requestH);
@@ -427,6 +456,11 @@ userTransactionThread(void *argP)
       chronos_error("Failed to release request");
       goto cleanup;
     }
+
+    fprintf(stderr,"\rSTATS: thr: %d\t txn_count: %d\t txn_success: %d\t txn_fail: %d"
+                   "\t cnt_view_stock: %d\t cnt_view_portfolio: %d\t cnt_view_purchase: %d\t cnt_view_sale: %d"
+                   , infoP->thread_num, cnt_txns, cnt_success, cnt_fail
+                   , cnt_view_stock, cnt_view_portfolio, cnt_view_purchase, cnt_view_sale); 
 
     /* Wait some time before issuing next request */
     if (waitThinkTime(infoP->contextP->minThinkingTime,

@@ -302,8 +302,10 @@ chronosClientSendRequest(chronosRequest    requestH,
     goto failXit;
   }
 
+#ifdef CHRONOS_DEBUG_2
   chronos_info("Sending new transaction request: %d", 
                 chronosRequestTypeGet(requestH));
+#endif
 
   buf = (char *)requestH;
   to_write = chronosRequestSizeGet(requestH);
@@ -329,7 +331,8 @@ failXit:
  * Waits for response from chronos server
  */
 int
-chronosClientReceiveResponse(chronosConnHandle connH, 
+chronosClientReceiveResponse(int *txn_rc_ret, 
+                             chronosConnHandle connH, 
                              int (*isTimeToDieFp) (void))
 {
   int rc;
@@ -338,7 +341,7 @@ chronosClientReceiveResponse(chronosConnHandle connH,
   chronosClientConnection_t *connectionP = NULL;
   struct pollfd fds[1];
 
-  if (connH == NULL) {
+  if (connH == NULL || txn_rc_ret == NULL) {
     chronos_error("Invalid handle");
     goto failXit;
   }
@@ -399,9 +402,12 @@ chronosClientReceiveResponse(chronosConnHandle connH,
       buf += num_bytes;
     }
 
+#ifdef CHRONOS_DEBUG_2
     chronos_info("Txn: %d, rc: %d", 
                   chronosResponseTypeGet(responseH),
                   chronosResponseResultGet(responseH));
+#endif
+    *txn_rc_ret = chronosResponseResultGet(responseH);
     break;
   }
 

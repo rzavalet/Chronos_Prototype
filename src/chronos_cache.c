@@ -212,6 +212,21 @@ chronosClientCacheUserIdGet(int numUser, chronosClientCache  clientCacheH)
   return clientCacheP->portfoliosArr[numUser].userId;
 }
 
+const char *
+chronosClientCacheUserGet(int numUser, chronosClientCache  clientCacheH)
+{
+  chronosClientCache_t *clientCacheP = NULL;
+
+  if (clientCacheH == NULL) {
+    return 0;
+  }
+
+  clientCacheP = (chronosClientCache_t *) clientCacheH;
+  assert(0 <= numUser && numUser < clientCacheP->numPortfolios);
+
+  return clientCacheP->portfoliosArr[numUser].user;
+}
+
 int
 chronosClientCacheNumSymbolFromUserGet(int numUser, chronosClientCache  clientCacheH)
 {
@@ -228,7 +243,7 @@ chronosClientCacheNumSymbolFromUserGet(int numUser, chronosClientCache  clientCa
 }
 
 int
-chronosClientCacheSymbolFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH)
+chronosClientCacheSymbolIdFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH)
 {
   chronosClientCache_t *clientCacheP = NULL;
 
@@ -241,6 +256,22 @@ chronosClientCacheSymbolFromUserGet(int numUser, int numSymbol, chronosClientCac
   assert(0 <= numSymbol && numSymbol < clientCacheP->portfoliosArr[numUser].numSymbols);
 
   return clientCacheP->portfoliosArr[numUser].stockInfoArr[numSymbol].symbolId;
+}
+
+const char *
+chronosClientCacheSymbolFromUserGet(int numUser, int numSymbol, chronosClientCache  clientCacheH)
+{
+  chronosClientCache_t *clientCacheP = NULL;
+
+  if (clientCacheH == NULL) {
+    return 0;
+  }
+
+  clientCacheP = (chronosClientCache_t *) clientCacheH;
+  assert(0 <= numUser && numUser < clientCacheP->numPortfolios);
+  assert(0 <= numSymbol && numSymbol < clientCacheP->portfoliosArr[numUser].numSymbols);
+
+  return clientCacheP->portfoliosArr[numUser].stockInfoArr[numSymbol].symbol;
 }
 
 float
