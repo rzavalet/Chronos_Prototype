@@ -267,6 +267,12 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
       goto failXit;
   } 
 
+  rc = envP->set_timeout(envP, 10000000, DB_SET_LOCK_TIMEOUT);
+  if (rc != 0) {
+      benchmark_error("Error setting lock timeout: %s", db_strerror(rc));
+      goto failXit;
+  } 
+
   rc = envP->open(envP, benchmarkP->db_home_dir, env_flags, 0); 
   if (rc != 0) {
     benchmark_error("Error opening environment: %s", db_strerror(rc));

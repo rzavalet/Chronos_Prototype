@@ -379,6 +379,16 @@ userTransactionThread(void *argP)
                                          infoP->contextP->numClientsThreads, 
                                          cacheH);
 
+  /* connect to the chronos server */
+  rc = chronosClientConnect(infoP->contextP->serverAddress,
+                            infoP->contextP->serverPort,
+                            NULL,
+                            connectionH);
+  if (rc != CHRONOS_SUCCESS) {
+    chronos_error("Could not connect to chronos server");
+    goto cleanup;
+  }
+
   current_time = time(NULL);
   next_sample_time = current_time + CHRONOS_CLIENT_SAMPLING_INTERVAL;
 
@@ -386,16 +396,6 @@ userTransactionThread(void *argP)
   while(1) {
     chronosRequest requestH = NULL;
     
-    /* connect to the chronos server */
-    rc = chronosClientConnect(infoP->contextP->serverAddress,
-                              infoP->contextP->serverPort,
-                              NULL,
-                              connectionH);
-    if (rc != CHRONOS_SUCCESS) {
-      chronos_error("Could not connect to chronos server");
-      goto cleanup;
-    }
-
     /* First we run a few purchases to warm up the system */
     loadIterations ++;
     if (loadIterations >= CHRONOS_CLIENT_LOAD_ITERATIONS) {
@@ -459,12 +459,6 @@ userTransactionThread(void *argP)
     if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed to release request");
       goto cleanup;
-    }
-
-    /* disconnect from the chronos server */
-    rc = chronosClientDisconnect(connectionH);
-    if (rc != CHRONOS_SUCCESS) {
-      chronos_error("Failed to disconnect from server");
     }
 
     current_time = time(NULL);

@@ -22,7 +22,6 @@
 #include "chronos_server.h"
 #include "chronos_transactions.h"
 
-#define CHRONOS_TCP_QUEUE   1024
 static const char *program_name = "startup_server";
 
 int benchmark_debug_level = BENCHMARK_DEBUG_LEVEL_XACT;
@@ -48,10 +47,8 @@ daHandler(void *argP);
 static void *
 updateThread(void *argP);
 
-#if 0
 static void *
 processThread(void *argP);
-#endif
 
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, int *txn_rc, chronosServerThreadInfo_t *infoP);
@@ -59,10 +56,6 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, int *txn_rc, chronosServerT
 static int
 waitPeriod(double updatePeriodMS);
 
-static int
-processUserTransaction(int *txn_rc,
-                       chronosRequestPacket_t *reqPacketP,
-                       chronosServerThreadInfo_t *infoP);
 #if 0
 static int
 startExperimentTimer(chronosServerContext_t *serverContextP);
@@ -326,7 +319,6 @@ int main(int argc, char *argv[])
     chronos_debug(3, "%d next update time: %llu", i, initial_update_time_ms);
   }
 
-#if 0
   /* Spawn processing thread */
   processingThreadInfoArrP = calloc(serverContextP->numServerThreads, sizeof(chronosServerThreadInfo_t));
   if (processingThreadInfoArrP == NULL) {
@@ -351,7 +343,6 @@ int main(int argc, char *argv[])
 
     chronos_debug(2,"Spawed processing thread");
  } 
-#endif
 
 #ifdef CHRONOS_UPDATE_TRANSACTIONS_ENABLED
   /* Spawn the update threads */
@@ -440,14 +431,12 @@ int main(int argc, char *argv[])
   }
 #endif
   
-#if 0
   for (i=0; i<serverContextP->numServerThreads; i++) {
     rc = pthread_join(processingThreadInfoArrP[i].thread_id, (void **)&thread_rc);
     if (rc != CHRONOS_SUCCESS) {
       chronos_error("Failed while joining thread %s", CHRONOS_SERVER_THREAD_NAME(processingThreadInfoArrP[i].thread_type));
     }
   }
-#endif
 
 #ifdef CHRONOS_PRINT_STATS
   printStats(infoP);
@@ -481,7 +470,6 @@ cleanup:
       free(serverContextP->dataItemsArray);
     }
 
-    sleep(10);
     if (benchmark_handle_free(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
       chronos_error("Failed to free handle");
       goto failXit;
@@ -620,7 +608,6 @@ void handler_sampling(void *arg)
   return;
 }
 
-#if 0
 static int
 ThreadTraceOpen(int thread_num, chronosServerThreadInfo_t *infoP)
 {
@@ -727,7 +714,6 @@ failXit:
 cleanup:
   return rc;
 }
-#endif
 
 
 static int
@@ -862,7 +848,14 @@ failXit:
 static int
 dispatchTableFn (chronosRequestPacket_t *reqPacketP, int *txn_rc_ret, chronosServerThreadInfo_t *infoP)
 {
-  if (infoP == NULL || infoP->contextP == NULL || txn_rc_ret == NULL) {
+  int i;
+  volatile int txn_done = 0;
+  volatile int txn_rc = 0;
+  volatile int current_slot;
+  unsigned long long ticket = 0;
+  chronos_time_t   txn_enqueue;
+
+  if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -875,9 +868,28 @@ dispatchTableFn (chronosRequestPacket_t *reqPacketP, int *txn_rc_ret, chronosSer
    *==========================================*/
   chronos_debug(2, "Processing transaction: %s", CHRONOS_TXN_NAME(reqPacketP->txn_type));
   
-  processUserTransaction(txn_rc_ret, reqPacketP, infoP);
+  CHRONOS_TIME_GET(txn_enqueue);
+  chronos_enqueue_user_transaction(reqPacketP,
+                                   &txn_enqueue, 
+                                   &ticket, 
+                                   &txn_done, 
+                                   &txn_rc,
+                                   infoP->contextP);
 
-  chronos_debug(2, "Done processing transaction: %s, rc: %d", CHRONOS_TXN_NAME(reqPacketP->txn_type), *txn_rc_ret);
+  if (reqPacketP->txn_type == CHRONOS_USER_TXN_VIEW_STOCK) {
+    current_slot = infoP->contextP->currentSlot;
+    for (i=0; i<reqPacketP->numItems; i++) {
+      infoP->contextP->dataItemsArray[reqPacketP->request_data.symbolInfo[i].symbolId].updateFrequency[current_slot] ++;
+    }
+  }
+
+  while (!txn_done) {
+    (void) sched_yield();
+  }
+
+  *txn_rc_ret = txn_rc;
+
+  chronos_debug(2, "Done processing transaction: %s, rc: %d", CHRONOS_TXN_NAME(reqPacketP->txn_type), txn_rc);
 
   return CHRONOS_SUCCESS;
 
@@ -909,97 +921,127 @@ daHandler(void *argP)
   CHRONOS_SERVER_THREAD_CHECK(infoP);
   CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
 
-  /*------------ Read the request -----------------*/
-  chronos_debug(3, "waiting new request");
+  /*=======================================================
+   * Wait here till all threads are initialized 
+   *======================================================*/
+  chronos_debug(4,"Waiting for client threads to startup");
+  pthread_mutex_lock(&infoP->contextP->startThreadsMutex);
+  while (infoP->contextP->currentNumClients < infoP->contextP->numClientsThreads && time_to_die == 0) {
+    pthread_cond_wait(&infoP->contextP->startThreadsWait, &infoP->contextP->startThreadsMutex);
+  }  
+  pthread_cond_broadcast(&infoP->contextP->startThreadsWait);
+  pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
+  chronos_debug(4,"Done waiting for client threads to startup");
 
-  memset(&reqPacket, 0, sizeof(reqPacket));
-  char *buf = (char *) &reqPacket;
-  int   to_read = sizeof(reqPacket);
 
-  while (to_read > 0) {
-    num_bytes = read(infoP->socket_fd, buf, 1);
-    if (num_bytes < 0) {
-      chronos_error("Failed while reading request from client");
-      goto cleanup;
+  /*=====================================================
+   * Keep receiving new transaction requests until it 
+   * is time to die.
+   *====================================================*/
+  while (1) {
+
+    CHRONOS_SERVER_THREAD_CHECK(infoP);
+    CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
+
+    /*------------ Read the request -----------------*/
+    chronos_debug(3, "waiting new request");
+
+    memset(&reqPacket, 0, sizeof(reqPacket));
+    char *buf = (char *) &reqPacket;
+    int   to_read = sizeof(reqPacket);
+
+    while (to_read > 0) {
+      num_bytes = read(infoP->socket_fd, buf, 1);
+      if (num_bytes < 0) {
+        chronos_error("Failed while reading request from client");
+        goto cleanup;
+      }
+
+      to_read -= num_bytes;
+      buf += num_bytes;
     }
 
-    to_read -= num_bytes;
-    buf += num_bytes;
-  }
-
-  assert(CHRONOS_TXN_IS_VALID(reqPacket.txn_type));
-  chronos_debug(3, "Received transaction request: %s", CHRONOS_TXN_NAME(reqPacket.txn_type));
-  /*-----------------------------------------------*/
+    assert(CHRONOS_TXN_IS_VALID(reqPacket.txn_type));
+    chronos_debug(3, "Received transaction request: %s", CHRONOS_TXN_NAME(reqPacket.txn_type));
+    /*-----------------------------------------------*/
 
 
-  /*----------- do admission control ---------------*/
-  need_admission_control = infoP->contextP->num_txn_to_wait > 0 ? 1 : 0;
-  cnt_msg = 0;
+    /*----------- do admission control ---------------*/
+    need_admission_control = infoP->contextP->num_txn_to_wait > 0 ? 1 : 0;
+    cnt_msg = 0;
 #define MSG_FREQ 10
-  while (infoP->contextP->num_txn_to_wait > 0)
-  {
-    if (cnt_msg >= MSG_FREQ) {
-      chronos_warning("### [AC] Doing admission control (%d/%d) ###",
+    while (infoP->contextP->num_txn_to_wait > 0)
+    {
+      if (cnt_msg >= MSG_FREQ) {
+        chronos_warning("### [AC] Doing admission control (%d/%d) ###",
+                     infoP->contextP->num_txn_to_wait,
+                     infoP->contextP->total_txns_enqueued);
+      }
+      cnt_msg = (cnt_msg + 1) % MSG_FREQ;
+      if (time_to_die == 1) {
+        chronos_info("Requested to die");
+        goto cleanup;
+      }
+
+      (void) sched_yield();
+    }
+    if (need_admission_control) {
+      chronos_warning("### [AC] Done with admission control (%d/%d) ###",
                    infoP->contextP->num_txn_to_wait,
                    infoP->contextP->total_txns_enqueued);
     }
-    cnt_msg = (cnt_msg + 1) % MSG_FREQ;
+    /*-----------------------------------------------*/
+
+
+
+    /*----------- Process the request ----------------*/
+    if (dispatchTableFn(&reqPacket, &txn_rc, infoP) != CHRONOS_SUCCESS) {
+      chronos_error("Failed to handle request");
+      goto cleanup;
+    }
+    /*-----------------------------------------------*/
+
+
+    /*---------- Reply to the request ---------------*/
+    chronos_debug(3, "Replying to client");
+
+    memset(&resPacket, 0, sizeof(resPacket));
+    resPacket.txn_type = reqPacket.txn_type;
+    resPacket.rc = txn_rc;
+
+    buf = (char *)&resPacket;
+    to_write = sizeof(resPacket);
+
+    while(to_write >0) {
+      written = write(infoP->socket_fd, buf, to_write);
+      if (written < 0) {
+        chronos_error("Failed to write to socket");
+        goto cleanup;
+      }
+
+      to_write -= written;
+      buf += written;
+    }
+    chronos_debug(3, "Replied to client");
+    /*-----------------------------------------------*/
+
+
     if (time_to_die == 1) {
       chronos_info("Requested to die");
       goto cleanup;
     }
-
-    (void) sched_yield();
-  }
-  if (need_admission_control) {
-    chronos_warning("### [AC] Done with admission control (%d/%d) ###",
-                 infoP->contextP->num_txn_to_wait,
-                 infoP->contextP->total_txns_enqueued);
-  }
-  /*-----------------------------------------------*/
-
-
-
-  /*----------- Process the request ----------------*/
-  if (dispatchTableFn(&reqPacket, &txn_rc, infoP) != CHRONOS_SUCCESS) {
-    chronos_error("Failed to handle request");
-    goto cleanup;
-  }
-  /*-----------------------------------------------*/
-
-
-  /*---------- Reply to the request ---------------*/
-  chronos_debug(3, "Replying to client");
-
-  memset(&resPacket, 0, sizeof(resPacket));
-  resPacket.txn_type = reqPacket.txn_type;
-  resPacket.rc = txn_rc;
-
-  buf = (char *)&resPacket;
-  to_write = sizeof(resPacket);
-
-  while(to_write >0) {
-    written = write(infoP->socket_fd, buf, to_write);
-    if (written < 0) {
-      chronos_error("Failed to write to socket");
-      goto cleanup;
-    }
-
-    to_write -= written;
-    buf += written;
-  }
-  chronos_debug(3, "Replied to client");
-  /*-----------------------------------------------*/
-
-
-  if (time_to_die == 1) {
-    chronos_info("Requested to die");
-    goto cleanup;
   }
 
 cleanup:
 
   close(infoP->socket_fd);
+
+  pthread_mutex_lock(&infoP->contextP->startThreadsMutex);
+  infoP->contextP->currentNumClients -= 1;
+  if (infoP->contextP->currentNumClients == 0) {
+    time_to_die = 1;
+  }
+  pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
 
   free(infoP);
 
@@ -1014,6 +1056,7 @@ static void *
 daListener(void *argP) 
 {
   int rc;
+  int done_creating = 0;
   struct sockaddr_in server_address;
   struct sockaddr_in client_address;
   struct pollfd fds[1];
@@ -1087,7 +1130,7 @@ daListener(void *argP)
     goto cleanup;
   }
 
-  rc = listen(socket_fd, CHRONOS_TCP_QUEUE);
+  rc = listen(socket_fd, infoP->contextP->numClientsThreads);
   if (rc < 0) {
     perror("listen() failed");
     goto cleanup;
@@ -1098,13 +1141,10 @@ daListener(void *argP)
 
   chronos_debug(4, "Waiting for incoming connections...");
 
-  current_time = time(NULL);
-  next_sample_time = current_time + infoP->contextP->duration_sec;
-
   /* Keep listening for incoming connections till we
    * complete all threads for the experiment
    */
-  while(!time_to_die) {
+  while(!done_creating && !time_to_die) {
 
     chronos_debug(4, "Polling for new connection");
     
@@ -1165,13 +1205,19 @@ daListener(void *argP)
 
       chronos_debug(2,"Spawed handler thread");
 
+      /*===========================================================
+       * Signal the threads for the fact that all of them have
+       * been created and that they can start creating transactions
+       *==========================================================*/
+      pthread_mutex_lock(&infoP->contextP->startThreadsMutex);
+      infoP->contextP->currentNumClients += 1;
+      if (infoP->contextP->currentNumClients == infoP->contextP->numClientsThreads) {
+        done_creating = 1;
+        chronos_info("daListener created all requested threads");
+      }
+      pthread_cond_broadcast(&infoP->contextP->startThreadsWait);
+      pthread_mutex_unlock(&infoP->contextP->startThreadsMutex);
     } while (accepted_socket_fd != -1);
-
-    current_time = time(NULL);
-    if (current_time >= next_sample_time) {
-      time_to_die = 1;
-      chronos_info("**** CHRONOS EXPERIMENT FINISHING ****");
-    }
   }
 
   if (time_to_die == 1) {
@@ -1190,6 +1236,20 @@ daListener(void *argP)
     goto cleanup;
   }
 #endif
+
+  current_time = time(NULL);
+  next_sample_time = current_time + infoP->contextP->duration_sec;
+
+  while (!time_to_die) {
+    current_time = time(NULL);
+    if (current_time >= next_sample_time) {
+      time_to_die = 1;
+      chronos_info("**** CHRONOS EXPERIMENT FINISHING ****");
+    }
+    else {
+      sleep(0);
+    }
+  }
 
 cleanup:
   chronos_info("daListener exiting");
@@ -1215,13 +1275,12 @@ waitPeriod(double updatePeriodMS)
 
 #ifdef CHRONOS_USER_TRANSACTIONS_ENABLED
 static int
-processUserTransaction(int *txn_rc,
-                       chronosRequestPacket_t *reqPacketP,
-                       chronosServerThreadInfo_t *infoP)
+processUserTransaction(chronosServerThreadInfo_t *infoP)
 {
   int               rc = CHRONOS_SUCCESS;
   int               i;
   int               num_data_items = 0;
+  int               txn_rc = CHRONOS_SUCCESS;
 #ifdef CHRONOS_SAMPLING_ENABLED
   int               thread_num;
   int               current_slot = 0;
@@ -1229,10 +1288,15 @@ processUserTransaction(int *txn_rc,
   chronos_time_t    txn_duration;
   chronosServerStats_t  *statsP = NULL;
 #endif
+  unsigned long long ticket = 0;
+  chronos_time_t    txn_enqueue;
   chronos_time_t    txn_begin;
   chronos_time_t    txn_end;
   const char        *pkey_list[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
   benchmark_xact_data_t data[CHRONOS_MAX_DATA_ITEMS_PER_XACT];
+  volatile int      *txn_done = NULL;
+  volatile int      *txn_rcP = NULL;
+  chronosRequestPacket_t request;
   chronosUserTransaction_t txn_type;
 
   if (infoP == NULL || infoP->contextP == NULL) {
@@ -1240,8 +1304,19 @@ processUserTransaction(int *txn_rc,
     goto failXit;
   }
 
-    txn_type = reqPacketP->txn_type;
-    num_data_items = reqPacketP->numItems;
+  userTxnQueueP = &(infoP->contextP->userTxnQueue);
+
+  if (userTxnQueueP->occupied > 0) {
+    chronos_info("Processing user txn...");
+
+    rc = chronos_dequeue_user_transaction(&request, &txn_enqueue, &ticket, &txn_done, &txn_rcP, infoP->contextP);
+    if (rc != CHRONOS_SUCCESS) {
+      chronos_error("Failed to dequeue a user transaction");
+      goto failXit;
+    }
+
+    txn_type = request.txn_type;
+    num_data_items = request.numItems;
     
     CHRONOS_TIME_GET(txn_begin);
 
@@ -1250,34 +1325,34 @@ processUserTransaction(int *txn_rc,
 
     case CHRONOS_USER_TXN_VIEW_STOCK:
       for (i=0; i<num_data_items; i++) {
-        pkey_list[i] = reqPacketP->request_data.symbolInfo[i].symbol;
+        pkey_list[i] = request.request_data.symbolInfo[i].symbol;
       }
-      *txn_rc = benchmark_view_stock2(num_data_items, pkey_list, infoP->contextP->benchmarkCtxtP);
+      txn_rc = benchmark_view_stock2(num_data_items, pkey_list, infoP->contextP->benchmarkCtxtP);
       break;
 
     case CHRONOS_USER_TXN_VIEW_PORTFOLIO:
       for (i=0; i<num_data_items; i++) {
-        pkey_list[i] = reqPacketP->request_data.portfolioInfo[i].accountId;
+        pkey_list[i] = request.request_data.portfolioInfo[i].accountId;
       }
-      *txn_rc = benchmark_view_portfolio2(num_data_items, pkey_list, infoP->contextP->benchmarkCtxtP);
+      txn_rc = benchmark_view_portfolio2(num_data_items, pkey_list, infoP->contextP->benchmarkCtxtP);
       break;
 
     case CHRONOS_USER_TXN_PURCHASE:
       for (i=0; i<num_data_items; i++) {
-        memcpy(&(data[i]), &(reqPacketP->request_data.purchaseInfo[i]), sizeof(data[i]));
+        memcpy(&(data[i]), &(request.request_data.purchaseInfo[i]), sizeof(data[i]));
       }
     
-      *txn_rc = benchmark_purchase2(num_data_items, 
+      txn_rc = benchmark_purchase2(num_data_items, 
                                    data,
                                    infoP->contextP->benchmarkCtxtP);
       break;
 
     case CHRONOS_USER_TXN_SALE:
       for (i=0; i<num_data_items; i++) {
-        memcpy(&(data[i]), &(reqPacketP->request_data.sellInfo[i]), sizeof(data[i]));
+        memcpy(&(data[i]), &(request.request_data.sellInfo[i]), sizeof(data[i]));
       }
     
-      *txn_rc = benchmark_sell2(num_data_items, 
+      txn_rc = benchmark_sell2(num_data_items, 
                                data, 
                                infoP->contextP->benchmarkCtxtP);
       break;
@@ -1286,7 +1361,10 @@ processUserTransaction(int *txn_rc,
       assert(0);
     }
 
-    chronos_info("Txn rc: %d", *txn_rc);
+    /* Notify waiter thread that this txn is done */
+    *txn_done = 1;
+    *txn_rcP = txn_rc;
+    chronos_info("Txn rc: %d", txn_rc);
 
     if (infoP->contextP->num_txn_to_wait > 0) {
       chronos_warning("### [AC] Need to wait for: %d/%d transactions to finish ###", 
@@ -1300,16 +1378,14 @@ processUserTransaction(int *txn_rc,
 
     CHRONOS_TIME_GET(txn_end);
    
-#if 0
     ThreadTraceTxnElapsedTimePrint(&txn_enqueue, &txn_begin, &txn_end, txn_type, infoP);
-#endif
 
 #ifdef CHRONOS_SAMPLING_ENABLED
     thread_num = infoP->thread_num;
     current_slot = infoP->contextP->currentSlot;
     statsP = &(infoP->contextP->stats_matrix[current_slot][thread_num]);
 
-    if (*txn_rc == CHRONOS_SUCCESS) {
+    if (txn_rc == CHRONOS_SUCCESS) {
       /* One more transasction finished */
       statsP->num_txns ++;
 
@@ -1328,6 +1404,7 @@ processUserTransaction(int *txn_rc,
     }
 #endif
     chronos_info("Done processing user txn...");
+  }
   goto cleanup;
 
 failXit:
@@ -1339,16 +1416,17 @@ cleanup:
 #endif
 
 static int
-processRefreshTransaction(chronosRequestPacket_t *requestP,
-                          chronosServerThreadInfo_t *infoP)
+processRefreshTransaction(chronosServerThreadInfo_t *infoP)
 {
   int               rc = CHRONOS_SUCCESS;
   const char       *pkey = NULL;
   chronosServerContext_t *contextP = NULL;
+  chronos_time_t    txn_enqueue;
   chronos_time_t    txn_begin;
   chronos_time_t    txn_end;
+  chronosRequestPacket_t request;
 
-  if (infoP == NULL || infoP->contextP == NULL || requestP == NULL) {
+  if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
     goto failXit;
   }
@@ -1360,7 +1438,13 @@ processRefreshTransaction(chronosRequestPacket_t *requestP,
 
   chronos_info("(thr: %d) Processing update...", infoP->thread_num);
 
-  pkey = requestP->request_data.symbolInfo[0].symbol;
+  rc = chronos_dequeue_system_transaction(&request, &txn_enqueue, contextP);
+  if (rc != CHRONOS_SUCCESS) {
+    chronos_error("Failed to dequeue a system transaction");
+    goto failXit;
+  }
+
+  pkey = request.request_data.symbolInfo[0].symbol;
   assert(pkey != NULL);
   chronos_debug(3, "Updating value for pkey: %s...", pkey);
 
@@ -1379,9 +1463,7 @@ processRefreshTransaction(chronosRequestPacket_t *requestP,
     infoP->contextP->num_txn_to_wait --;
   }
 
-#if 0
   ThreadTraceTxnElapsedTimePrint(&txn_enqueue, &txn_begin, &txn_end, -1, infoP);
-#endif
 
 #if 0
   int               i;
@@ -1441,7 +1523,6 @@ cleanup:
   return rc;
 }
 
-#if 0
 /*
  * This is the driver function of process thread
  */
@@ -1499,7 +1580,6 @@ cleanup:
   
   pthread_exit(NULL);
 }
-#endif
 
 /*
  * This is the driver function of an update thread
@@ -1511,11 +1591,13 @@ updateThread(void *argP)
   int    num_updates = 0;
   chronosDataItem_t *dataItemArray =  NULL;
   volatile int current_slot;
+  chronos_time_t   txn_enqueue;
   chronos_time_t   current_time;
   unsigned long long current_time_ms;
   chronos_time_t   next_update_time;
   unsigned long long next_update_time_ms;
   chronosServerThreadInfo_t *infoP = (chronosServerThreadInfo_t *) argP;
+  chronosServerContext_t *contextP = NULL;
 
   if (infoP == NULL || infoP->contextP == NULL) {
     chronos_error("Invalid argument");
@@ -1524,6 +1606,8 @@ updateThread(void *argP)
 
   CHRONOS_SERVER_THREAD_CHECK(infoP);
   CHRONOS_SERVER_CTX_CHECK(infoP->contextP);
+
+  contextP = infoP->contextP;
 
   num_updates = infoP->parameters.updateParameters.num_stocks;
   assert(num_updates > 0);
@@ -1555,8 +1639,8 @@ updateThread(void *argP)
                       i,
                       index,
                       pkey);
-
-        processRefreshTransaction(&request, infoP);
+        CHRONOS_TIME_GET(txn_enqueue);
+        chronos_enqueue_system_transaction(&request, &txn_enqueue, contextP);
 
         current_slot = infoP->contextP->currentSlot;
         dataItemArray[i].updateFrequency[current_slot]++;
