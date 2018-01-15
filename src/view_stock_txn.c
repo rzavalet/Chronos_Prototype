@@ -194,7 +194,7 @@ benchmark_view_stock2(int num_symbols, const char **symbol_list_P, void *benchma
   
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
-  ret = start_xact(&xactH, benchmarkP);
+  ret = start_xact(&xactH, "VIEW_STOCK_TXN", benchmarkP);
   if (ret != BENCHMARK_SUCCESS) {
     goto failXit;
   }

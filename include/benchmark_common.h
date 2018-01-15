@@ -283,7 +283,7 @@ int
 show_portfolio_item(void *vBuf, char **symbolIdPP);
 
 int 
-start_xact(benchmark_xact_h *xact_ret, BENCHMARK_DBS *benchmarkP);
+start_xact(benchmark_xact_h *xact_ret, const char *txn_name, BENCHMARK_DBS *benchmarkP);
 
 int 
 abort_xact(benchmark_xact_h xactH, BENCHMARK_DBS *benchmarkP);

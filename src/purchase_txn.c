@@ -103,7 +103,7 @@ benchmark_purchase2(int           num_data,
 
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
-  ret = start_xact(&xactH, benchmarkP);
+  ret = start_xact(&xactH, "PURCHASE_TXN", benchmarkP);
   if (ret != BENCHMARK_SUCCESS) {
     goto failXit;
   }

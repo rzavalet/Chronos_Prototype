@@ -481,7 +481,9 @@ cleanup:
       free(serverContextP->dataItemsArray);
     }
 
+#if 0
     sleep(10);
+#endif
     if (benchmark_handle_free(serverContextP->benchmarkCtxtP) != CHRONOS_SUCCESS) {
       chronos_error("Failed to free handle");
       goto failXit;

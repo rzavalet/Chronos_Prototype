@@ -141,10 +141,13 @@ open_database(DB_ENV *envP,
   }
 
   /* Set the open flags */
-  open_flags = DB_AUTO_COMMIT; 
+  open_flags = DB_THREAD          /* multi-threaded application */
+              | DB_AUTO_COMMIT;   /* open is a transation */ 
 
-  if (create)
+  if (create) {
     open_flags |= DB_CREATE; /*  Allow database creation */
+    open_flags |= DB_EXCL;   /*  Error if DB exists */
+  }
 
   /* Now open the database */
   ret = dbp->open(dbp,        /* Pointer to the database */
@@ -239,15 +242,17 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
     goto failXit;
   }
  
-  env_flags = DB_INIT_TXN  |
-              DB_INIT_LOCK |
-              DB_INIT_LOG  |
-              DB_INIT_MPOOL;
+  env_flags = DB_INIT_TXN  |  /* Init transaction subsystem */
+              DB_INIT_LOCK |  /* Init locking subsystem */
+              DB_INIT_LOG  |  /* Init logging subsystem */
+              DB_INIT_MPOOL|  /* Init shared memory buffer pool */
+              DB_THREAD    ;  /* Multithreaded application */
 
-  if (benchmarkP->createDBs == 1) 
-    env_flags |= DB_CREATE;
+  if (benchmarkP->createDBs == 1)  {
+    env_flags |= DB_CREATE;   /* Create underlying files as necessary */
+  }
 
- env_flags |= DB_SYSTEM_MEM;
+ env_flags |= DB_SYSTEM_MEM;  /* Allocate from shared memory instead of heap memory */
 
   /*
    * Indicate that we want db to perform lock detection internally.
@@ -270,6 +275,12 @@ int open_environment(BENCHMARK_DBS *benchmarkP)
   rc = envP->set_timeout(envP, 10000000, DB_SET_LOCK_TIMEOUT);
   if (rc != 0) {
       benchmark_error("Error setting lock timeout: %s", db_strerror(rc));
+      goto failXit;
+  } 
+
+  rc = envP->set_timeout(envP, 10000000, DB_SET_TXN_TIMEOUT);
+  if (rc != 0) {
+      benchmark_error("Error setting txn timeout: %s", db_strerror(rc));
       goto failXit;
   } 
 
@@ -1261,7 +1272,7 @@ show_portfolio_item(void *vBuf, char **symbolIdPP)
 }
 
 int 
-start_xact(benchmark_xact_h *xact_ret, BENCHMARK_DBS *benchmarkP)
+start_xact(benchmark_xact_h *xact_ret, const char *txn_name, BENCHMARK_DBS *benchmarkP)
 {
   int rc = BENCHMARK_SUCCESS;
   DB_TXN  *txnP = NULL;
@@ -1284,6 +1295,12 @@ start_xact(benchmark_xact_h *xact_ret, BENCHMARK_DBS *benchmarkP)
     goto failXit; 
   }
   benchmark_debug(BENCHMARK_DEBUG_LEVEL_XACT, "PID: %d, Starting transaction: %p", getpid(), txnP);
+
+  rc = txnP->set_name(txnP, txn_name);
+  if (rc != 0) {
+    envP->err(envP, rc, "[%s:%d] [%d] Transaction name set failed.", __FILE__, __LINE__, getpid());
+    goto failXit; 
+  }
 
   *xact_ret = txnP;
 

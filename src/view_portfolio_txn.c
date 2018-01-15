@@ -107,7 +107,7 @@ benchmark_view_portfolio2(int           num_accounts,
   
   BENCHMARK_CHECK_MAGIC(benchmarkP);
 
-  ret = start_xact(&xactH, benchmarkP);
+  ret = start_xact(&xactH, "VIEW_PORTFOLIO_TXN", benchmarkP);
   if (ret != BENCHMARK_SUCCESS) {
     goto failXit;
   }
