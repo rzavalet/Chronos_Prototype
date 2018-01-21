@@ -16,7 +16,6 @@
  * =====================================================================================
  */
 
-/* This is a test for git + eclipse */
 #include "benchmark.h"
 #include "benchmark_common.h"
 
